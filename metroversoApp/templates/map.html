@@ -11,11 +11,16 @@
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.13.0/mapbox-gl.css" rel="stylesheet">
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.13.0/mapbox-gl.js"></script>
 
+<!--Turf import-->
+<script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+
+
 <!--CSS/style imports-->
 <link rel="stylesheet" href="{% static 'css/mapStyle.css' %}">
 
 <!--JS/js-->
-
+<script src="{% static 'js/dataTurf.js' %}" onload="console.log('dataTurf cargado');"></script>
+<script src="{% static 'js/functions.js' %}" onload="console.log('functions cargado');"></script>
 
 </head>
 <body>
@@ -40,6 +45,115 @@ const initialLocationView = [-75.5752,6.2491]; // Coordinates of San Antonio
         center: initialLocationView,
         zoom: 15
     });
+
+    console.log("Map initialized");
+    map.on('load', () => {
+        userPoint = turf.point([-75.585684,6.191629]);
+        const top3 = closestPoints(userPoint,2000);
+        console.log("Nodes:"+top3);
+
+    new mapboxgl.Marker({ color: "blue" })
+        .setLngLat(userPoint.geometry.coordinates)
+        .addTo(map);
+
+    const pointsGeoJSON = {
+        "type": "FeatureCollection",
+        "features": top3.map(p => ({
+            "type": "Feature",
+            "geometry": p.geometry,
+            "properties": {
+                "ID": p.properties.ID,                        
+            }
+        }))
+    };
+
+   
+    const linesGeoJSON = {
+        "type": "FeatureCollection",
+        "features": top3.map(p => {
+           
+            const distance = turf.distance(userPoint, p, { units: 'meters' });
+
+            return {
+                "type": "Feature",
+                "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                        userPoint.geometry.coordinates,
+                        p.geometry.coordinates
+                    ]
+                },
+                "properties": {
+                    "distance": `${distance.toFixed(0)} m`  // redondeamos a metros
+                }
+            };
+        })
+    };
+
+    
+    map.addSource('points', { "type": "geojson", "data": pointsGeoJSON });
+    map.addSource('lines', { "type": "geojson", "data": linesGeoJSON });
+
+    
+    map.addLayer({
+        "id": "lines-layer",
+        "type": "line",
+        "source": "lines",
+        "layout": {
+            "line-join": "round",
+            "line-cap": "round"
+        },
+        "paint": {
+            "line-color": "#FF0000",
+            "line-width": 2
+        }
+    });
+
+    
+    map.addLayer({
+        "id": "points-layer",
+        "type": "circle",
+        "source": "points",
+        "paint": {
+            "circle-color": "#FF0000",
+            "circle-radius": 6,
+            "circle-stroke-width": 2,
+            "circle-stroke-color": "#FFFFFF"
+        }
+    });
+
+    
+    map.addLayer({
+        "id": "distance-labels",
+        "type": "symbol",
+        "source": "lines",
+        "layout": {
+            "symbol-placement": "line",          
+            "text-field": ["get", "distance"],  
+            "text-size": 14,
+            "text-offset": [0, 0.5]              
+        },
+        "paint": {
+            "text-color": "#000000",
+            "text-halo-color": "#FFFFFF",
+            "text-halo-width": 1
+        }
+    });
+});
+
+map.on('click', 'points-layer', (e) => {
+    const feature = e.features[0];   
+    
+   
+    new mapboxgl.Popup()
+        .setLngLat(feature.geometry.coordinates)
+        .setHTML(`
+            <b>ID:</b> ${feature.properties. ID || 'Sin ID'}<br>
+            <b>Distance:</b> ${feature.properties.distance || 'N/A'}
+        `)
+        .addTo(map);
+});
+
 </script>
 
 </body>
