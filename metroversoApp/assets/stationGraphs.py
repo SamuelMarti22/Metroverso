@@ -1,4 +1,16 @@
-# Formato del id: A01 -- A(La línea a la que pertenece) + 01 (número de la estación según la API)
+import networkx as nx
+from math import sqrt
+import json
+
+# Function for calculating Euclidean distance (flat)
+def euclidiana(coord1, coord2):
+    x1, y1 = coord1
+    x2, y2 = coord2
+    return sqrt((x2 - x1)**2 + (y2 - y1)**2)
+
+G = nx.Graph()
+
+# ID format: A01 -- A (the line it belongs to) + 01 (station number according to the API)
 lineaA = {
     "A01": [-75.54426910322798, 6.337853626702383],  # Niquía
     "A02": [-75.55373230475944, 6.329958711908574],  # Bello
@@ -23,10 +35,23 @@ lineaA = {
     "A21": [-75.62644764544693, 6.152742930466616],  # La Estrella
 }
 
+
+#Connections Line A:
+
+for i in range(1, 21):  # De A01 a A20
+    origen = f"A{str(i).zfill(2)}"
+    destino = f"A{str(i+1).zfill(2)}"
+    G.add_edge(origen, destino, weight=euclidiana(lineaA[origen], lineaA[destino]))
+
 lineaL = {
     "L02": [-75.50297173, 6.281545751],  # Arvi
     "L01": [-75.54184763, 6.29272255],  # Santo Domingo
 }
+
+#Connections Line L:
+
+G.add_edge("L01", "L02", weight=euclidiana(lineaL["L01"], lineaL["L02"]))
+
 
 linea1 = {
     "M00": [-75.6092249, 6.230666882],  # UDM
@@ -36,12 +61,13 @@ linea1 = {
     "M04": [-75.59097001, 6.231596189],  # Rosales
     "M05": [-75.58656411, 6.231742717],  # Fátima
     "M06": [-75.58205816, 6.231865203],  # Nutibara
-    "M07": [-75.57675839, 6.230480887],  # Industriales
+    "M07": [-75.57563364841289, 6.230039107985888],  # Industriales
     "M08": [-75.57540073, 6.243661857],  # Plaza Mayor
     "M09": [-75.57503562, 6.250853156],  # Cisneros
     "M10": [-75.57314523, 6.256091368],  # Minorista
     "M11": [-75.56914261, 6.260710636],  # Chagualo
     "M12": [-75.56758006, 6.263931067],  # Ruta N
+    "M19": [-75.56327830924161, 6.2640097938723756],  # Hospital
     "M13": [-75.55592313, 6.262113085],  # Palos Verdes
     "M14": [-75.55504413, 6.267667781],  # Gardel
     "M15": [-75.55407869, 6.273257435],  # Manrique
@@ -49,6 +75,14 @@ linea1 = {
     "M17": [-75.55293799, 6.282932],  # Berlín
     "M18": [-75.55665899, 6.285200132],  # Parque Aranjuez
 }
+
+#Connections Line 1:
+
+for i in range(0, 18):  # De M00 a M18
+    origen = f"M{str(i).zfill(2)}"
+    destino = f"M{str(i+1).zfill(2)}"
+    G.add_edge(origen, destino, weight=euclidiana(linea1[origen], linea1[destino]))
+
 
 linea2 = {
     "X00": [-75.6092249, 6.230666882],  # UDM
@@ -58,7 +92,7 @@ linea2 = {
     "X04": [-75.59097001, 6.231596189],  # Rosales
     "X05": [-75.58656411, 6.231742717],  # Fátima
     "X06": [-75.58205816, 6.231865203],  # Nutibara
-    "X07": [-75.57675839, 6.230480887],  # Industriales
+    "X07": [-75.57563364841289, 6.230039107985888],  # Industriales
     "X08": [-75.57098596, 6.22862439],  # Barro Colombia
     "X09": [-75.57004225, 6.234088772],  # Perpetuo Socorro
     "X10": [-75.56978175, 6.240609554],  # Barrio Colon
@@ -74,7 +108,16 @@ linea2 = {
     "X20": [-75.55665899, 6.285200132],  # Parque Aranjuez
 }
 
+#Connections Line 2:
+
+for i in range(0, 20):  # De X00 a X20
+    origen = f"X{str(i).zfill(2)}"
+    destino = f"X{str(i+1).zfill(2)}"
+    G.add_edge(origen, destino, weight=euclidiana(linea2[origen], linea2[destino]))
+
+
 lineaB = {
+    "B00": [-75.56967864286219, 6.247175927579917], #San Antonio
     "B01": [-75.57515198, 6.249053572], # Cisneros
     "B02": [-75.58294171, 6.252984046], # Suramericana
     "B03": [-75.58825637, 6.253335629], # Estadio
@@ -83,36 +126,84 @@ lineaB = {
     "B06": [-75.6136642, 6.256780931],  # San Javier
 }
 
+#Connections Line B:
+
+for i in range(0, 6):  # De B00 a B06
+    origen = f"B{str(i).zfill(2)}"
+    destino = f"B{str(i+1).zfill(2)}"
+    G.add_edge(origen, destino, weight=euclidiana(lineaB[origen], lineaB[destino]))
+    # G.add_edge(destino, origen, weight=euclidiana(lineaB[destino], lineaB[origen]))  # opcional: para 
+    # xión bidireccional
+
+
 lineaT = {
-    "T01": [-75.56538621, 6.24732917],  # San José
+    "T00": [-75.56967864286219, 6.247175927579917], #San Antonio
+    "T01": [-75.56609179, 6.247080223],  # San José
     "T02": [-75.56199329, 6.245588625], # Pabellon del Agua
-    "T03": [-75.55876266, 6.24395102],  # Bicentenario 
-    "T04": [-75.5539, 6.241399227],     # Buenos Aires 
+    "T03": [-75.55876266, 6.24395102],  # Bicentenario
+    "T04": [-75.5539, 6.241399227],     # Buenos Aires
     "T05": [-75.54900339, 6.241387875], # Miraflores
     "T06": [-75.54517565, 6.239028042], # Loyola
     "T07": [-75.54173913, 6.235509449], # Alejandro Echavarria
     "T08": [-75.54013974, 6.233150212], # Oriente
 }
 
+#Connections Line T:
+
+for i in range(0, 8):  # De T00 a T08
+    origen = f"T{str(i).zfill(2)}"
+    destino = f"T{str(i+1).zfill(2)}"
+    G.add_edge(origen, destino, weight=euclidiana(lineaT[origen], lineaT[destino]))
+
+
+
 lineaZ = {
+    "Z00": [-75.54900339, 6.241387875], # Miraflores
     "Z01": [-75.54447595, 6.24526309],  # El Pinal
     "Z02": [-75.5413945, 6.24761518],   # 13 de Noviembre
 }
 
+#Connections Line Z:
+
+for i in range(0, 2):  # De Z00 a Z02
+    origen = f"Z{str(i).zfill(2)}"
+    destino = f"Z{str(i+1).zfill(2)}"
+    G.add_edge(origen, destino, weight=euclidiana(lineaZ[origen], lineaZ[destino]))
+    # G.add_edge(destino, origen, weight=euclidiana(lineaZ[destino], lineaZ[origen]))  # opcional
+
 lineaJ = {
-    "J01": [-75.61420338, 6.281093175], # La Aurora
-    "J02": [-75.61401716, 6.275360769], # Vallejuelos
-    "J03": [-75.61370257, 6.26567653],  # JuanXXIII
-    
+    "J00": [-75.61420338, 6.281093175], # La Aurora
+    "J01": [-75.61401716, 6.275360769], # Vallejuelos
+    "J02": [-75.61370257, 6.26567653],  # JuanXXIII
+    "J03": [-75.6136642, 6.256780931],  # San Javier
 }
 
+#Connections Line J:
+
+for i in range(0, 3):  # De J00 a J03
+    origen = f"J{str(i).zfill(2)}"
+    destino = f"J{str(i+1).zfill(2)}"
+    G.add_edge(origen, destino, weight=euclidiana(lineaJ[origen], lineaJ[destino]))
+    # G.add_edge(destino, origen, weight=euclidiana(lineaJ[destino], lineaJ[origen]))  # opcional
+
+
 lineaH = {
+    "H00": [-75.54013974, 6.233150212], # Oriente
     "H01": [-75.53637212, 6.236645415], # Las Torres
     "H02": [-75.52867948, 6.234874544], # Villa Sierra
 }
 
+#Connections Line H:
+
+for i in range(0, 2):  # De H00 a H02
+    origen = f"H{str(i).zfill(2)}"
+    destino = f"H{str(i+1).zfill(2)}"
+    G.add_edge(origen, destino, weight=euclidiana(lineaH[origen], lineaH[destino]))
+    # G.add_edge(destino, origen, weight=euclidiana(lineaH[destino], lineaH[origen]))  # opcional
+
+
 lineaO = {
-    "O01": [-75.57036193, 6.27751343],  # Parada Caribe 
+    "O01": [-75.56938422818597, 6.278324369727542], #Caribe
     "O02": [-75.57316774, 6.276849813], # Parada Cementerio Universal
     "O03": [-75.57825047, 6.27411148],  # Parada Barrio Cordoba
     "O04": [-75.58276145, 6.273552208], # Parada Barrio Pilarica
@@ -120,27 +211,56 @@ lineaO = {
     "O06": [-75.59215013, 6.273785084], # Parada Facultad de Minas
     "O07": [-75.59518655, 6.269905466], # Parada Barrio Los Colores
     "O08": [-75.59640856, 6.264465824], # Parada Barrio Calazans
-    "O09": [-75.59756999, 6.259210679], # Parada Barrio Floresta 
+    "O09": [-75.5977437, 6.258709043],  # Floresta
     "O10": [-75.59853235, 6.255031809], # Parada Barrio Los Pinos
     "O11": [-75.60251712, 6.246309776], # Parada Barrio Laureles
     "O12": [-75.6028934, 6.239729528],  # Parada Barrio Santa Gema
     "O13": [-75.6021801, 6.235370376],  # Parada Nueva Villa de Aburra
-    "O14": [-75.6021006, 6.232430791],  # Parada Integracion la Palma
+    "M02": [-75.60102788, 6.231177752],  # La Palma
 }
 
+#Connections Line O:
+
+for i in range(1, 13):  # De O01 a O13
+    origen = f"O{str(i).zfill(2)}"
+    destino = f"O{str(i+1).zfill(2)}"
+    G.add_edge(origen, destino, weight=euclidiana(lineaO[origen], lineaO[destino]))
+    # G.add_edge(destino, origen, weight=euclidiana(lineaO[destino], lineaO[origen]))  # opcional
+
+G.add_edge("O13", "M02", weight=euclidiana(lineaO["O13"], lineaO["M02"]))
+# G.add_edge("M02", "O13", weight=euclidiana(lineaO["M02"], lineaO["O13"]))  # opcional
+
+
 lineaP = {
+    "P00": [-75.55851194186361, 6.299961957796953],  # Acevedo
     "P01": [-75.5673189, 6.301882672], # Sena Pedregal
     "P02": [-75.57594721, 6.30424823], # Doce de Octubre
     "P03": [-75.58233359, 6.30599902], # El progreso
 }
 
+#Connections Line P:
+
+for i in range(0, 3):  # De P00 a P03
+    origen = f"P{str(i).zfill(2)}"
+    destino = f"P{str(i+1).zfill(2)}"
+    G.add_edge(origen, destino, weight=euclidiana(lineaP[origen], lineaP[destino]))
+
 lineaK = {
+    "K00": [-75.55851194186361, 6.299961957796953],  # Acevedo
     "K01": [-75.55189694, 6.296272054], # Andalucía
     "K02": [-75.54814136, 6.295122597], # Popular
-    "K03": [-75.54172728, 6.293159378], # Santo Domingo
+    "K03": [-75.54184763, 6.29272255],  # Santo Domingo
 }
 
+#Connections Line K:
+
+for i in range(0, 3):  # De K00 a K03
+    origen = f"K{str(i).zfill(2)}"
+    destino = f"K{str(i+1).zfill(2)}"
+    G.add_edge(origen, destino, weight=euclidiana(lineaK[origen], lineaK[destino]))
+
 # Alimentadores:
+
 C6_001 = {
     "C6-001-01": [-75.5573494869921, 6.300018519748982],
     "C6-001-02": [-75.55589655334563, 6.304679211463447],
@@ -165,6 +285,12 @@ C6_001 = {
     "C6-001-21": [-75.5573494869921, 6.300018519748982],
     "C6-001-22": [-75.55046278321267, 6.307577129251151],
 }
+
+for i in range(1, 22):  # de 01 a 22
+    origen = "C6-001-" + str(i).zfill(2)
+    destino = "C6-001-" + str(i + 1).zfill(2)
+    G.add_edge(origen, destino, weight=euclidiana(C6_001[origen], C6_001[destino]))
+
 
 C6_002 = {
     "C6-002-23": [-75.57385185142601, 6.265296206273871],
@@ -215,6 +341,12 @@ C6_002 = {
     "C6-002-68": [-75.54814984753594, 6.261228912087639],
     "C6-002-69": [-75.55871178578549, 6.261609038469119],
 }
+
+for i in range(23, 69):  # De 23 a 69
+    origen = f"C6-002-{str(i).zfill(2)}"
+    destino = f"C6-002-{str(i + 1).zfill(2)}"
+    G.add_edge(origen, destino, weight=euclidiana(C6_002[origen], C6_002[destino]))
+
 
 C6_001 = {
     "C6-001-01": [-75.5573494869921, 6.300018519748982],
@@ -320,11 +452,16 @@ C6_003 = {
     "C6-003-95": [-75.55832852605879, 6.2751641077973765],
 }
 
+for i in range(70, 95):  # De 70 a 95
+    origen = f"C6-003-{str(i).zfill(2)}"
+    destino = f"C6-003-{str(i + 1).zfill(2)}"
+    G.add_edge(origen, destino, weight=euclidiana(C6_003[origen], C6_003[destino]))
+
 C6_004 = {
-    "C6-004-96": [-75.57287122146687, 6.238926789368501],
-    "C6-004-97": [-75.56917594382071, 6.236715607407897],
-    "C6-004-98": [-75.56703376499352, 6.23322175771687],
-    "C6-004-99": [-75.56640820387108, 6.230010419831464],
+    "C6-004-096": [-75.57287122146687, 6.238926789368501],
+    "C6-004-097": [-75.56917594382071, 6.236715607407897],
+    "C6-004-098": [-75.56703376499352, 6.23322175771687],
+    "C6-004-099": [-75.56640820387108, 6.230010419831464],
     "C6-004-100": [-75.56404066518706, 6.226814387390006],
     "C6-004-101": [-75.56470456163252, 6.227725508801865],
     "C6-004-102": [-75.56365340483137, 6.229380169785419],
@@ -369,6 +506,12 @@ C6_004 = {
     "C6-004-141": [-75.5564513001684, 6.234253081199816],
 }
 
+for i in range(96, 141):  # De 096 a 141
+    origen = f"C6-004-{str(i).zfill(3)}"
+    destino = f"C6-004-{str(i + 1).zfill(3)}"
+    G.add_edge(origen, destino, weight=euclidiana(C6_004[origen], C6_004[destino]))
+
+
 C6_005 = {
     "C6-005-142": [-75.56715186727081, 6.245624588753786],
     "C6-005-143": [-75.56516809395468, 6.24492613852387],
@@ -411,6 +554,8 @@ C6_005 = {
     "C6-005-181": [-75.5558249046512, 6.240138630370965],
 }
 
+# revisar 
+
 C6_014 = {
     "C6-014-164": [-75.55712459183364, 6.255305140161052],
     "C6-014-401": [-75.56585572697955, 6.257328095771951],
@@ -438,6 +583,14 @@ C6_014 = {
     "C6-014-423": [-75.56585572697955, 6.257328095771951],
 }
 
+G.add_edge("C6-014-164", "C6-014-401", weight=euclidiana(C6_014["C6-014-164"], C6_014["C6-014-401"]))
+
+for i in range(401, 423):  # De 401 a 422
+    origen = f"C6-014-{str(i).zfill(3)}"
+    destino = f"C6-014-{str(i + 1).zfill(3)}"
+    G.add_edge(origen, destino, weight=euclidiana(C6_014[origen], C6_014[destino]))
+
+
 C6_006 = {
     "C6-006-182": [-75.53416147490674, 6.235663733749273],
     "C6-006-183": [-75.53416147490674, 6.235663733749273],
@@ -454,6 +607,12 @@ C6_006 = {
     "C6-006-194": [-75.53812404324131, 6.23327225010722],
     "C6-006-195": [-75.53778937695796, 6.233194317046591],
 }
+
+for i in range(182, 195):  # De 182 a 195
+    origen = f"C6-006-{str(i).zfill(3)}"
+    destino = f"C6-006-{str(i + 1).zfill(3)}"
+    G.add_edge(origen, destino, weight=euclidiana(C6_006[origen], C6_006[destino]))
+
 
 C6_007 = {
     "C6-007-196": [-75.55188673862281, 6.230123116296003],
@@ -485,6 +644,11 @@ C6_007 = {
     "C6-007-222": [-75.5510584903226, 6.231356029920786],
     "C6-007-223": [-75.55310713296006, 6.229707682564449],
 }
+
+for i in range(196, 223):
+    origen = f"C6-007-{str(i).zfill(3)}"
+    destino = f"C6-007-{str(i + 1).zfill(3)}"
+    G.add_edge(origen, destino, weight=euclidiana(C6_007[origen], C6_007[destino]))
 
 C6_008 = {
     "C6-008-224": [-75.56659682473766, 6.257187887154235],
@@ -522,6 +686,11 @@ C6_008 = {
     "C6-008-256": [-75.54218105156288, 6.240584382804278],
     "C6-008-257": [-75.54218105156288, 6.240584382804278],
 }
+
+for i in range(224, 257):
+    origen = f"C6-008-{str(i).zfill(3)}"
+    destino = f"C6-008-{str(i + 1).zfill(3)}"
+    G.add_edge(origen, destino, weight=euclidiana(C6_008[origen], C6_008[destino]))
 
 C6_009 = {
     "C6-009-258": [-75.54306962791448, 6.247980092427261],
@@ -564,6 +733,11 @@ C6_009 = {
     "C6-009-295": [-75.54306962791448, 6.247980092427261],
 }
 
+for i in range(258, 295):
+    origen = f"C6-009-{str(i).zfill(3)}"
+    destino = f"C6-009-{str(i + 1).zfill(3)}"
+    G.add_edge(origen, destino, weight=euclidiana(C6_009[origen], C6_009[destino]))
+
 C6_010 = {
     "C6-010-296": [-75.56751303615592, 6.251480069684041],
     "C6-010-297": [-75.56274273041012, 6.253644492701282],
@@ -604,6 +778,11 @@ C6_010 = {
     "C6-010-332": [-75.56284427981454, 6.250946264913082],
 }
 
+for i in range(296, 332):
+    origen = f"C6-010-{str(i).zfill(3)}"
+    destino = f"C6-010-{str(i + 1).zfill(3)}"
+    G.add_edge(origen, destino, weight=euclidiana(C6_010[origen], C6_010[destino]))
+
 C6_011 = {
     "C6-011-333": [-75.55725573259988, 6.3002097488547655],
     "C6-011-334": [-75.55589655334563, 6.304679211463447],
@@ -621,6 +800,11 @@ C6_011 = {
     "C6-011-346": [-75.5548855706623, 6.301855726969994],
     "C6-011-347": [-75.55725573259988, 6.3002097488547655],
 }
+
+for i in range(333, 347):
+    origen = f"C6-011-{str(i).zfill(3)}"
+    destino = f"C6-011-{str(i + 1).zfill(3)}"
+    G.add_edge(origen, destino, weight=euclidiana(C6_011[origen], C6_011[destino]))
 
 C6_012 = {
     "C6-012-348": [-75.55745899750902, 6.2997248386907],
@@ -641,6 +825,11 @@ C6_012 = {
     "C6-012-363": [-75.55285039186266, 6.301518573392297],
     "C6-012-364": [-75.5548855706623, 6.301855726969994],
 }
+
+for i in range(348, 364):
+    origen = f"C6-012-{str(i).zfill(3)}"
+    destino = f"C6-012-{str(i + 1).zfill(3)}"
+    G.add_edge(origen, destino, weight=euclidiana(C6_012[origen], C6_012[destino]))
 
 C6_013 = {
     "C6-013-365": [-75.5459880662401, 6.301375825813188],
@@ -680,6 +869,11 @@ C6_013 = {
     "C6-013-399": [-75.5459880662401, 6.301375825813188],
     "C6-013-400": [-75.55340082668195, 6.294820084102761],
 }
+
+for i in range(365, 400):
+    origen = f"C6-013-{str(i).zfill(3)}"
+    destino = f"C6-013-{str(i + 1).zfill(3)}"
+    G.add_edge(origen, destino, weight=euclidiana(C6_013[origen], C6_013[destino]))
 
 C6_016 = {
     "C6-016-424": [-75.55669652565503, 6.261795524702089],
@@ -728,6 +922,11 @@ C6_016 = {
     "C6-016-467": [-75.54940585082687, 6.270781599079449],
 }
 
+for i in range(424, 467):
+    origen = f"C6-016-{str(i).zfill(3)}"
+    destino = f"C6-016-{str(i + 1).zfill(3)}"
+    G.add_edge(origen, destino, weight=euclidiana(C6_016[origen], C6_016[destino]))
+
 C6_018 = {
     "C6-018-468": [-75.5467130539167, 6.291082843056999],
     "C6-018-469": [-75.54925294616186, 6.2912084428071875],
@@ -758,6 +957,11 @@ C6_018 = {
     "C6-018-494": [-75.5517403896616, 6.28756611133875],
 }
 
+for i in range(468, 494):
+    origen = f"C6-018-{str(i).zfill(3)}"
+    destino = f"C6-018-{str(i + 1).zfill(3)}"
+    G.add_edge(origen, destino, weight=euclidiana(C6_018[origen], C6_018[destino]))
+
 C6_019 = {
     "C6-019-495": [-75.54354840282828, 6.269431805442789],
     "C6-019-496": [-75.54471349133566, 6.269083254617251],
@@ -776,6 +980,11 @@ C6_019 = {
     "C6-019-509": [-75.54354840282828, 6.269431805442789],
     "C6-019-510": [-75.55125262108996, 6.27050463492168],
 }
+
+for i in range(495, 510):
+    origen = f"C6-019-{str(i).zfill(3)}"
+    destino = f"C6-019-{str(i + 1).zfill(3)}"
+    G.add_edge(origen, destino, weight=euclidiana(C6_019[origen], C6_019[destino]))
 
 C6_020 = {
     "C6-020-511": [-75.56617732823236, 6.270355652475611],
@@ -808,12 +1017,17 @@ C6_020 = {
     "C6-020-538": [-75.55665833384568, 6.273259107096139],
     "C6-020-539": [-75.55946195785955, 6.273754651930194],
     "C6-020-540": [-75.56225016858183, 6.274250853505262],
-    "C6-020-542": [-75.56617732823236, 6.270355652475611],
-    "C6-020-543": [-75.54380206042524, 6.2826246441653755],
+    "C6-020-541": [-75.56617732823236, 6.270355652475611],
+    "C6-020-542": [-75.54380206042524, 6.2826246441653755],
+    "C6-020-543": [-75.5428441581608, 6.284858778367677],
     "C6-020-544": [-75.5428441581608, 6.284858778367677],
-    "C6-020-545": [-75.5428441581608, 6.284858778367677],
-    "C6-020-546": [-75.54373812124909, 6.28310478004101],
+    "C6-020-545": [-75.54373812124909, 6.28310478004101],
 }
+
+for i in range(511, 545):
+    origen = f"C6-020-{str(i).zfill(3)}"
+    destino = f"C6-020-{str(i + 1).zfill(3)}"
+    G.add_edge(origen, destino, weight=euclidiana(C6_020[origen], C6_020[destino]))
 
 C6_022 = {
     "C6-022-541": [-75.55121335228807, 6.265765273993573],
@@ -861,6 +1075,13 @@ C6_022 = {
     "C6-022-620": [-75.54248400685417, 6.2697946822324875],
 }
 
+G.add_edge(origen, destino, weight=euclidiana(C6_022["C6-022-541"], C6_022["C6-022-579"]))
+
+for i in range(579, 620):
+    origen = f"C6-022-{str(i).zfill(3)}"
+    destino = f"C6-022-{str(i + 1).zfill(3)}"
+    G.add_edge(origen, destino, weight=euclidiana(C6_022[origen], C6_022[destino]))
+
 C6_021 = {
     "C6-021-547": [-75.56075031155923, 6.289150450100158],
     "C6-021-548": [-75.55960259094525, 6.287679734029824],
@@ -896,6 +1117,11 @@ C6_021 = {
     "C6-021-578": [-75.55954047463048, 6.285990970049231],
 }
 
+for i in range(547, 578):
+    origen = f"C6-021-{str(i).zfill(3)}"
+    destino = f"C6-021-{str(i + 1).zfill(3)}"
+    G.add_edge(origen, destino, weight=euclidiana(C6_021[origen], C6_021[destino]))
+
 C6_023 = {
     "C6-023-621": [-75.54169357248026, 6.235609164109908],
     "C6-023-622": [-75.54099343648336, 6.236261925402692],
@@ -919,6 +1145,11 @@ C6_023 = {
     "C6-023-640": [-75.53152972812067, 6.229728934318008],
     "C6-023-641": [-75.53735563327554, 6.230966557929594],
 }
+
+for i in range(621, 641):
+    origen = f"C6-023-{str(i).zfill(3)}"
+    destino = f"C6-023-{str(i + 1).zfill(3)}"
+    G.add_edge(origen, destino, weight=euclidiana(C6_023[origen], C6_023[destino]))
 
 C6_024 = {
     "C6-024-642": [-75.52881878449492, 6.229490933156409],
@@ -949,6 +1180,11 @@ C6_024 = {
     "C6-024-667": [-75.53533710553484, 6.229713709164071],
 }
 
+for i in range(642, 667):
+    origen = f"C6-024-{str(i).zfill(3)}"
+    destino = f"C6-024-{str(i + 1).zfill(3)}"
+    G.add_edge(origen, destino, weight=euclidiana(C6_024[origen], C6_024[destino]))
+
 C6_025 = {
     "C6-025-668": [-75.54032645802901, 6.232964389177378],
     "C6-025-669": [-75.53937756264351, 6.231140014351035],
@@ -978,6 +1214,11 @@ C6_025 = {
     "C6-025-693": [-75.53533710553484, 6.229713709164071],
     "C6-025-694": [-75.535330954814, 6.229739883957444],
 }
+
+for i in range(668, 694):
+    origen = f"C6-025-{str(i).zfill(3)}"
+    destino = f"C6-025-{str(i + 1).zfill(3)}"
+    G.add_edge(origen, destino, weight=euclidiana(C6_025[origen], C6_025[destino]))
 
 C6_002A = {
     "C6-002A-695": [-75.5627629472307, 6.264957411888292],
@@ -1023,6 +1264,11 @@ C6_002A = {
     "C6-002A-735": [-75.5429975963851, 6.266297165998728],
 }
 
+for i in range(695, 735):
+    origen = f"C6-002A-{str(i).zfill(3)}"
+    destino = f"C6-002A-{str(i + 1).zfill(3)}"
+    G.add_edge(origen, destino, weight=euclidiana(C6_002A[origen], C6_002A[destino]))
+
 C6_005A = {
     "C6-005A-736": [-75.56715186727081, 6.245624588753786],
     "C6-005A-737": [-75.56516809395468, 6.24492613852387],
@@ -1067,6 +1313,11 @@ C6_005A = {
     "C6-005A-776": [-75.54861526922562, 6.2364503116409855],
 }
 
+for i in range(736, 776):
+    origen = f"C6-005A-{str(i).zfill(3)}"
+    destino = f"C6-005A-{str(i + 1).zfill(3)}"
+    G.add_edge(origen, destino, weight=euclidiana(C6_005A[origen], C6_005A[destino]))
+
 C6_012A = {
     "C6-012A-777": [-75.55745899750902, 6.2997248386907],
     "C6-012A-778": [-75.553818074166, 6.2976814565178865],
@@ -1084,6 +1335,11 @@ C6_012A = {
     "C6-012A-790": [-75.55861930246927, 6.29624845872167],
     "C6-012A-791": [-75.55745899750902, 6.2997248386907],
 }
+
+for i in range(777, 791):
+    origen = f"C6-012A-{str(i).zfill(3)}"
+    destino = f"C6-012A-{str(i + 1).zfill(3)}"
+    G.add_edge(origen, destino, weight=euclidiana(C6_012A[origen], C6_012A[destino]))
 
 C6_015A = {
     "C6-015A-792": [-75.5629966359997, 6.26489489694395],
@@ -1126,6 +1382,11 @@ C6_015A = {
     "C6-015A-829": [-75.54671936067146, 6.287253714450441],
 }
 
+for i in range(792, 829):
+    origen = f"C6-015A-{str(i).zfill(3)}"
+    destino = f"C6-015A-{str(i + 1).zfill(3)}"
+    G.add_edge(origen, destino, weight=euclidiana(C6_015A[origen], C6_015A[destino]))
+
 C6_019A = {
     "C6-019A-830": [-75.55534535299643, 6.268069659390712],
     "C6-019A-831": [-75.54940585082687, 6.270781599079449],
@@ -1146,6 +1407,11 @@ C6_019A = {
     "C6-019A-846": [-75.55264925883499, 6.269398195118649],
     "C6-019A-847": [-75.55534535299643, 6.268069659390712],
 }
+
+for i in range(830, 847):
+    origen = f"C6-019A-{str(i).zfill(3)}"
+    destino = f"C6-019A-{str(i + 1).zfill(3)}"
+    G.add_edge(origen, destino, weight=euclidiana(C6_019A[origen], C6_019A[destino]))
 
 C6_022A = {
     "C6-022A-848": [-75.56571214989188, 6.257749415461141],
@@ -1196,6 +1462,11 @@ C6_022A = {
     "C6-022A-893": [-75.54248400685417, 6.2697946822324875],
 }
 
+for i in range(848, 893):
+    origen = f"C6-022A-{str(i).zfill(3)}"
+    destino = f"C6-022A-{str(i + 1).zfill(3)}"
+    G.add_edge(origen, destino, weight=euclidiana(C6_022A[origen], C6_022A[destino]))
+
 C6_025B = {
     "C6-025B-894": [-75.54032645802901, 6.232964389177378],
     "C6-025B-895": [-75.53937756264351, 6.231140014351035],
@@ -1212,6 +1483,11 @@ C6_025B = {
     "C6-025B-906": [-75.53666224890954, 6.228145736785881],
     "C6-025B-907": [-75.53590890780248, 6.228673587405597],
 }
+
+for i in range(894, 907):
+    origen = f"C6-025B-{str(i).zfill(3)}"
+    destino = f"C6-025B-{str(i + 1).zfill(3)}"
+    G.add_edge(origen, destino, weight=euclidiana(C6_025B[origen], C6_025B[destino]))
 
 C3_001 = {
     "C3-001-908": [-75.58128736095594, 6.19416757069353],
@@ -1255,6 +1531,11 @@ C3_001 = {
     "C3-001-946": [-75.58046759727665, 6.192608675595142],
     "C3-001-947": [-75.58128736095594, 6.19416757069353],
 }
+
+for i in range(908, 947):
+    origen = f"C3-001-{str(i).zfill(3)}"
+    destino = f"C3-001-{str(i + 1).zfill(3)}"
+    G.add_edge(origen, destino, weight=euclidiana(C3_001[origen], C3_001[destino]))
 
 C3_002 = {
     "C3-002-948": [-75.58289999169098, 6.19516174975352],
@@ -1301,17 +1582,22 @@ C3_002 = {
     "C3-002-989": [-75.5941025006697, 6.211826577355741],
 }
 
+for i in range(948, 989):
+    origen = f"C3-002-{str(i).zfill(3)}"
+    destino = f"C3-002-{str(i + 1).zfill(3)}"
+    G.add_edge(origen, destino, weight=euclidiana(C3_002[origen], C3_002[destino]))
+
 C3_005 = {
-    "C3-005-990": [-75.64021732925522, 6.233476216828856],
-    "C3-005-991": [-75.63877563492618, 6.231635976721841],
-    "C3-005-992": [-75.6352983678414, 6.232003517035887],
-    "C3-005-993": [-75.63272267289061, 6.232058461983485],
-    "C3-005-994": [-75.6305089833981, 6.231874465732767],
-    "C3-005-995": [-75.62921632621727, 6.233021370146882],
-    "C3-005-996": [-75.62430867960475, 6.234517152961739],
-    "C3-005-997": [-75.62281124615997, 6.235482940976172],
-    "C3-005-998": [-75.62169452727376, 6.2359461300740895],
-    "C3-005-999": [-75.61900710672228, 6.2358189230296865],
+    "C3-005-0990": [-75.64021732925522, 6.233476216828856],
+    "C3-005-0991": [-75.63877563492618, 6.231635976721841],
+    "C3-005-0992": [-75.6352983678414, 6.232003517035887],
+    "C3-005-0993": [-75.63272267289061, 6.232058461983485],
+    "C3-005-0994": [-75.6305089833981, 6.231874465732767],
+    "C3-005-0995": [-75.62921632621727, 6.233021370146882],
+    "C3-005-0996": [-75.62430867960475, 6.234517152961739],
+    "C3-005-0997": [-75.62281124615997, 6.235482940976172],
+    "C3-005-0998": [-75.62169452727376, 6.2359461300740895],
+    "C3-005-0999": [-75.61900710672228, 6.2358189230296865],
     "C3-005-1000": [-75.61608559125241, 6.23463197528407],
     "C3-005-1001": [-75.61134395086718, 6.235054043441777],
     "C3-005-1002": [-75.6095633304443, 6.234516466063339],
@@ -1343,6 +1629,11 @@ C3_005 = {
     "C3-005-1028": [-75.63970257421823, 6.23124337177046],
 }
 
+for i in range(990, 1028):
+    origen = f"C3-005-{str(i).zfill(4)}"
+    destino = f"C3-005-{str(i + 1).zfill(4)}"
+    G.add_edge(origen, destino, weight=euclidiana(C3_005[origen], C3_005[destino]))
+
 C3_006 = {
     "C3-006-1029": [-75.61163969132633, 6.23299824747651],
     "C3-006-1030": [-75.61245185769212, 6.232814210461069],
@@ -1368,6 +1659,11 @@ C3_006 = {
     "C3-006-1050": [-75.61373770206619, 6.234096219935533],
     "C3-006-1051": [-75.6097939550799, 6.230542679570163],
 }
+
+for i in range(1029, 1051):
+    origen = f"C3-006-{str(i).zfill(4)}"
+    destino = f"C3-006-{str(i + 1).zfill(4)}"
+    G.add_edge(origen, destino, weight=euclidiana(C3_006[origen], C3_006[destino]))
 
 C3_007 = {
     "C3-007-1052": [-75.60857443939472, 6.219624667057787],
@@ -1397,6 +1693,11 @@ C3_007 = {
     "C3-007-1076": [-75.60858305713454, 6.219655111367353],
     "C3-007-1077": [-75.61159043748461, 6.219551057937146],
 }
+
+for i in range(1052, 1077):
+    origen = f"C3-007-{str(i).zfill(4)}"
+    destino = f"C3-007-{str(i + 1).zfill(4)}"
+    G.add_edge(origen, destino, weight=euclidiana(C3_007[origen], C3_007[destino]))
 
 C3_008 = {
     "C3-008-1078": [-75.60421249177496, 6.215171451661364],
@@ -1431,6 +1732,11 @@ C3_008 = {
     "C3-008-1107": [-75.60421249177496, 6.215171451661364],
 }
 
+for i in range(1078, 1107):
+    origen = f"C3-008-{str(i).zfill(4)}"
+    destino = f"C3-008-{str(i + 1).zfill(4)}"
+    G.add_edge(origen, destino, weight=euclidiana(C3_008[origen], C3_008[destino]))
+
 C3_001A = {
     "C3-001A-1108": [-75.58128736095594, 6.19416757069353],
     "C3-001A-1109": [-75.584384338869, 6.196189391269397],
@@ -1462,6 +1768,11 @@ C3_001A = {
     "C3-001A-1135": [-75.58046759727665, 6.192608675595142],
     "C3-001A-1136": [-75.58128736095594, 6.19416757069353],
 }
+
+for i in range(1108, 1136):
+    origen = f"C3-001A-{str(i).zfill(4)}"
+    destino = f"C3-001A-{str(i + 1).zfill(4)}"
+    G.add_edge(origen, destino, weight=euclidiana(C3_001A[origen], C3_001A[destino]))
 
 C3_004B = {
     "C3-004B-1137": [-75.64301253533847, 6.221127018485767],
@@ -1515,6 +1826,11 @@ C3_004B = {
     "C3-004B-1185": [-75.60397112539599, 6.225606356312655],
 }
 
+for i in range(1137, 1185):
+    origen = f"C3-004B-{str(i).zfill(4)}"
+    destino = f"C3-004B-{str(i + 1).zfill(4)}"
+    G.add_edge(origen, destino, weight=euclidiana(C3_004B[origen], C3_004B[destino]))
+
 C3_007A = {
     "C3-007A-1186": [-75.60107672171094, 6.231064188582492],
     "C3-007A-1187": [-75.59884319063575, 6.228726121386831],
@@ -1542,6 +1858,12 @@ C3_007A = {
     "C3-007A-1209": [-75.60184467939652, 6.227441911358645],
     "C3-007A-1210": [-75.60107672171094, 6.231064188582492],
 }
+
+for i in range(1186, 1210):
+    origen = f"C3-007A-{str(i).zfill(4)}"
+    destino = f"C3-007A-{str(i + 1).zfill(4)}"
+    G.add_edge(origen, destino, weight=euclidiana(C3_007A[origen], C3_007A[destino]))
+
 
 C3_003M = {
     "C3-003M-1211": [-75.61377607300787, 6.206628229455284],
@@ -1603,6 +1925,11 @@ C3_003M = {
     "C3-003M-1267": [-75.6004098550017, 6.207158898878315],
     "C3-003M-1268": [-75.60034760252371, 6.207062938415839],
 }
+
+for i in range(1211, 1268):
+    origen = f"C3-003M-{str(i).zfill(4)}"
+    destino = f"C3-003M-{str(i + 1).zfill(4)}"
+    G.add_edge(origen, destino, weight=euclidiana(C3_003M[origen], C3_003M[destino]))
 
 C3_003P = {
     "C3-003P-1269": [-75.59613879328698, 6.2309937224383125],
@@ -1667,6 +1994,11 @@ C3_003P = {
     "C3-003P-1328": [-75.60724472580607, 6.211941555695988],
 }
 
+for i in range(1269, 1328):
+    origen = f"C3-003P-{str(i).zfill(4)}"
+    destino = f"C3-003P-{str(i + 1).zfill(4)}"
+    G.add_edge(origen, destino, weight=euclidiana(C3_003P[origen], C3_003P[destino]))
+
 C3_004P = {
     "C3-004P-1329": [-75.63554155940234, 6.218402860777715],
     "C3-004P-1330": [-75.63566943315364, 6.219918267587694],
@@ -1718,6 +2050,11 @@ C3_004P = {
     "C3-004P-1376": [-75.60397112539599, 6.225606356312655],
 }
 
+for i in range(1329, 1376):
+    origen = f"C3-004P-{str(i).zfill(4)}"
+    destino = f"C3-004P-{str(i + 1).zfill(4)}"
+    G.add_edge(origen, destino, weight=euclidiana(C3_004P[origen], C3_004P[destino]))
+
 C3_003RA = {
     "C3-003RA-1377": [-75.5958151112177, 6.231312002582695],
     "C3-003RA-1378": [-75.59647535265967, 6.228233605447229],
@@ -1765,6 +2102,11 @@ C3_003RA = {
     "C3-003RA-1420": [-75.59831625869812, 6.214980574504792],
     "C3-003RA-1421": [-75.59843503003623, 6.212455880451931],
 }
+
+for i in range(1377, 1421):
+    origen = f"C3-003RA-{str(i).zfill(4)}"
+    destino = f"C3-003RA-{str(i + 1).zfill(4)}"
+    G.add_edge(origen, destino, weight=euclidiana(C3_003RA[origen], C3_003RA[destino]))
 
 C3_003RV = {
     "C3-003RV-1422": [-75.59581515599494, 6.231312289857578],
@@ -1816,6 +2158,11 @@ C3_003RV = {
     "C3-003RV-1468": [-75.59974127580419, 6.210813596826022],
 }
 
+for i in range(1422, 1468):
+    origen = f"C3-003RV-{str(i).zfill(4)}"
+    destino = f"C3-003RV-{str(i + 1).zfill(4)}"
+    G.add_edge(origen, destino, weight=euclidiana(C3_003RV[origen], C3_003RV[destino]))
+
 C3_003RLC = {
     "C3-003RLC-1469": [-75.59613879328698, 6.2309937224383125],
     "C3-003RLC-1470": [-75.59647535265967, 6.228233605447229],
@@ -1861,3 +2208,14 @@ C3_003RLC = {
     "C3-003RLC-1510": [-75.59630617301586, 6.228482079420031],
     "C3-003RLC-1511": [-75.59613879328698, 6.2309937224383125],
 }
+
+for i in range(1469, 1511):
+    origen = f"C3-003RLC-{str(i).zfill(4)}"
+    destino = f"C3-003RLC-{str(i + 1).zfill(4)}"
+    G.add_edge(origen, destino, weight=euclidiana(C3_003RLC[origen], C3_003RLC[destino]))
+
+rute = nx.dijkstra_path(G, source="A01", target="A20", weight="weight")
+distance = nx.dijkstra_path_length(G, source="A01", target="A20", weight="weight")
+
+print("Rute:", rute)
+print("Distance:", round(distance, 2), "meters")
