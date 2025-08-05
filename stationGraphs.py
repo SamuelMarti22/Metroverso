@@ -2280,22 +2280,6 @@ for i in range(0, 3):  # De K00 a K03
 #     destino = f"C3-003RLC-{str(i + 1).zfill(4)}"
 #     G.add_edge(origen, destino, weight=euclidiana(C3_003RLC[origen], C3_003RLC[destino]))
 
-pos = nx.spring_layout(G, seed=42)
-
-# ① Detectar nodos que comienzan con "O"
-nodos_O = [n for n in G.nodes if n.startswith("O")]
-
-# ② Colorear nodos
-node_colors = ["green" if n in nodos_O else "lightblue" for n in G.nodes]
-
-# ③ Colorear aristas: rojo si una punta es un nodo "O"
-edge_colors = []
-for u, v in G.edges():
-    if u in nodos_O or v in nodos_O:
-        edge_colors.append("red")
-    else:
-        edge_colors.append("gray")
-
 for u, v, data in G.edges(data=True):
     if u[0] != v[0]:
         data["weight"] += 1  # Penalización de trasbordo
@@ -2305,45 +2289,6 @@ distancia = nx.dijkstra_path_length(G, source="A01", target="A21", weight="weigh
 
 print("Rute:", rute)
 print("Distance:", round(distancia, 2), "meters")
-
-
-# 🔎 Crear set de aristas en la rutai
-aristas_rute = set()
-for i in range(len(rute) - 1):
-    u, v = rute[i], rute[i + 1]
-    aristas_rute.add((u, v))
-    aristas_rute.add((v, u))  # Para grafos no dirigidos
-
-# 🎨 Recolorear nodos y aristas según si están en la rute
-node_colors_destacados = []
-for n in G.nodes():
-    if n in rute:
-        node_colors_destacados.append("yellow")
-    else:
-        node_colors_destacados.append("lightgray")
-
-edge_colors_destacados = []
-for u, v in G.edges():
-    if (u, v) in aristas_rute or (v, u) in aristas_rute:
-        edge_colors_destacados.append("yellow")
-    else:
-        edge_colors_destacados.append("lightgray")
-
-# ✏️ Dibujar grafo resaltando la rute
-plt.figure(figsize=(12, 10))
-nx.draw(
-    G, pos,
-    with_labels=True,
-    node_color=node_colors_destacados,
-    edge_color=edge_colors_destacados,
-    node_size=600,
-    width=3,
-    font_size=9
-)
-plt.title(f"rute destacada: {' → '.join(rute)}\nDistancia: {round(distancia, 2)} metros")
-plt.axis('off')
-plt.tight_layout()
-plt.show()
 
 # # Dibujar el grafo
 # plt.figure(figsize=(10, 7))
