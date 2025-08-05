@@ -1,5 +1,4 @@
 function closestPoints(userPoint, radius) {
-
     let defineArea = turf.buffer(userPoint, radius, { units: 'meters' });
     let pointsArea = turf.pointsWithinPolygon(featureCollection, defineArea);
 
@@ -14,7 +13,7 @@ function closestPoints(userPoint, radius) {
         });
 
         distancePoints.sort((pointX, pointY) => pointX.distance - pointY.distance);
-
+        
         return distancePoints.slice(0, 3);
     } else {
         return [];

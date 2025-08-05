@@ -401,6 +401,7 @@
             if (inRoute) return; // Skip if in route mode
 
             const top3 = closestPoints(userPoint, 2000);
+            console.log("Closest points:", top3);
 
             const pointsGeoJSON = {
                 "type": "FeatureCollection",
