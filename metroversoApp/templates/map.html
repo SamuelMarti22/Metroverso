@@ -16,7 +16,7 @@
 
 
 <!--CSS/style imports-->
-<link rel="stylesheet" href="{% static 'css/mapStyle.css' %}">
+<link rel="stylesheet" href="{% static 'css/Stylemap.css' %}">
 
 <!--JS/js-->
 <script src="{% static 'js/dataTurf.js' %}" onload="console.log('dataTurf cargado');"></script>
@@ -28,7 +28,14 @@
 <!--Map Container-->
 <div id="map"></div>
 
-<!----->
+<!--Interactive Botton Rute-->
+<div class="divRute">
+<input type="text" id="inputStart" placeholder="Inicio">
+<input type="text" id="inputDestination" placeholder="Destino">
+<button id="btnSearchRute">Buscar líneas</button>
+</div>
+
+
 <script>
 mapboxgl.accessToken = 'pk.eyJ1IjoibGFjYXRyaWxmIiwiYSI6ImNtZG00eGJqZjAxMGYyaXBrcGY3b2tjYzIifQ.gx3C4J17a-6YrUBt6sZTmQ';
 
@@ -46,6 +53,7 @@ const initialLocationView = [-75.5752,6.2491]; // Coordinates of San Antonio
         zoom: 15
     });
 
+// Function to find the closest points
     console.log("Map initialized");
     map.on('load', () => {
         userPoint = turf.point([-75.585684,6.191629]);
@@ -153,6 +161,25 @@ map.on('click', 'points-layer', (e) => {
         `)
         .addTo(map);
 });
+
+// End closest points function
+
+// Rute finding function
+document.getElementById('btnSearchRute').addEventListener('click', function() {
+    const inputStart = document.getElementById('inputStart').value;
+    const inputDestination = document.getElementById('inputDestination').value;
+
+    console.log(`Inicio: ${inputStart}, Destino: ${inputDestination}`);
+
+    // fetch(`/ruta/obtener_lineas?inputStart=${inputStart}&inputDestination=${inputDestination}`)
+    //     .then(res => res.json())
+    //     .then(data => {
+    //         console.log(data);
+    //     });
+});
+
+
+// End rute finding function
 
 </script>
 

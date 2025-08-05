@@ -1,0 +1,12 @@
+body { margin: 0; padding: 0;}
+#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+
+.divRute{
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 10000;
+    background-color: green;
+    padding: 10px;
+    border-radius: 5px;
+}

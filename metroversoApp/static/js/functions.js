@@ -20,3 +20,4 @@ function closestPoints(userPoint, radius) {
         return [];
     }
 }
+
