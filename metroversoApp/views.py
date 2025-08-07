@@ -1,7 +1,9 @@
 from django.shortcuts import render
 from django.http import HttpResponse
+from django.http import JsonResponse
 
 from .assets import stationGraphs
+from .utils import functions
 
 def map(request):
     # Render the map template
@@ -12,7 +14,9 @@ def callRute(request):
     destination = request.GET.get('inputDestination')  # Default to 'A20' if not provided
 
     # Call the rute function from utils
-    rute, distance = stationGraphs.rute(stationGraphs.G, start, destination)
+    rute, distance= functions.calculeRute(start, destination)
 
-    # Return the route and distance as a JSON response
-    return HttpResponse(f"Rute: {rute}, Distance: {distance} meters")
+    return JsonResponse({ 
+    'rute': rute,
+    'distance': distance 
+    })

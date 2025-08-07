@@ -171,13 +171,12 @@ document.getElementById('btnSearchRute').addEventListener('click', function() {
 
     console.log(`Inicio: ${inputStart}, Destino: ${inputDestination}`);
 
-    // fetch(`/ruta/obtener_lineas?inputStart=${inputStart}&inputDestination=${inputDestination}`)
-    //     .then(res => res.json())
-    //     .then(data => {
-    //         console.log(data);
-    //     });
+     fetch(`/view/callRute?inputStart=${inputStart}&inputDestination=${inputDestination}`)
+         .then(res => res.json())
+         .then(data => {
+             console.log(data.rute, data.distance);
+         });
 });
-
 
 // End rute finding function
 
