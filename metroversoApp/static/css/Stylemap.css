@@ -3,10 +3,81 @@ body { margin: 0; padding: 0;}
 
 .divRute{
     position: absolute;
-    top: 10px;
+    width: 270px;
+    top: 60px;
     left: 10px;
-    z-index: 10000;
     background-color: green;
     padding: 10px;
     border-radius: 5px;
+}
+
+.sidebar {
+    width: 50px;
+    height: 100vh;
+    background-color: #f8f9fa;
+    position: fixed;
+    top: 0;
+    left: 0;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    padding: 2px;
+    display: flex;
+    flex-direction: column;
+    z-index: 2;
+}
+
+.subCategory {
+    width: 40px;
+    height: 35px;
+    background-color: #cfcfcf;
+    border-radius: 5px;
+    justify-content: center;
+    margin: 2px;
+}
+
+.icon {
+    width: 45px;
+    height: 45px;
+    border-radius: 5px;
+    justify-content: center;
+    display: flex;
+    margin-top: 20px;
+}
+
+.profileIcon {
+    width: 40px;
+    height: 40px;
+    border-radius: 100px;
+    background-color: #4a3434;
+    justify-content: center;
+    display: flex;
+    margin: 2px;
+}
+    
+.offcanvasContainer {
+    position: fixed;
+    top: 0;
+    left: 90px;
+    padding: 30px;
+    z-index: 1;
+}
+
+.offcanvas.offcanvas-start {
+    width: 280px !important;
+    border: none;
+    margin-left: 34px;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+}
+
+.userLocation {
+    position: fixed;
+    bottom: 20px;
+    right: 10px;
+    width: 40px;
+    height: 40px;
+    border-radius: 100px;
+    background-color: #ffffff;
+    justify-content: center;
+    display: flex;
+    margin: 2px;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
 }
