@@ -40,6 +40,105 @@ const initialLocationView = [-75.5752,6.2491]; // Coordinates of San Antonio
         center: initialLocationView,
         zoom: 15
     });
+
+    // Variable global para almacenar el marcador del usuario
+        let userMarker = null;
+        let watchId = null;
+        let lastUpdateTime = 0;
+        const UPDATE_INTERVAL = 3000; // Intervalo de actualización en milisegundos
+
+        // Función para obtener la ubicación del usuario
+        function getUserLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function (position) {
+                        updateUserLocation(position);
+                        startLocationTracking();
+                    },
+                    handleLocationError,
+                    {
+                        enableHighAccuracy: false,
+                        timeout: 5000,
+                        maximumAge: 10000
+                    }
+                );
+            }
+        }
+
+        // Función para actualizar la ubicación del usuario
+        function updateUserLocation(position) {
+            const userLat = position.coords.latitude;
+            const userLng = position.coords.longitude;
+            const currentTime = Date.now();
+
+            // Limitar actualizaciones muy frecuentes
+            if (currentTime - lastUpdateTime < UPDATE_INTERVAL) {
+                return;
+            }
+
+            lastUpdateTime = currentTime;
+
+            if (!userMarker) {
+                // Crear el marcador personalizado
+                const markerElement = document.createElement('div');
+                markerElement.innerHTML = '📍';
+                markerElement.style.fontSize = '20px';
+                markerElement.style.cursor = 'pointer';
+
+                userMarker = new mapboxgl.Marker({ element: markerElement })
+                    .setLngLat([userLng, userLat])
+                    .setPopup(new mapboxgl.Popup().setText('Tu ubicación'))
+                    .addTo(map);
+            } else {
+                // Si el marcador ya existe, solo actualizar su posición
+                userMarker.setLngLat([userLng, userLat]);
+            }
+        }
+
+        // Función para iniciar seguimiento optimizado
+        function startLocationTracking() {
+            watchId = navigator.geolocation.watchPosition(
+                updateUserLocation,
+                handleLocationError,
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: UPDATE_INTERVAL
+                }
+            );
+        }
+
+        // Función para manejar errores
+        function handleLocationError(error) {
+            console.warn('No se pudo obtener la ubicación:', error.message);
+
+            switch (error.code) {
+                case error.PERMISSION_DENIED:
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    alert('La información de ubicación no está disponible.');
+                    break;
+                case error.TIMEOUT:
+                    alert('El tiempo de espera para obtener la ubicación expiró.');
+                    break;
+                default:
+                    alert('Error al obtener la ubicación.');
+                    break;
+            }
+        }
+
+        // Función para detener el seguimiento
+        function stopLocationTracking() {
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+            }
+        }
+
+        // Pedir la ubicación cuando el mapa esté listo
+        map.on('load', function () {
+            getUserLocation();
+        });
 </script>
 
 </body>
