@@ -1,2 +1,12 @@
 body { margin: 0; padding: 0;}
 #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+button {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 10;
+    background: white;
+    padding: 8px;
+    border-radius: 5px;
+    cursor: pointer;
+}

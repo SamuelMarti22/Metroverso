@@ -22,6 +22,7 @@
 
 <!--Map Container-->
 <div id="map"></div>
+<button id="btnLocation">Mi ubicación</button>
 
 <!----->
 <script>
@@ -45,7 +46,7 @@ const initialLocationView = [-75.5752,6.2491]; // Coordinates of San Antonio
         let userMarker = null;
         let watchId = null;
         let lastUpdateTime = 0;
-        const UPDATE_INTERVAL = 3000; // Intervalo de actualización en milisegundos
+        const UPDATE_INTERVAL = 1000; // Intervalo de actualización en milisegundos
 
         // Función para obtener la ubicación del usuario
         function getUserLocation() {
@@ -57,9 +58,9 @@ const initialLocationView = [-75.5752,6.2491]; // Coordinates of San Antonio
                     },
                     handleLocationError,
                     {
-                        enableHighAccuracy: false,
-                        timeout: 5000,
-                        maximumAge: 10000
+                        enableHighAccuracy: true,
+                        timeout: 10000,           
+                        maximumAge: 0           
                     }
                 );
             }
@@ -69,10 +70,17 @@ const initialLocationView = [-75.5752,6.2491]; // Coordinates of San Antonio
         function updateUserLocation(position) {
             const userLat = position.coords.latitude;
             const userLng = position.coords.longitude;
+            const accuracy = position.coords.accuracy;
             const currentTime = Date.now();
 
             // Limitar actualizaciones muy frecuentes
             if (currentTime - lastUpdateTime < UPDATE_INTERVAL) {
+                return;
+            }
+
+            console.log("Location accuracy:", Math.round(accuracy * 100) / 100, "m");
+            if (accuracy > 100) {
+                console.warn("Precisión de ubicación baja");
                 return;
             }
 
@@ -102,27 +110,28 @@ const initialLocationView = [-75.5752,6.2491]; // Coordinates of San Antonio
                 handleLocationError,
                 {
                     enableHighAccuracy: true,
-                    timeout: 10000,
+                    timeout: 5000,
                     maximumAge: UPDATE_INTERVAL
                 }
             );
         }
 
-        // Función para manejar errores
+        // Función para manejar errores de ubicación
         function handleLocationError(error) {
             console.warn('No se pudo obtener la ubicación:', error.message);
 
             switch (error.code) {
                 case error.PERMISSION_DENIED:
+                    console.warn('Permiso denegado para acceder a la ubicación.');
                     break;
                 case error.POSITION_UNAVAILABLE:
-                    alert('La información de ubicación no está disponible.');
+                    console.warn('La información de ubicación no está disponible.');
                     break;
                 case error.TIMEOUT:
-                    alert('El tiempo de espera para obtener la ubicación expiró.');
+                    console.warn('El tiempo de espera para obtener la ubicación expiró.');
                     break;
                 default:
-                    alert('Error al obtener la ubicación.');
+                    console.warn('Error al obtener la ubicación.');
                     break;
             }
         }
@@ -138,6 +147,18 @@ const initialLocationView = [-75.5752,6.2491]; // Coordinates of San Antonio
         // Pedir la ubicación cuando el mapa esté listo
         map.on('load', function () {
             getUserLocation();
+        });
+
+        document.getElementById('btnLocation').addEventListener('click', function () {
+            if (userMarker) {
+                map.flyTo({
+                    center: userMarker.getLngLat(),
+                    zoom: 15,
+                    essential: true
+                });
+            } else {
+                console.warn('No se ha podido encontrar la ubicación.');
+            }
         });
 </script>
 
