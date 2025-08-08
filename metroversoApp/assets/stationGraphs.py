@@ -1,6 +1,6 @@
 import networkx as nx
 from math import sqrt
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import math
 import json
 
@@ -2280,15 +2280,15 @@ for i in range(0, 3):  # De K00 a K03
 #     destino = f"C3-003RLC-{str(i + 1).zfill(4)}"
 #     G.add_edge(origen, destino, weight=euclidiana(C3_003RLC[origen], C3_003RLC[destino]))
 
-for u, v, data in G.edges(data=True):
-    if u[0] != v[0]:
-        data["weight"] += 1  # Penalización de trasbordo
+# for u, v, data in G.edges(data=True):
+#     if u[0] != v[0]:
+#         data["weight"] += 1  # Penalización de trasbordo
 
-rute = nx.dijkstra_path(G, source="M00", target="J00", weight="weight")
-distancia = nx.dijkstra_path_length(G, source="A01", target="A21", weight="weight")
+# rute = nx.dijkstra_path(G, source="M00", target="J00", weight="weight")
+# distancia = nx.dijkstra_path_length(G, source="A01", target="A21", weight="weight")
 
-print("Rute:", rute)
-print("Distance:", round(distancia, 2), "meters")
+# print("Rute:", rute)
+# print("Distance:", round(distancia, 2), "meters")
 
 # # Dibujar el grafo
 # plt.figure(figsize=(10, 7))

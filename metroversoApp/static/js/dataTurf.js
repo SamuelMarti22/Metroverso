@@ -1,5 +1,3 @@
-import * as turf from '@turf/turf';
-
 // Define points for stations with its IDs
 const pointsStations = [
 
@@ -1808,3 +1806,4 @@ turf.point([-75.55665899, 6.285200132], { ID: "X20" }),
   turf.point([-75.59613879328698, 6.2309937224383125], { ID: "C3-003RLC-1511" }),
 ];
 
+const featureCollection = turf.featureCollection(pointsStations);
