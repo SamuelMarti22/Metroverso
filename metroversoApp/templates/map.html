@@ -108,7 +108,15 @@
     </div>
 
     <!-- User Location Button -->
-    <div class="userLocation" id="btnUserLocation">
+    <div class="userLocation1" id="btnUserLocationOrigin">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-arms-up"
+            viewBox="0 0 16 16">
+            <path d="M8 3a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3" />
+            <path
+                d="m5.93 6.704-.846 8.451a.768.768 0 0 0 1.523.203l.81-4.865a.59.59 0 0 1 1.165 0l.81 4.865a.768.768 0 0 0 1.523-.203l-.845-8.451A1.5 1.5 0 0 1 10.5 5.5L13 2.284a.796.796 0 0 0-1.239-.998L9.634 3.84a.7.7 0 0 1-.33.235c-.23.074-.665.176-1.304.176-.64 0-1.074-.102-1.305-.176a.7.7 0 0 1-.329-.235L4.239 1.286a.796.796 0 0 0-1.24.998l2.5 3.216c.317.316.475.758.43 1.204Z" />
+        </svg>
+    </div>
+    <div class="userLocation" id="btnUserLocationDestiny">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-arms-up"
             viewBox="0 0 16 16">
             <path d="M8 3a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3" />
@@ -263,39 +271,54 @@
 
         // Selecting a destination point
 
-        let selecting = false;
+        let selecting = 0;
         let selectedCoord = null;
-        let marker = null;
+        let markerOrigin = null;
+        let markerDestiny = null;
         let mapContainer = document.getElementById("map")
 
-        document.getElementById("btnUserLocation").addEventListener("click", () => {
-            selecting = true;
+        document.getElementById("btnUserLocationOrigin").addEventListener("click", () => {
+            selecting = 1;
             map.getCanvas().classList.add("crosshair");
-            // map.getCanvas().style.cursor = 'crosshair';
-            console.log("🟢 Modo selección activado: haz clic en el mapa");
+            console.log("🟢 Modo selección activado (Origen): haz clic en el mapa");
+        });
+
+        document.getElementById("btnUserLocationDestiny").addEventListener("click", () => {
+            selecting = 2;
+            map.getCanvas().classList.add("crosshair");
+            console.log("🟢 Modo selección activado (Destino): haz clic en el mapa");
         });
 
         // If a user clicks the map
         map.on("click", (e) => {
-            if (!selecting) return; // If it is not selecting does nothing
+            if (selecting === 0) return; // no estamos seleccionando
 
-            selectedCoord = [e.lngLat.lng, e.lngLat.lat];
+            if (selecting === 1) {
+                // inicio
+                selectedCoordOrigin = [e.lngLat.lng, e.lngLat.lat];
 
-            // If the point exists, we replace it
-            if (marker) {
-                marker.setLngLat(selectedCoord);
+                if (markerOrigin) {
+                    markerOrigin.setLngLat(selectedCoordOrigin);
+                } else {
+                    markerOrigin = new mapboxgl.Marker({ color: "blue" })
+                        .setLngLat(selectedCoordOrigin)
+                        .addTo(map);
+                }
             } else {
-                marker = new mapboxgl.Marker({ color: "red" })
-                    .setLngLat(selectedCoord)
-                    .addTo(map);
+                // destino
+                selectedCoordDestiny = [e.lngLat.lng, e.lngLat.lat];
+
+                if (markerDestiny) {
+                    markerDestiny.setLngLat(selectedCoordDestiny);
+                } else {
+                    markerDestiny = new mapboxgl.Marker({ color: "red" })
+                        .setLngLat(selectedCoordDestiny)
+                        .addTo(map);
+                }
             }
-
-            console.log("📍 Coordenates:", selectedCoord);
-
             // Salimos del modo selección
-            selecting = false;
+            selecting = 0;
             map.getCanvas().classList.remove("crosshair");
-            // map.getCanvas().style= 'mapbox://styles/mapbox/standard';
         });
 
     </script>

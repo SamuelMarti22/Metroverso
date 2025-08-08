@@ -92,6 +92,21 @@ body {
     cursor: pointer;
 }
 
+.userLocation1 {
+    position: fixed;
+    bottom: 70px;
+    right: 10px;
+    width: 40px;
+    height: 40px;
+    border-radius: 100px;
+    background-color: #ffffff;
+    justify-content: center;
+    display: flex;
+    margin: 2px;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+}
+
 .crosshair {
     cursor: crosshair;
 }
