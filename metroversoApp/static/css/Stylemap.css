@@ -2,13 +2,26 @@ body { margin: 0; padding: 0;}
 #map { position: absolute; top: 0; bottom: 0; width: 100%; }
 
 .divRute{
-    position: absolute;
-    width: 270px;
-    top: 60px;
-    left: 10px;
-    background-color: green;
-    padding: 10px;
-    border-radius: 5px;
+    padding: 0;
+}
+
+.divRute input {
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.divRute input:focus {
+    border-color: #20c997 !important; /* Bootstrap teal/light green */
+    box-shadow: 0 0 0 0.2rem rgba(32, 201, 151, 0.25) !important;
+}
+
+.divRute .btn-primary {
+    background-color: #20c997 !important; /* Bootstrap teal/light green */
+    border-color: #20c997 !important;
+}
+
+.divRute .btn-primary:hover {
+    background-color: #1aa179 !important;
+    border-color: #1aa179 !important;
 }
 
 .sidebar {
@@ -27,45 +40,121 @@ body { margin: 0; padding: 0;}
 
 .subCategory {
     width: 40px;
-    height: 35px;
-    background-color: #cfcfcf;
-    border-radius: 5px;
-    justify-content: center;
-    margin: 2px;
+    height: 40px;
+    border-radius: 8px;
+    margin: 3px auto;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.subCategory svg {
+    color: #6c757d !important; /* Bootstrap text-muted gray */
+    transition: color 0.3s ease;
+}
+
+.subCategory:hover {
+    background-color: #e9ecef !important; /* Bootstrap light gray */
+}
+
+.subCategory:hover svg {
+    color: #20c997 !important; /* Bootstrap teal/light green */
+}
+
+.subCategory.active {
+    background-color: #d1ecf1 !important; /* Bootstrap info light */
+}
+
+.subCategory.active svg {
+    color: #20c997 !important; /* Bootstrap teal/light green */
 }
 
 .icon {
-    width: 45px;
-    height: 45px;
-    border-radius: 5px;
-    justify-content: center;
-    display: flex;
-    margin-top: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    margin: 20px auto 15px auto;
 }
 
 .profileIcon {
     width: 40px;
     height: 40px;
-    border-radius: 100px;
-    background-color: #4a3434;
-    justify-content: center;
-    display: flex;
-    margin: 2px;
+    border-radius: 50%;
+    background-color: #495057; /* Bootstrap dark gray */
+    margin: auto auto 15px auto;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.profileIcon:hover {
+    background-color: #20c997; /* Bootstrap teal/light green */
+}
+
+.profileIcon svg {
+    color: white;
 }
     
 .offcanvasContainer {
     position: fixed;
     top: 0;
-    left: 90px;
+    left: 70px;
     padding: 30px;
     z-index: 1;
 }
 
 .offcanvas.offcanvas-start {
-    width: 280px !important;
+    width: 350px !important;
     border: none;
     margin-left: 34px;
     box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+}
+
+.offcanvas-title {
+    font-size: 1rem !important;
+}
+
+.offcanvas-header {
+    padding: 25px 30px 20px 30px !important;
+}
+
+.offcanvas-body {
+    font-size: 0.9rem !important;
+    padding: 25px 30px !important;
+}
+
+.languageContainer {
+    position: fixed;
+    top: 0;
+    left: 70px;
+    padding: 30px;
+    z-index: 1;
+}
+
+.language-item {
+    padding: 15px 25px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.language-item:hover {
+    background-color: #e9ecef;
+}
+
+.language-item.selected {
+    background-color: #d1ecf1;
+    color: #20c997;
+    font-weight: 600;
+}
+
+.language-flag {
+    width: 24px;
+    height: 18px;
+    margin-right: 12px;
+    border-radius: 2px;
 }
 
 .userLocation {
@@ -74,10 +163,26 @@ body { margin: 0; padding: 0;}
     right: 10px;
     width: 40px;
     height: 40px;
-    border-radius: 100px;
+    border-radius: 50%;
     background-color: #ffffff;
-    justify-content: center;
     display: flex;
-    margin: 2px;
-    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.userLocation:hover {
+    background-color: #e9ecef !important; /* Bootstrap light gray */
+    transform: scale(1.05);
+}
+
+.userLocation svg {
+    color: #6c757d !important; /* Bootstrap text-muted gray */
+    transition: color 0.3s ease;
+}
+
+.userLocation:hover svg {
+    color: #20c997 !important; /* Bootstrap teal/light green */
 }
