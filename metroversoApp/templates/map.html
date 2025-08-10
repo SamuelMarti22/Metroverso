@@ -11,11 +11,14 @@
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.13.0/mapbox-gl.css" rel="stylesheet">
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.13.0/mapbox-gl.js"></script>
 
+<!--Turf import-->
+<script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+
+
 <!--CSS/style imports-->
 <link rel="stylesheet" href="{% static 'css/mapStyle.css' %}">
 
 <!--JS/js-->
-
 
 </head>
 <body>
@@ -42,13 +45,13 @@ const initialLocationView = [-75.5752,6.2491]; // Coordinates of San Antonio
         zoom: 15
     });
 
-    // Variable global para almacenar el marcador del usuario
+    // Global variables to store user marker
         let userMarker = null;
         let watchId = null;
         let lastUpdateTime = 0;
-        const UPDATE_INTERVAL = 1000; // Intervalo de actualización en milisegundos
+        const UPDATE_INTERVAL = 1000; // Update interval in milliseconds
 
-        // Función para obtener la ubicación del usuario
+        // Function to get user location
         function getUserLocation() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
@@ -66,28 +69,28 @@ const initialLocationView = [-75.5752,6.2491]; // Coordinates of San Antonio
             }
         }
 
-        // Función para actualizar la ubicación del usuario
+        // Function to update user location
         function updateUserLocation(position) {
             const userLat = position.coords.latitude;
             const userLng = position.coords.longitude;
             const accuracy = position.coords.accuracy;
             const currentTime = Date.now();
 
-            // Limitar actualizaciones muy frecuentes
+            // Limit very frequent updates
             if (currentTime - lastUpdateTime < UPDATE_INTERVAL) {
                 return;
             }
 
             console.log("Location accuracy:", Math.round(accuracy * 100) / 100, "m");
             if (accuracy > 100) {
-                console.warn("Precisión de ubicación baja");
+                console.warn("Low location precision");
                 return;
             }
 
             lastUpdateTime = currentTime;
 
             if (!userMarker) {
-                // Crear el marcador personalizado
+                // Create custom marker
                 const markerElement = document.createElement('div');
                 markerElement.innerHTML = '📍';
                 markerElement.style.fontSize = '20px';
@@ -95,15 +98,18 @@ const initialLocationView = [-75.5752,6.2491]; // Coordinates of San Antonio
 
                 userMarker = new mapboxgl.Marker({ element: markerElement })
                     .setLngLat([userLng, userLat])
-                    .setPopup(new mapboxgl.Popup().setText('Tu ubicación'))
+                    .setPopup(new mapboxgl.Popup({ 
+                        closeButton: false,
+                        offset: [0, -10]
+                    }).setText('Tu ubicación'))
                     .addTo(map);
             } else {
-                // Si el marcador ya existe, solo actualizar su posición
+                // If marker already exists, just update its position
                 userMarker.setLngLat([userLng, userLat]);
             }
         }
 
-        // Función para iniciar seguimiento optimizado
+        // Function to start optimized tracking
         function startLocationTracking() {
             watchId = navigator.geolocation.watchPosition(
                 updateUserLocation,
@@ -116,27 +122,27 @@ const initialLocationView = [-75.5752,6.2491]; // Coordinates of San Antonio
             );
         }
 
-        // Función para manejar errores de ubicación
+        // Function to handle location errors
         function handleLocationError(error) {
-            console.warn('No se pudo obtener la ubicación:', error.message);
+            console.warn('Could not get location:', error.message);
 
             switch (error.code) {
                 case error.PERMISSION_DENIED:
-                    console.warn('Permiso denegado para acceder a la ubicación.');
+                    console.warn('Permission denied to access location.');
                     break;
                 case error.POSITION_UNAVAILABLE:
-                    console.warn('La información de ubicación no está disponible.');
+                    console.warn('Location information is not available.');
                     break;
                 case error.TIMEOUT:
-                    console.warn('El tiempo de espera para obtener la ubicación expiró.');
+                    console.warn('Location request timed out.');
                     break;
                 default:
-                    console.warn('Error al obtener la ubicación.');
+                    console.warn('Error getting location.');
                     break;
             }
         }
 
-        // Función para detener el seguimiento
+        // Function to stop location tracking
         function stopLocationTracking() {
             if (watchId !== null) {
                 navigator.geolocation.clearWatch(watchId);
@@ -144,12 +150,69 @@ const initialLocationView = [-75.5752,6.2491]; // Coordinates of San Antonio
             }
         }
 
-        // Pedir la ubicación cuando el mapa esté listo
-        map.on('load', function () {
+        // Function to get walking route
+        async function walkingRoute(start, end) {
+            const query = await fetch(
+                `https://api.mapbox.com/directions/v5/mapbox/walking/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&geometries=geojson&overview=full&approaches=unrestricted;unrestricted&access_token=${mapboxgl.accessToken}`,
+                { method: 'GET' }
+            );
+            const json = await query.json();
+            const data = json.routes[0];
+            return data;
+        }
+
+        // Function to add route to map
+        function addRouteToMap(route, routeId = 'walking-route') {
+            // Remove existing route if it exists
+            if (map.getSource(routeId)) {
+                map.removeLayer(routeId);
+                map.removeSource(routeId);
+            }
+
+            // Add route source and layer
+            map.addSource(routeId, {
+                type: 'geojson',
+                data: {
+                    type: 'Feature',
+                    properties: {},
+                    geometry: route.geometry
+                }
+            });
+
+            map.addLayer({
+                id: routeId,
+                type: 'line',
+                source: routeId,
+                layout: {
+                    'line-join': 'round',
+                    'line-cap': 'round'
+                },
+                paint: {
+                    'line-color': '#4CAF50',
+                    'line-width': 4,
+                    'line-opacity': 0.8,
+                    'line-dasharray':  [2, 2]
+                }
+            });
+        }
+
+        map.on('load', function() {
             getUserLocation();
+
+            const lastPoint = turf.point([-75.581547, 6.194671]);
+            const destination = turf.point([-75.585684, 6.191629]);
+
+            // Get walking route and draw it
+            walkingRoute(lastPoint.geometry.coordinates, destination.geometry.coordinates)
+            .then(route => {
+                addRouteToMap(route, "lastRoute");
+            })
+            .catch(error => {
+                console.error('Error getting route:', error);
+            });
         });
 
-        document.getElementById('btnLocation').addEventListener('click', function () {
+     document.getElementById('btnLocation').addEventListener('click', function () {
             if (userMarker) {
                 map.flyTo({
                     center: userMarker.getLngLat(),
