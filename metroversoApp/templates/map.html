@@ -202,15 +202,6 @@
             zoom: 15
         });
 
-        // Function to find the closest points
-        console.log("Map initialized");
-        userPoint = turf.point([-75.585684, 6.191629]);
-        const top3 = closestPoints(userPoint, 2000);
-        console.log("Nodes:" + top3);
-
-        new mapboxgl.Marker({ color: "blue" })
-            .setLngLat(userPoint.geometry.coordinates)
-            .addTo(map);
         let inRoute = false; // Flag to check if in route mode
         let userLocation = null;
         let lastUserLocation = null; // Store last location for comparison
@@ -439,75 +430,81 @@
                             ]
                         },
                         "properties": {
-                            "distance": `${distance.toFixed(0)} m`  // redondeamos a metros
+                            "distance": `${distance.toFixed(0)} m`  // round to meters
                         }
                     };
                 })
             };
-            return {
-                "type": "Feature",
-                "geometry": {
-                    "type": "LineString",
-                    "coordinates": [
-                        userPoint.geometry.coordinates,
-                        p.geometry.coordinates
-                    ]
+
+
+            map.addSource('points', { "type": "geojson", "data": pointsGeoJSON });
+            map.addSource('lines', { "type": "geojson", "data": linesGeoJSON });
+
+
+            map.addLayer({
+                "id": "lines-layer",
+                "type": "line",
+                "source": "lines",
+                "layout": {
+                    "line-join": "round",
+                    "line-cap": "round"
                 },
-                "properties": {
-                    "distance": `${distance.toFixed(0)} m`  // round to meters
+                "paint": {
+                    "line-color": "#FF0000",
+                    "line-width": 2
                 }
-            };
-        };
+            });
 
 
-        map.addSource('points', { "type": "geojson", "data": pointsGeoJSON });
-        map.addSource('lines', { "type": "geojson", "data": linesGeoJSON });
+            map.addLayer({
+                "id": "points-layer",
+                "type": "circle",
+                "source": "points",
+                "paint": {
+                    "circle-color": "#FF0000",
+                    "circle-radius": 6,
+                    "circle-stroke-width": 2,
+                    "circle-stroke-color": "#FFFFFF"
+                }
+            });
 
 
-        map.addLayer({
-            "id": "lines-layer",
-            "type": "line",
-            "source": "lines",
-            "layout": {
-                "line-join": "round",
-                "line-cap": "round"
-            },
-            "paint": {
-                "line-color": "#FF0000",
-                "line-width": 2
-            }
+            map.addLayer({
+                "id": "distance-labels",
+                "type": "symbol",
+                "source": "lines",
+                "layout": {
+                    "symbol-placement": "line",
+                    "text-field": ["get", "distance"],
+                    "text-size": 14,
+                    "text-offset": [0, 0.5]
+                },
+                "paint": {
+                    "text-color": "#000000",
+                    "text-halo-color": "#FFFFFF",
+                    "text-halo-width": 1
+                }
+            });
+        }
+
+        console.log("Map initialized");
+        map.on('load', () => {
+
+            getUserLocation();
+
+            const lastPoint = turf.point([-75.581547, 6.194671]);
+            const destination = turf.point([-75.585684, 6.191629]);
+
+            // Get walking route and draw it
+            walkingRoute(lastPoint.geometry.coordinates, destination.geometry.coordinates)
+                .then(route => {
+                    addRouteToMap(route, "lastRoute");
+                })
+                .catch(error => {
+                    console.error('Error getting route:', error);
+                });
         });
 
-
-        map.addLayer({
-            "id": "points-layer",
-            "type": "circle",
-            "source": "points",
-            "paint": {
-                "circle-color": "#FF0000",
-                "circle-radius": 6,
-                "circle-stroke-width": 2,
-                "circle-stroke-color": "#FFFFFF"
-            }
-        });
-
-
-        map.addLayer({
-            "id": "distance-labels",
-            "type": "symbol",
-            "source": "lines",
-            "layout": {
-                "symbol-placement": "line",
-                "text-field": ["get", "distance"],
-                "text-size": 14,
-                "text-offset": [0, 0.5]
-            },
-            "paint": {
-                "text-color": "#000000",
-                "text-halo-color": "#FFFFFF",
-                "text-halo-width": 1
-            }
-        });
 
         map.on('click', 'points-layer', (e) => {
             const feature = e.features[0];
@@ -555,6 +552,7 @@
         });
 
         // End rute finding function
+
         function displayTransferInfo(transferInfo, route) {
             let infoContainer = document.getElementById('routeInfo');
             if (!infoContainer) {
@@ -641,7 +639,7 @@
         // If a user clicks the map
         map.on("click", (e) => {
             if (selecting === 0) return; // no estamos seleccionando
-
+            console.log("Holi")
             if (selecting === 1) {
                 // inicio
                 selectedCoordOrigin = [e.lngLat.lng, e.lngLat.lat];
