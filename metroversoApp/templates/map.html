@@ -27,7 +27,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-
 </head>
 
 <body>
@@ -37,9 +36,9 @@
 
 
     <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" fill="#008f37"
+    <div class="sidebar d-flex flex-column">
+        <div class="icon d-flex justify-content-center align-items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" fill="#20c997"
                 class="bi bi-sign-railroad-fill" viewBox="0 0 16 16">
                 <path
                     d="M9.05.435c-.58-.58-1.52-.58-2.1 0L4.224 3.162 8 6.94l3.777-3.777L9.049.435Zm3.274 7.425v-.862h.467c.28 0 .467.154.467.44 0 .28-.182.421-.475.421h-.459Z" />
@@ -50,61 +49,122 @@
             </svg>
         </div>
 
-        <div class="subCategory" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasScrolling"
-            aria-controls="offcanvasScrolling">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+        <div class="subCategory d-flex justify-content-center align-items-center active" type="button"
+            data-bs-toggle="offcanvas" data-bs-target="#offcanvasScrolling" aria-controls="offcanvasScrolling">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor"
                 class="bi bi-compass-fill" viewBox="0 0 16 16">
                 <path
                     d="M15.5 8.516a7.5 7.5 0 1 1-9.462-7.24A1 1 0 0 1 7 0h2a1 1 0 0 1 .962 1.276 7.5 7.5 0 0 1 5.538 7.24m-3.61-3.905L6.94 7.439 4.11 12.39l4.95-2.828 2.828-4.95z" />
             </svg>
         </div>
 
-        <div class="subCategory">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+        <div class="subCategory d-flex justify-content-center align-items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor"
                 class="bi bi-signpost-2-fill" viewBox="0 0 16 16">
                 <path
                     d="M7.293.707A1 1 0 0 0 7 1.414V2H2a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h5v1H2.5a1 1 0 0 0-.8.4L.725 8.7a.5.5 0 0 0 0 .6l.975 1.3a1 1 0 0 0 .8.4H7v5h2v-5h5a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1H9V6h4.5a1 1 0 0 0 .8-.4l.975-1.3a.5.5 0 0 0 0-.6L14.3 2.4a1 1 0 0 0-.8-.4H9v-.586A1 1 0 0 0 7.293.707" />
             </svg>
         </div>
 
-        <div class="subCategory">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-radar"
+        <div class="subCategory d-flex justify-content-center align-items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-radar"
                 viewBox="0 0 16 16">
                 <path
                     d="M6.634 1.135A7 7 0 0 1 15 8a.5.5 0 0 1-1 0 6 6 0 1 0-6.5 5.98v-1.005A5 5 0 1 1 13 8a.5.5 0 0 1-1 0 4 4 0 1 0-4.5 3.969v-1.011A2.999 2.999 0 1 1 11 8a.5.5 0 0 1-1 0 2 2 0 1 0-2.5 1.936v-1.07a1 1 0 1 1 1 0V15.5a.5.5 0 0 1-1 0v-.518a7 7 0 0 1-.866-13.847" />
             </svg>
         </div>
 
-        <div class="subCategory" style="margin-top: 460px;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-alipay"
+        <div class="subCategory d-flex justify-content-center align-items-center" type="button"
+            data-bs-toggle="offcanvas" data-bs-target="#languageOffcanvas" aria-controls="languageOffcanvas">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-translate"
                 viewBox="0 0 16 16">
                 <path
-                    d="M2.541 0H13.5a2.55 2.55 0 0 1 2.54 2.563v8.297c-.006 0-.531-.046-2.978-.813-.412-.14-.916-.327-1.479-.536q-.456-.17-.957-.353a13 13 0 0 0 1.325-3.373H8.822V4.649h3.831v-.634h-3.83V2.121H7.26c-.274 0-.274.273-.274.273v1.621H3.11v.634h3.875v1.136h-3.2v.634H9.99c-.227.789-.532 1.53-.894 2.202-2.013-.67-4.161-1.212-5.51-.878-.864.214-1.42.597-1.746.998-1.499 1.84-.424 4.633 2.741 4.633 1.872 0 3.675-1.053 5.072-2.787 2.08 1.008 6.37 2.738 6.387 2.745v.105A2.55 2.55 0 0 1 13.5 16H2.541A2.55 2.55 0 0 1 0 13.437V2.563A2.55 2.55 0 0 1 2.541 0" />
+                    d="M4.545 6.714 4.11 8H3l1.862-5h1.284L8 8H6.833l-.435-1.286zm1.634-.736L5.5 3.956h-.049l-.679 2.022z" />
                 <path
-                    d="M2.309 9.27c-1.22 1.073-.49 3.034 1.978 3.034 1.434 0 2.868-.925 3.994-2.406-1.602-.789-2.959-1.353-4.425-1.207-.397.04-1.14.217-1.547.58Z" />
+                    d="M0 2a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v3h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-3H2a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zm7.138 9.995q.289.451.63.846c-.748.575-1.673 1.001-2.768 1.292.178.217.451.635.555.867 1.125-.359 2.08-.844 2.886-1.494.777.665 1.739 1.165 2.93 1.472.133-.254.414-.673.629-.89-1.125-.253-2.057-.694-2.82-1.284.681-.747 1.222-1.651 1.621-2.757H14V8h-3v1.047h.765c-.318.844-.74 1.546-1.272 2.13a6 6 0 0 1-.415-.492 2 2 0 0 1-.94.31" />
             </svg>
         </div>
 
-        <div class="profileIcon"></div>
+        <div class="profileIcon d-flex justify-content-center align-items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="white" class="bi bi-person-fill"
+                viewBox="0 0 16 16">
+                <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6" />
+            </svg>
+        </div>
     </div>
 
     <!-- Offcanvas Panel -->
     <div class="offcanvasContainer">
         <div class="offcanvas offcanvas-start" data-bs-scroll="true" data-bs-backdrop="false" tabindex="-1"
             id="offcanvasScrolling" aria-labelledby="offcanvasScrollingLabel">
-            <div class="offcanvas-header">
-                <h5 class="offcanvas-title" id="offcanvasScrollingLabel">Offcanvas with body scrolling</h5>
+            <div class="offcanvas-header border-bottom">
+                <h5 class="offcanvas-title text-success fw-bold" id="offcanvasScrollingLabel">
+                    Planificador de Rutas Metro
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
             </div>
             <div class="offcanvas-body">
-                <!--Interactive Botton Rute-->
                 <div class="divRute">
-                    <input type="text" id="inputStart" placeholder="Inicio">
-                    <input type="text" id="inputDestination" placeholder="Destino">
-                    <button id="btnSearchRute">Buscar líneas</button>
+                    <div class="mb-3">
+                        <label for="inputStart" class="form-label text-muted small">Estación de Inicio</label>
+                        <input type="text" class="form-control" id="inputStart" placeholder="Inicio">
+                    </div>
+                    <div class="mb-3">
+                        <label for="inputDestination" class="form-label text-muted small">Estación de Destino</label>
+                        <input type="text" class="form-control" id="inputDestination" placeholder="Destino">
+                    </div>
+                    <button class="btn btn-primary w-100 fw-semibold" id="btnSearchRute">
+                        <i class="bi bi-search me-2"></i>Buscar Ruta
+                    </button>
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Language Offcanvas Panel -->
+    <div class="languageContainer">
+        <div class="offcanvas offcanvas-start" data-bs-scroll="true" data-bs-backdrop="false" tabindex="-1"
+            id="languageOffcanvas" aria-labelledby="languageOffcanvasLabel">
+            <div class="offcanvas-header border-bottom">
+                <h5 class="offcanvas-title text-success fw-bold" id="languageOffcanvasLabel">
+                    Seleccionar Idioma
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <div class="offcanvas-body">
+                <div class="language-list">
+                    <div class="language-item selected" data-lang="es">
+                        <div class="language-flag"
+                            style="background: linear-gradient(to bottom, #AA151B 0%, #AA151B 33.33%, #F1BF00 33.33%, #F1BF00 66.66%, #AA151B 66.66%, #AA151B 100%);">
+                        </div>
+                        <span>Español</span>
+                        <i class="bi bi-check-circle-fill ms-auto text-success"></i>
+                    </div>
+                    <div class="language-item" data-lang="en">
+                        <div class="language-flag"
+                            style="background: linear-gradient(135deg, #012169 25%, transparent 25%) -10px 0, linear-gradient(225deg, #012169 25%, transparent 25%) -10px 0, linear-gradient(315deg, #012169 25%, transparent 25%), linear-gradient(45deg, #012169 25%, transparent 25%); background-size: 20px 20px; background-color: #FFFFFF; position: relative;">
+                            <div
+                                style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: repeating-linear-gradient(0deg, #FFFFFF 0px, #FFFFFF 2px, #CE1124 2px, #CE1124 4px), repeating-linear-gradient(90deg, #FFFFFF 0px, #FFFFFF 2px, #CE1124 2px, #CE1124 4px);">
+                            </div>
+                            <div
+                                style="position: absolute; top: 0; left: 0; width: 50%; height: 50%; background: #012169;">
+                            </div>
+                        </div>
+                        <span>English</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Location Button -->
+    <div class="userLocation">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-arms-up"
+            viewBox="0 0 16 16">
+            <path d="M8 3a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3" />
+            <path
+                d="m5.93 6.704-.846 8.451a.768.768 0 0 0 1.523.203l.81-4.865a.59.59 0 0 1 1.165 0l.81 4.865a.768.768 0 0 0 1.523-.203l-.845-8.451A1.5 1.5 0 0 1 10.5 5.5L13 2.284a.796.796 0 0 0-1.239-.998L9.634 3.84a.7.7 0 0 1-.33.235c-.23.074-.665.176-1.304.176-.64 0-1.074-.102-1.305-.176a.7.7 0 0 1-.329-.235L4.239 1.286a.796.796 0 0 0-1.24.998l2.5 3.216c.317.316.475.758.43 1.204Z" />
+        </svg>
     </div>
 
     <!-- User Location Button -->
@@ -116,7 +176,7 @@
                 d="m5.93 6.704-.846 8.451a.768.768 0 0 0 1.523.203l.81-4.865a.59.59 0 0 1 1.165 0l.81 4.865a.768.768 0 0 0 1.523-.203l-.845-8.451A1.5 1.5 0 0 1 10.5 5.5L13 2.284a.796.796 0 0 0-1.239-.998L9.634 3.84a.7.7 0 0 1-.33.235c-.23.074-.665.176-1.304.176-.64 0-1.074-.102-1.305-.176a.7.7 0 0 1-.329-.235L4.239 1.286a.796.796 0 0 0-1.24.998l2.5 3.216c.317.316.475.758.43 1.204Z" />
         </svg>
     </div>
-    <div class="userLocation" id="btnUserLocationDestiny">
+    <div class="userLocation2" id="btnUserLocationDestiny">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-arms-up"
             viewBox="0 0 16 16">
             <path d="M8 3a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3" />
@@ -144,14 +204,212 @@
 
         // Function to find the closest points
         console.log("Map initialized");
-        map.on('load', () => {
-            userPoint = turf.point([-75.585684, 6.191629]);
-            const top3 = closestPoints(userPoint, 2000);
-            console.log("Nodes:" + top3);
+        userPoint = turf.point([-75.585684, 6.191629]);
+        const top3 = closestPoints(userPoint, 2000);
+        console.log("Nodes:" + top3);
 
-            new mapboxgl.Marker({ color: "blue" })
-                .setLngLat(userPoint.geometry.coordinates)
-                .addTo(map);
+        new mapboxgl.Marker({ color: "blue" })
+            .setLngLat(userPoint.geometry.coordinates)
+            .addTo(map);
+        let inRoute = false; // Flag to check if in route mode
+        let userLocation = null;
+        let lastUserLocation = null; // Store last location for comparison
+        let userMarker = null;
+        let blueLocationMarker = null; // Store blue marker reference
+        let watchId = null;
+        let lastUpdateTime = 0;
+        const UPDATE_INTERVAL = 1000; // Update interval in milliseconds
+        const STATION_UPDATE_THRESHOLD = 10; // Update stations when user moves more than 50 meters
+
+        // Function to get user location
+        function getUserLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function (position) {
+                        updateUserLocation(position);
+                        startLocationTracking();
+                    },
+                    handleLocationError,
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 0
+                    }
+                );
+            }
+        }
+
+        // Function to update user location
+        function updateUserLocation(position) {
+            const userLat = position.coords.latitude;
+            const userLng = position.coords.longitude;
+            const accuracy = position.coords.accuracy;
+            const currentTime = Date.now();
+
+            // Limit very frequent updates
+            if (currentTime - lastUpdateTime < UPDATE_INTERVAL) {
+                return;
+            }
+
+            console.log("Location accuracy:", Math.round(accuracy * 100) / 100, "m");
+            //if (accuracy > 100) {
+            //    console.warn("Low location precision");
+            //    return;
+            //}
+
+            const newUserLocation = [userLng, userLat];
+
+            // Check if user has moved significantly before updating closest stations
+            let shouldUpdateStations = false;
+            if (!lastUserLocation) {
+                shouldUpdateStations = true; // First time getting location
+            } else {
+                const distance = turf.distance(
+                    turf.point(lastUserLocation),
+                    turf.point(newUserLocation),
+                    { units: 'meters' }
+                );
+                if (distance > STATION_UPDATE_THRESHOLD) {
+                    shouldUpdateStations = true;
+                }
+            }
+
+            userLocation = newUserLocation;
+            lastUpdateTime = currentTime;
+
+            // Update closest stations only if user has moved significantly
+            if (shouldUpdateStations) {
+                closestStations(turf.point(userLocation), 2000);
+                lastUserLocation = [...userLocation]; // Store copy of current location
+            }
+
+            if (!userMarker) {
+                // Create custom marker
+                const markerElement = document.createElement('div');
+                markerElement.innerHTML = '📍';
+                markerElement.style.fontSize = '20px';
+                markerElement.style.cursor = 'pointer';
+
+                userMarker = new mapboxgl.Marker({ element: markerElement })
+                    .setLngLat([userLng, userLat])
+                    .setPopup(new mapboxgl.Popup({
+                        closeButton: false,
+                        offset: [0, -10]
+                    }).setText('Tu ubicación'))
+                    .addTo(map);
+            } else {
+                // If marker already exists, just update its position
+                userMarker.setLngLat([userLng, userLat]);
+            }
+        }
+
+        // Function to start optimized tracking
+        function startLocationTracking() {
+            watchId = navigator.geolocation.watchPosition(
+                updateUserLocation,
+                handleLocationError,
+                {
+                    enableHighAccuracy: true,
+                    timeout: 5000,
+                    maximumAge: UPDATE_INTERVAL
+                }
+            );
+        }
+
+        // Function to handle location errors
+        function handleLocationError(error) {
+            console.warn('Could not get location:', error.message);
+
+            switch (error.code) {
+                case error.PERMISSION_DENIED:
+                    console.warn('Permission denied to access location.');
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    console.warn('Location information is not available.');
+                    break;
+                case error.TIMEOUT:
+                    console.warn('Location request timed out.');
+                    break;
+                default:
+                    console.warn('Error getting location.');
+                    break;
+            }
+        }
+
+        // Function to stop location tracking
+        function stopLocationTracking() {
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+            }
+        }
+
+        // Function to force update closest stations
+        function forceUpdateClosestStations() {
+            if (userLocation) {
+                closestStations(turf.point(userLocation), 2000);
+                lastUserLocation = [...userLocation];
+            }
+        }
+
+        // Function to get walking route
+        async function walkingRoute(start, end) {
+            const query = await fetch(
+                `https://api.mapbox.com/directions/v5/mapbox/walking/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&geometries=geojson&overview=full&approaches=unrestricted;unrestricted&access_token=${mapboxgl.accessToken}`,
+                { method: 'GET' }
+            );
+            const json = await query.json();
+            const data = json.routes[0];
+            return data;
+        }
+
+        // Function to add route to map
+        function addRouteToMap(route, routeId = 'walking-route') {
+            // Remove existing route if it exists
+            if (map.getSource(routeId)) {
+                map.removeLayer(routeId);
+                map.removeSource(routeId);
+            }
+
+            // Add route source and layer
+            map.addSource(routeId, {
+                type: 'geojson',
+                data: {
+                    type: 'Feature',
+                    properties: {},
+                    geometry: route.geometry
+                }
+            });
+
+            map.addLayer({
+                id: routeId,
+                type: 'line',
+                source: routeId,
+                layout: {
+                    'line-join': 'round',
+                    'line-cap': 'round'
+                },
+                paint: {
+                    'line-color': '#4CAF50',
+                    'line-width': 4,
+                    'line-opacity': 0.8,
+                    'line-dasharray': [2, 2]
+                }
+            });
+        }
+
+        // Function to find the closest stations to the user location
+        function closestStations(userPoint, maxDistance) {
+            // Remove existing layers and sources if they exist
+            if (map.getLayer('distance-labels')) map.removeLayer('distance-labels');
+            if (map.getLayer('points-layer')) map.removeLayer('points-layer');
+            if (map.getLayer('lines-layer')) map.removeLayer('lines-layer');
+            if (map.getSource('points')) map.removeSource('points');
+            if (map.getSource('lines')) map.removeSource('lines');
+
+            if (inRoute) return; // Skip if in route mode
+
+            const top3 = closestPoints(userPoint, 2000);
 
             const pointsGeoJSON = {
                 "type": "FeatureCollection",
@@ -186,61 +444,73 @@
                     };
                 })
             };
-
-
-            map.addSource('points', { "type": "geojson", "data": pointsGeoJSON });
-            map.addSource('lines', { "type": "geojson", "data": linesGeoJSON });
-
-
-            map.addLayer({
-                "id": "lines-layer",
-                "type": "line",
-                "source": "lines",
-                "layout": {
-                    "line-join": "round",
-                    "line-cap": "round"
+            return {
+                "type": "Feature",
+                "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                        userPoint.geometry.coordinates,
+                        p.geometry.coordinates
+                    ]
                 },
-                "paint": {
-                    "line-color": "#FF0000",
-                    "line-width": 2
+                "properties": {
+                    "distance": `${distance.toFixed(0)} m`  // round to meters
                 }
-            });
+            };
+        };
 
 
-            map.addLayer({
-                "id": "points-layer",
-                "type": "circle",
-                "source": "points",
-                "paint": {
-                    "circle-color": "#FF0000",
-                    "circle-radius": 6,
-                    "circle-stroke-width": 2,
-                    "circle-stroke-color": "#FFFFFF"
-                }
-            });
+        map.addSource('points', { "type": "geojson", "data": pointsGeoJSON });
+        map.addSource('lines', { "type": "geojson", "data": linesGeoJSON });
 
 
-            map.addLayer({
-                "id": "distance-labels",
-                "type": "symbol",
-                "source": "lines",
-                "layout": {
-                    "symbol-placement": "line",
-                    "text-field": ["get", "distance"],
-                    "text-size": 14,
-                    "text-offset": [0, 0.5]
-                },
-                "paint": {
-                    "text-color": "#000000",
-                    "text-halo-color": "#FFFFFF",
-                    "text-halo-width": 1
-                }
-            });
+        map.addLayer({
+            "id": "lines-layer",
+            "type": "line",
+            "source": "lines",
+            "layout": {
+                "line-join": "round",
+                "line-cap": "round"
+            },
+            "paint": {
+                "line-color": "#FF0000",
+                "line-width": 2
+            }
+        });
+
+
+        map.addLayer({
+            "id": "points-layer",
+            "type": "circle",
+            "source": "points",
+            "paint": {
+                "circle-color": "#FF0000",
+                "circle-radius": 6,
+                "circle-stroke-width": 2,
+                "circle-stroke-color": "#FFFFFF"
+            }
+        });
+
+
+        map.addLayer({
+            "id": "distance-labels",
+            "type": "symbol",
+            "source": "lines",
+            "layout": {
+                "symbol-placement": "line",
+                "text-field": ["get", "distance"],
+                "text-size": 14,
+                "text-offset": [0, 0.5]
+            },
+            "paint": {
+                "text-color": "#000000",
+                "text-halo-color": "#FFFFFF",
+                "text-halo-width": 1
+            }
         });
 
         map.on('click', 'points-layer', (e) => {
             const feature = e.features[0];
-
 
             new mapboxgl.Popup()
                 .setLngLat(feature.geometry.coordinates)
@@ -249,6 +519,19 @@
             <b>Distance:</b> ${feature.properties.distance || 'N/A'}
         `)
                 .addTo(map);
+        });
+
+        // Function to go to user location
+        document.querySelector('.userLocation').addEventListener('click', function () {
+            if (userMarker) {
+                map.flyTo({
+                    center: userMarker.getLngLat(),
+                    zoom: 15,
+                    essential: true
+                });
+            } else {
+                console.warn('No se ha podido encontrar la ubicación.');
+            }
         });
 
         // End closest points function
@@ -263,11 +546,77 @@
             fetch(`/view/callRute?inputStart=${inputStart}&inputDestination=${inputDestination}`)
                 .then(res => res.json())
                 .then(data => {
-                    console.log(data.rute, data.distance);
+                    console.log('Ruta:', data.rute);
+                    console.log('Distancia:', data.distance);
+                    console.log('Información de transferencias:', data.transfer_info);
+
+                    displayTransferInfo(data.transfer_info, data.rute);
                 });
         });
 
         // End rute finding function
+        function displayTransferInfo(transferInfo, route) {
+            let infoContainer = document.getElementById('routeInfo');
+            if (!infoContainer) {
+                infoContainer = document.createElement('div');
+                infoContainer.id = 'routeInfo';
+                infoContainer.style.marginTop = '10px';
+                infoContainer.style.padding = '10px';
+                infoContainer.style.backgroundColor = '#f8f9fa';
+                infoContainer.style.borderRadius = '5px';
+                document.querySelector('.divRute').appendChild(infoContainer);
+            }
+
+            let html = `<h6>Información de Ruta</h6>`;
+            html += `<p><strong>Ruta completa:</strong> ${route.join(' → ')}</p>`;
+
+            if (transferInfo.requires_transfer) {
+                html += `<p><strong>Se requieren ${transferInfo.transfer_count} transferencia(s)</strong></p>`;
+                html += `<p><strong>Estaciones de transferencia:</strong></p>`;
+                html += `<ul>`;
+                transferInfo.transfer_stations.forEach(station => {
+                    html += `<li>Transferencia en: <strong>${station}</strong></li>`;
+                });
+                html += `</ul>`;
+            } else {
+                html += `<p><strong>No se requieren transferencias</strong></p>`;
+                html += `<p>Viaje directo en la línea ${transferInfo.line_segments[0]?.line}</p>`;
+            }
+
+            infoContainer.innerHTML = html;
+        }
+
+        // Handle sidebar active states
+        document.querySelectorAll('.subCategory').forEach(item => {
+            item.addEventListener('click', function () {
+                // Remove active class from all items
+                document.querySelectorAll('.subCategory').forEach(el => el.classList.remove('active'));
+                // Add active class to clicked item
+                this.classList.add('active');
+            });
+        });
+
+        // Language selection functionality
+        document.querySelectorAll('.language-item').forEach(item => {
+            item.addEventListener('click', function () {
+                // Remove selected class from all items
+                document.querySelectorAll('.language-item').forEach(i => {
+                    i.classList.remove('selected');
+                    const icon = i.querySelector('.bi-check-circle-fill');
+                    if (icon) icon.remove();
+                });
+
+                // Add selected class to clicked item
+                this.classList.add('selected');
+
+                // Add check icon
+                if (!this.querySelector('.bi-check-circle-fill')) {
+                    const checkIcon = document.createElement('i');
+                    checkIcon.className = 'bi bi-check-circle-fill ms-auto text-success';
+                    this.appendChild(checkIcon);
+                }
+            });
+        });
 
         // Selecting a destination point
 
@@ -320,7 +669,6 @@
             selecting = 0;
             map.getCanvas().classList.remove("crosshair");
         });
-
     </script>
 
 </body>
