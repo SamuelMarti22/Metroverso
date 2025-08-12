@@ -34,6 +34,11 @@
     <!--Map Container-->
     <div id="map"></div>
 
+    <!-- Validation alert -->
+    <div id="alerta-validacion" class="alert alert-warning alert-dismissible fade show position-absolute top-0 start-50 translate-middle-x mt-3" role="alert" style="display: none; z-index: 9999; max-width: 600px;">
+        <span id="mensaje-alerta">Mensaje de alerta aquí</span>
+    </div>
+
 
     <!-- Sidebar -->
     <div class="sidebar d-flex flex-column">
@@ -539,6 +544,20 @@
             const inputStart = document.getElementById('inputStart').value;
             const inputDestination = document.getElementById('inputDestination').value;
 
+            const alertBox = document.getElementById("alerta-validacion");
+            const alertMessage = document.getElementById("mensaje-alerta");
+
+            const validationResult = validateInputsAndStations(inputStart, inputDestination, pointsStations, validateLocation);
+            if (!validationResult.valid) {
+                showAutoClosingAlert(alertBox, alertMessage, validationResult.message);
+                return;
+            }
+
+            const { startPoint, endPoint } = validationResult;
+
+            // Hide alert if all is valid
+            alertBox.style.display = "none";
+
             console.log(`Inicio: ${inputStart}, Destino: ${inputDestination}`);
 
             fetch(`/view/callRute?inputStart=${inputStart}&inputDestination=${inputDestination}`)
@@ -550,6 +569,12 @@
 
                     displayTransferInfo(data.transfer_info, data.rute);
                 });
+
+            // Adjust map view to include both points
+            const bounds = new mapboxgl.LngLatBounds();
+            bounds.extend(startPoint.geometry.coordinates);
+            bounds.extend(endPoint.geometry.coordinates);
+            map.fitBounds(bounds, { padding: 40 });
         });
 
         // End rute finding function
