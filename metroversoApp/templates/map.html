@@ -592,7 +592,9 @@
             }
 
             let html = `<h6>Información de Ruta</h6>`;
-            html += `<p><strong>Ruta completa:</strong> ${route.join(' → ')}</p>`;
+            html += '<p class="route-chain"><strong>Ruta completa:</strong> '
+                + window.renderRouteChain(route, transferInfo)
+                + '</p>';
 
             if (transferInfo.requires_transfer) {
                 html += `<p><strong>Se requieren ${transferInfo.transfer_count} transferencia(s)</strong></p>`;
@@ -607,6 +609,31 @@
                 html += `<p>Viaje directo en la línea ${transferInfo.line_segments[0]?.line}</p>`;
             }
 
+            // How to make transfers
+            if (transferInfo.requires_transfer) {
+            const segs = transferInfo.line_segments;
+            const transferHints = [];
+
+            for (let i = 1; i < segs.length; i++) {
+                const prev = segs[i - 1];
+                const curr = segs[i];
+                const transferStation = prev.stations[prev.stations.length - 1];
+                const newLine = curr.line;
+                const nextStation = curr.stations.length > 1 ? curr.stations[1] : transferStation;
+
+                transferHints.push(
+                `En <strong>${transferStation}</strong> cambia a la línea <strong>${newLine}</strong> y dirígete a <strong>${nextStation}</strong>.`
+                );
+            }
+
+            html += `
+                <hr class="my-2">
+                <h6 class="mb-2 text-success fw-bold">seguimiento de transbordos</h6>
+                <div class="small">
+                ${transferHints.map(h => `<div>• ${h}</div>`).join("")}
+                </div>
+            `;
+            }
             infoContainer.innerHTML = html;
         }
 

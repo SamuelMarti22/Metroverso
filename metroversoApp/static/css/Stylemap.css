@@ -278,3 +278,23 @@ body {
 .crosshair {
     cursor: crosshair;
 }
+
+/* Base color for all metro estaciones */
+.route-chain .station { 
+    font-weight: 600; 
+    color: #20c997; 
+}
+
+/* Color for transfer stations */
+.route-chain .station.transfer {
+    color: #ea0f0f; 
+    background: rgba(214, 51, 132, 0.08); /* Background */
+    padding: 0 .25rem;
+    border-radius: .25rem;
+}
+
+/* Color for separator → */
+.route-chain .sep { 
+    color: #6c757d; 
+    margin: 0 .25rem;
+}
