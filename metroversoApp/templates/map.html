@@ -35,7 +35,9 @@
     <div id="map"></div>
 
     <!-- Validation alert -->
-    <div id="alerta-validacion" class="alert alert-warning alert-dismissible fade show position-absolute top-0 start-50 translate-middle-x mt-3" role="alert" style="display: none; z-index: 9999; max-width: 600px;">
+    <div id="alerta-validacion"
+        class="alert alert-warning alert-dismissible fade show position-absolute top-0 start-50 translate-middle-x mt-3"
+        role="alert" style="display: none; z-index: 9999; max-width: 600px;">
         <span id="mensaje-alerta">Mensaje de alerta aquí</span>
     </div>
 
@@ -207,33 +209,17 @@
             zoom: 15
         });
 
+        let closestStationsToOrigin = [];
+        let closestStationsToDestination = [];
+
         let inRoute = false; // Flag to check if in route mode
         let userLocation = null;
         let lastUserLocation = null; // Store last location for comparison
         let userMarker = null;
-        let blueLocationMarker = null; // Store blue marker reference
         let watchId = null;
         let lastUpdateTime = 0;
         const UPDATE_INTERVAL = 1000; // Update interval in milliseconds
-        const STATION_UPDATE_THRESHOLD = 10; // Update stations when user moves more than 50 meters
-
-        // Function to get user location
-        function getUserLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    function (position) {
-                        updateUserLocation(position);
-                        startLocationTracking();
-                    },
-                    handleLocationError,
-                    {
-                        enableHighAccuracy: true,
-                        timeout: 10000,
-                        maximumAge: 0
-                    }
-                );
-            }
-        }
+        const STATION_UPDATE_THRESHOLD = 10; // Update stations when user moves more than 10 meters
 
         // Function to update user location
         function updateUserLocation(position) {
@@ -321,30 +307,14 @@
                     console.warn('Permission denied to access location.');
                     break;
                 case error.POSITION_UNAVAILABLE:
-                    console.warn('Location information is not available.');
+                    alert('Location information is not available.');
                     break;
                 case error.TIMEOUT:
-                    console.warn('Location request timed out.');
+                    alert('Location request timed out.');
                     break;
                 default:
-                    console.warn('Error getting location.');
+                    alert('Error getting location.');
                     break;
-            }
-        }
-
-        // Function to stop location tracking
-        function stopLocationTracking() {
-            if (watchId !== null) {
-                navigator.geolocation.clearWatch(watchId);
-                watchId = null;
-            }
-        }
-
-        // Function to force update closest stations
-        function forceUpdateClosestStations() {
-            if (userLocation) {
-                closestStations(turf.point(userLocation), 2000);
-                lastUserLocation = [...userLocation];
             }
         }
 
@@ -394,6 +364,101 @@
             });
         }
 
+        // Function to get walking route to origin
+        function walkingRouteToOrigin() {
+            const firstPoint = closestStationsToOrigin[0];
+            if (markerOrigin) {
+                walkingRoute([markerOrigin.getLngLat().lng, markerOrigin.getLngLat().lat], firstPoint.geometry.coordinates)
+                    .then(route => {
+                        if (route.distance > 2000) alert("La distancia del origen a la primera estación es mayor a 2 km");
+                        addRouteToMap(route, "routeToOrigin");
+
+                        if (map.getLayer('routeToOrigin-label')) map.removeLayer('routeToOrigin-label');
+                        if (map.getSource('routeToOrigin-label')) map.removeSource('routeToOrigin-label');
+                        map.addSource('routeToOrigin-label', {
+                            type: 'geojson',
+                            data: {
+                                type: 'FeatureCollection',
+                                features: [{
+                                    type: 'Feature',
+                                    geometry: route.geometry,
+                                    properties: {
+                                        distance: `${(route.distance / 1000).toFixed(2)} km`
+                                    }
+                                }]
+                            }
+                        });
+                        map.addLayer({
+                            id: 'routeToOrigin-label',
+                            type: 'symbol',
+                            source: 'routeToOrigin-label',
+                            layout: {
+                                'symbol-placement': 'line',
+                                'text-field': ['get', 'distance'],
+                                'text-size': 16,
+                                'text-offset': [0, 0.5]
+                            },
+                            paint: {
+                                'text-color': '#000000',
+                                'text-halo-color': '#FFFFFF',
+                                'text-halo-width': 2
+                            }
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error getting route:', error);
+                    });
+            }
+        }
+
+        // Function to get walking route to destination
+        function walkingRouteToDestination() {
+            const lastPoint = closestStationsToDestination[0];
+            if (markerDestiny) {
+                walkingRoute(lastPoint.geometry.coordinates, [markerDestiny.getLngLat().lng, markerDestiny.getLngLat().lat])
+                    .then(route => {
+                        if (route.distance > 2000) alert("la estación más cercana al destino está a más de 2 km");
+                        addRouteToMap(route, "routeToDestination");
+
+                        if (map.getLayer('routeToDestination-label')) map.removeLayer('routeToDestination-label');
+                        if (map.getSource('routeToDestination-label')) map.removeSource('routeToDestination-label');
+                        map.addSource('routeToDestination-label', {
+                            type: 'geojson',
+                            data: {
+                                type: 'FeatureCollection',
+                                features: [{
+                                    type: 'Feature',
+                                    geometry: route.geometry,
+                                    properties: {
+                                        distance: `${(route.distance / 1000).toFixed(2)} km`
+                                    }
+                                }]
+                            }
+                        });
+                        map.addLayer({
+                            id: 'routeToDestination-label',
+                            type: 'symbol',
+                            source: 'routeToDestination-label',
+                            layout: {
+                                'symbol-placement': 'line',
+                                'text-field': ['get', 'distance'],
+                                'text-size': 16,
+                                'text-offset': [0, 0.5]
+                            },
+                            paint: {
+                                'text-color': '#000000',
+                                'text-halo-color': '#FFFFFF',
+                                'text-halo-width': 2
+                            }
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error getting route:', error);
+                    });
+            }
+        }
+
+        // Function to find the closest stations to the user location
         // Function to find the closest stations to the user location
         function closestStations(userPoint, maxDistance) {
             // Remove existing layers and sources if they exist
@@ -495,20 +560,7 @@
 
         console.log("Map initialized");
         map.on('load', () => {
-
-            getUserLocation();
-
-            const lastPoint = turf.point([-75.581547, 6.194671]);
-            const destination = turf.point([-75.585684, 6.191629]);
-
-            // Get walking route and draw it
-            walkingRoute(lastPoint.geometry.coordinates, destination.geometry.coordinates)
-                .then(route => {
-                    addRouteToMap(route, "lastRoute");
-                })
-                .catch(error => {
-                    console.error('Error getting route:', error);
-                });
+            startLocationTracking();
         });
 
 
@@ -533,7 +585,7 @@
                     essential: true
                 });
             } else {
-                console.warn('No se ha podido encontrar la ubicación.');
+                alert('No se ha podido encontrar la ubicación.');
             }
         });
 
@@ -611,22 +663,22 @@
 
             // How to make transfers
             if (transferInfo.requires_transfer) {
-            const segs = transferInfo.line_segments;
-            const transferHints = [];
+                const segs = transferInfo.line_segments;
+                const transferHints = [];
 
-            for (let i = 1; i < segs.length; i++) {
-                const prev = segs[i - 1];
-                const curr = segs[i];
-                const transferStation = prev.stations[prev.stations.length - 1];
-                const newLine = curr.line;
-                const nextStation = curr.stations.length > 1 ? curr.stations[1] : transferStation;
+                for (let i = 1; i < segs.length; i++) {
+                    const prev = segs[i - 1];
+                    const curr = segs[i];
+                    const transferStation = prev.stations[prev.stations.length - 1];
+                    const newLine = curr.line;
+                    const nextStation = curr.stations.length > 1 ? curr.stations[1] : transferStation;
 
-                transferHints.push(
-                `En <strong>${transferStation}</strong> cambia a la línea <strong>${newLine}</strong> y dirígete a <strong>${nextStation}</strong>.`
-                );
-            }
+                    transferHints.push(
+                        `En <strong>${transferStation}</strong> cambia a la línea <strong>${newLine}</strong> y dirígete a <strong>${nextStation}</strong>.`
+                    );
+                }
 
-            html += `
+                html += `
                 <hr class="my-2">
                 <h6 class="mb-2 text-success fw-bold">seguimiento de transbordos</h6>
                 <div class="small">
@@ -672,7 +724,6 @@
         // Selecting a destination point
 
         let selecting = 0;
-        let selectedCoord = null;
         let markerOrigin = null;
         let markerDestiny = null;
         let mapContainer = document.getElementById("map")
@@ -692,10 +743,11 @@
         // If a user clicks the map
         map.on("click", (e) => {
             if (selecting === 0) return; // no estamos seleccionando
-            console.log("Holi")
+
             if (selecting === 1) {
                 // inicio
                 selectedCoordOrigin = [e.lngLat.lng, e.lngLat.lat];
+                closestStationsToOrigin = closestPoints(turf.point(selectedCoordOrigin), 4000);
 
                 if (markerOrigin) {
                     markerOrigin.setLngLat(selectedCoordOrigin);
@@ -707,6 +759,7 @@
             } else {
                 // destino
                 selectedCoordDestiny = [e.lngLat.lng, e.lngLat.lat];
+                closestStationsToDestination = closestPoints(turf.point(selectedCoordDestiny), 4000);
 
                 if (markerDestiny) {
                     markerDestiny.setLngLat(selectedCoordDestiny);
@@ -715,6 +768,11 @@
                         .setLngLat(selectedCoordDestiny)
                         .addTo(map);
                 }
+            }
+            inRoute = markerOrigin !== null && markerDestiny !== null;
+            if (inRoute) {
+                walkingRouteToOrigin();
+                walkingRouteToDestination();
             }
             // Salimos del modo selección
             selecting = 0;
