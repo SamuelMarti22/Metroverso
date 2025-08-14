@@ -72,12 +72,11 @@ window.validateInputsAndStations = function(startInput, endInput, stationPoints,
     return { valid: true, startPoint, endPoint };
 };
 
-// ✅ GLOBAL: queda disponible como window.renderRouteChain
 window.renderRouteChain = function(route, transferInfo){
   try {
     if (!Array.isArray(route)) return String(route ?? "");
 
-    // Construye el set de estaciones de transbordo
+    // build the transfer station set
     var transferSet = Object.create(null);
     if (transferInfo && Array.isArray(transferInfo.transfer_stations)) {
       for (var i = 0; i < transferInfo.transfer_stations.length; i++) {
@@ -86,7 +85,7 @@ window.renderRouteChain = function(route, transferInfo){
       }
     }
 
-    // Genera los spans
+    // Generates the spans
     var parts = [];
     for (var j = 0; j < route.length; j++) {
       var st = String(route[j] || "");
@@ -95,11 +94,11 @@ window.renderRouteChain = function(route, transferInfo){
       parts.push('<span class="' + cls + '">' + st + '</span>');
     }
 
-    // Une con el separador
+    // Unites with the separator
     return parts.join('<span class="sep"> → </span>');
   } catch (e) {
     console.error("renderRouteChain ERROR:", e, { route, transferInfo });
-    // Fallback: que al menos se vea algo
+    // Fallback: if at least something is visible
     return Array.isArray(route) ? route.join(' → ') : String(route ?? "");
   }
 };
