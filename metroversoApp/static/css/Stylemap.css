@@ -34,7 +34,7 @@ body {
 }
 
 .sidebar {
-    width: 50px;
+    width: 65px;
     height: 100vh;
     background-color: #f8f9fa;
     position: fixed;
@@ -48,10 +48,10 @@ body {
 }
 
 .subCategory {
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
-    margin: 3px auto;
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    margin: 5px auto;
     cursor: pointer;
     transition: all 0.3s ease;
 }
@@ -85,8 +85,8 @@ body {
 }
 
 .profileIcon {
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
     background-color: #495057; /* Bootstrap dark gray */
     margin: auto auto 15px auto;
@@ -105,7 +105,7 @@ body {
 .offcanvasContainer {
     position: fixed;
     top: 0;
-    left: 70px;
+    left: 85px;
     padding: 30px;
     z-index: 1;
 }
@@ -113,7 +113,7 @@ body {
 .offcanvas.offcanvas-start {
     width: 350px !important;
     border: none;
-    margin-left: 34px;
+    margin-left: 50px;
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
 }
 
@@ -215,64 +215,94 @@ body {
     border-radius: 2px;
 }
 
-.userLocation {
+/* Location Controls Container */
+.location-controls {
     position: fixed;
     bottom: 20px;
-    right: 10px;
-    width: 40px;
-    height: 40px;
+    right: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 100;
+}
+
+/* Base styles for all location buttons */
+.userLocation,
+.userLocation1,
+.userLocation2 {
+    width: 45px;
+    height: 45px;
     border-radius: 50%;
     background-color: #ffffff;
     display: flex;
     justify-content: center;
     align-items: center;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 3px 12px rgba(0,0,0,0.15);
     cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+/* Current location button - Primary */
+.userLocation {
+    background-color: #ffffff;
+    border: 2px solid #20c997;
+}
+
+.userLocation svg {
     transition: all 0.3s ease;
 }
 
 .userLocation:hover {
-    background-color: #e9ecef !important; /* Bootstrap light gray */
-    transform: scale(1.05);
-}
-
-.userLocation svg {
-    color: #6c757d !important; /* Bootstrap text-muted gray */
-    transition: color 0.3s ease;
+    background-color: #20c997;
+    transform: scale(1.1) translateY(-2px);
+    box-shadow: 0 5px 20px rgba(9, 199, 142, 0.4);
 }
 
 .userLocation:hover svg {
-    color: #20c997 !important; /* Bootstrap teal/light green */
+    fill: #ffffff !important;
 }
 
+/* Origin location button - Success */
 .userLocation1 {
-    position: fixed;
-    bottom: 70px;
-    right: 10px;
-    width: 40px;
-    height: 40px;
-    border-radius: 100px;
     background-color: #ffffff;
-    justify-content: center;
-    display: flex;
-    margin: 2px;
-    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-    cursor: pointer;
+    border: 2px solid #1d7bcd;
 }
 
+.userLocation1 svg {
+    color: #1d7bcd !important;
+    transition: all 0.3s ease;
+}
+
+.userLocation1:hover {
+    background-color: #1d7bcd;
+    transform: scale(1.1) translateY(-2px);
+    box-shadow: 0 5px 20px rgba(20, 115, 205, 0.3);
+}
+
+.userLocation1:hover svg {
+    color: #ffffff !important;
+}
+
+/* Destination location button - Warning */
 .userLocation2 {
-    position: fixed;
-    bottom: 120px;
-    right: 10px;
-    width: 40px;
-    height: 40px;
-    border-radius: 100px;
     background-color: #ffffff;
-    justify-content: center;
-    display: flex;
-    margin: 2px;
-    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-    cursor: pointer;
+    border: 2px solid #e6083c;
+}
+
+.userLocation2 svg {
+    color: #e6083c !important;
+    transition: all 0.3s ease;
+}
+
+.userLocation2:hover {
+    background-color: #e6083c;
+    transform: scale(1.1) translateY(-2px);
+    box-shadow: 0 5px 20px rgba(215, 4, 57, 0.3);
+}
+
+.userLocation2:hover svg {
+    color: #ffffff !important;
 }
 
 .crosshair {
