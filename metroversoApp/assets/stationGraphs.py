@@ -1,6 +1,5 @@
 import networkx as nx
 from math import sqrt
-#import matplotlib.pyplot as plt
 import math
 import json
 
@@ -9,6 +8,52 @@ def euclidiana(coord1, coord2):
     x1, y1 = coord1
     x2, y2 = coord2
     return sqrt((x2 - x1)**2 + (y2 - y1)**2)
+
+R_KM = 6371.0088
+
+def haversine(coord1, coord2):
+    lon1, lat1 = map(math.radians, coord1)
+    lon2, lat2 = map(math.radians, coord2)
+    dlon = lon2 - lon1
+    dlat = lat2 - lat1
+    a = math.sin(dlat/2)**2 + math.cos(lat1)*math.cos(lat2)*math.sin(dlon/2)**2
+    c = 2*math.asin(math.sqrt(a))
+    return R_KM * c  # km
+
+# km/h aproximados
+SPEEDS = {
+    "A": 40,   # Metro Linea A
+    "B": 40,   # Metro Linea B
+    "L": 18,   # Cable
+    "K": 18,   # Cable
+    "J": 18,   # Cable
+    "H": 18,   # Cable
+    "T": 16,   # Tranvía
+    "M": 16,   # Metroplus línea 1
+    "O": 13,   # Metroplus línea O
+    "X": 13,   # Metroplus línea 2
+    "P": 19,   # Cable 
+    "Z": 18,   # Cable 
+}
+
+def add_edge_time(G, coords_dict, u, v, line_key, transfer_min=0.3):
+    """Añade arista u<->v con peso en minutos.
+    line_key: clave para SPEEDS según la línea (ej. 'A','B','K'...).
+    """
+    d_km = haversine(coords_dict[u], coords_dict[v])
+    speed = SPEEDS[line_key]
+    time_min = (d_km / speed) * 60.0 + transfer_min
+
+    G.add_edge(
+        u, v,
+        weight=round(time_min,2),              # 👈 ahora el peso es TIEMPO (min)
+        time_min=time_min,
+        distance_km=d_km,
+        speed_kmh=speed,
+        line=line_key
+    )
+    print("distancia:",d_km)
+    print("tiempo:",time_min)
 
 G = nx.Graph()
 
@@ -43,7 +88,7 @@ lineaA = {
 for i in range(1, 21):  # De A01 a A20
     origen = f"A{str(i).zfill(2)}"
     destino = f"A{str(i+1).zfill(2)}"
-    G.add_edge(origen, destino, weight=euclidiana(lineaA[origen], lineaA[destino]))
+    add_edge_time(G, lineaA, origen, destino, line_key="A")
 
 lineaL = {
     "L02": [-75.50297173, 6.281545751],  # Arvi
@@ -52,8 +97,7 @@ lineaL = {
 
 #Conexiones Linea L:
 
-G.add_edge("L01", "L02", weight=euclidiana(lineaL["L01"], lineaL["L02"]))
-
+add_edge_time(G, lineaL, "L01", "L02", line_key="L")
 
 linea1 = {
     "M00": [-75.6092249, 6.230666882],  # UDM
@@ -96,7 +140,7 @@ for i in range(0, 18):  # De M00 a M18
     else: 
         origen = f"M{str(i).zfill(2)}"
         destino = f"M{str(i+1).zfill(2)}"
-    G.add_edge(origen, destino, weight=euclidiana(linea1[origen], linea1[destino]))
+    add_edge_time(G, linea1, origen, destino, line_key="M")
 
 
 linea2 = {
@@ -135,7 +179,7 @@ for i in range(0, 20):  # De X00 a X20
     else:
         origen = f"X{str(i).zfill(2)}"
         destino = f"X{str(i+1).zfill(2)}"
-    G.add_edge(origen, destino, weight=euclidiana(linea2[origen], linea2[destino]))
+    add_edge_time(G, linea2, origen, destino, line_key="X")
 
 
 lineaB = {
@@ -157,8 +201,7 @@ for i in range(0, 6):  # De B00 a B06
     else:
         origen = f"B{str(i).zfill(2)}"
         destino = f"B{str(i+1).zfill(2)}"
-    G.add_edge(origen, destino, weight=euclidiana(lineaB[origen], lineaB[destino]))
-    # G.add_edge(destino, origen, weight=euclidiana(lineaB[destino], lineaB[origen]))  # opcional: para conexión bidireccional
+    add_edge_time(G, lineaB, origen, destino, line_key="B")
 
 
 lineaT = {
@@ -185,7 +228,7 @@ for i in range(0, 8):  # De T00 a T08
     else:
         origen = f"T{str(i).zfill(2)}"
         destino = f"T{str(i+1).zfill(2)}"
-    G.add_edge(origen, destino, weight=euclidiana(lineaT[origen], lineaT[destino]))
+    add_edge_time(G, lineaT, origen, destino, line_key="T")
 
 
 
@@ -204,8 +247,7 @@ for i in range(0, 2):  # De Z00 a Z02
     else:
         origen = f"Z{str(i).zfill(2)}"
         destino = f"Z{str(i+1).zfill(2)}"
-    G.add_edge(origen, destino, weight=euclidiana(lineaZ[origen], lineaZ[destino]))
-    # G.add_edge(destino, origen, weight=euclidiana(lineaZ[destino], lineaZ[origen]))  # opcional
+    add_edge_time(G, lineaZ, origen, destino, line_key="Z")
 
 lineaJ = {
     "J00": [-75.61420338, 6.281093175], # La Aurora
@@ -223,8 +265,7 @@ for i in range(0, 3):  # De J00 a J03
     else:    
         origen = f"J{str(i).zfill(2)}"
         destino = f"J{str(i+1).zfill(2)}"
-    G.add_edge(origen, destino, weight=euclidiana(lineaJ[origen], lineaJ[destino]))
-    # G.add_edge(destino, origen, weight=euclidiana(lineaJ[destino], lineaJ[origen]))  # opcional
+    add_edge_time(G, lineaJ, origen, destino, line_key="J")
 
 
 lineaH = {
@@ -242,8 +283,7 @@ for i in range(0, 2):  # De H00 a H02
     else:
         origen = f"H{str(i).zfill(2)}"
         destino = f"H{str(i+1).zfill(2)}"
-    G.add_edge(origen, destino, weight=euclidiana(lineaH[origen], lineaH[destino]))
-    # G.add_edge(destino, origen, weight=euclidiana(lineaH[destino], lineaH[origen]))  # opcional
+    add_edge_time(G, lineaH, origen, destino, line_key="H")
 
 
 lineaO = {
@@ -275,17 +315,13 @@ for i in range(1, 13):  # De O01 a O13
     elif i == 9:
         origen = f"B04"
         destino = f"O{str(i+1).zfill(2)}"
-    elif i == 14:
+    elif i == 13:
         origen = f"O{str(i).zfill(2)}"
         destino = f"M02"
     else:
         origen = f"O{str(i).zfill(2)}"
         destino = f"O{str(i+1).zfill(2)}"
-    G.add_edge(origen, destino, weight=euclidiana(lineaO[origen], lineaO[destino]))
-    # G.add_edge(destino, origen, weight=euclidiana(lineaO[destino], lineaO[origen]))  # opcional
-
-G.add_edge("O13", "M02", weight=euclidiana(lineaO["O13"], lineaO["M02"]))
-# G.add_edge("M02", "O13", weight=euclidiana(lineaO["M02"], lineaO["O13"]))  # opcional
+    add_edge_time(G, lineaO, origen, destino, line_key="O")
 
 
 lineaP = {
@@ -304,7 +340,7 @@ for i in range(0, 3):  # De P00 a P03
     else:    
         origen = f"P{str(i).zfill(2)}"
         destino = f"P{str(i+1).zfill(2)}"
-    G.add_edge(origen, destino, weight=euclidiana(lineaP[origen], lineaP[destino]))
+    add_edge_time(G, lineaP, origen, destino, line_key="P")
 
 lineaK = {
     "A04": [-75.55851194186361, 6.299961957796953],  # Acevedo
@@ -325,7 +361,7 @@ for i in range(0, 3):  # De K00 a K03
     else:
         origen = f"K{str(i).zfill(2)}"
         destino = f"K{str(i+1).zfill(2)}"
-    G.add_edge(origen, destino, weight=euclidiana(lineaK[origen], lineaK[destino]))
+    add_edge_time(G, lineaK, origen, destino, line_key="K")
 
 # # Alimentadores:
 
@@ -2282,13 +2318,13 @@ for i in range(0, 3):  # De K00 a K03
 
 for u, v, data in G.edges(data=True):
     if u[0] != v[0]:
-        data["weight"] += 1  # Penalización de trasbordo
+        data["weight"] += 5  # Penalización de trasbordo
 
-# rute = nx.dijkstra_path(G, source="M00", target="J00", weight="weight")
-# distancia = nx.dijkstra_path_length(G, source="A01", target="A21", weight="weight")
+rute = nx.dijkstra_path(G, source="O02", target="O13", weight="weight")
+distancia = nx.dijkstra_path_length(G, source="A06", target="M02", weight="weight")
 
-# print("Rute:", rute)
-# print("Distance:", round(distancia, 2), "meters")
+print("Rute:", rute)
+print("Distance:", round(distancia, 2), "minutes")
 
 # # Dibujar el grafo
 # plt.figure(figsize=(10, 7))
