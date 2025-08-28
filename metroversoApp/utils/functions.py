@@ -80,6 +80,9 @@ def calculeRute(star, destination):
     try: 
         rute = nx.dijkstra_path(G, source=star, target=destination, weight="weight")
         distance = nx.dijkstra_path_length(G, source=star, target=destination, weight="weight")
+        
+        # coords_ruta = [rute[nodo] for nodo in rute]
+        # print(coords_ruta)
 
         # Analyze transfers
         transfer_info = analyze_route_transfers(rute)

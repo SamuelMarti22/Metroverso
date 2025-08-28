@@ -173,6 +173,14 @@ function addRouteToMap(route, routeId = "walking-route") {
     map.removeSource(routeId);
   }
 
+for (let i = 0; i < routeId.length; i++) {
+ 
+}
+
+
+  console.log("Rute",routeId);
+
+
   // Add route source and layer
   map.addSource(routeId, {
     type: "geojson",
@@ -680,3 +688,120 @@ document.getElementById("btnUserLocation").onclick = function () {
   pickStartingPoint(userLocation);
   map.flyTo({ center: userLocation });
 };
+
+// Cargar Lineas_Sistema_Metro
+(function () {
+  const cfg = window.APP_CONFIG || {};
+  if (!cfg.geojsonUrl) {
+    console.error("Falta geojsonUrl en APP_CONFIG");
+    return;
+  }
+
+  map.on("load", async () => {
+    // 1) Agregar la fuente GeoJSON
+    map.addSource("lineas-metro", {
+      type: "geojson",
+      data: cfg.geojsonUrl
+    });
+
+    // 2) Capa base (línea)
+    map.addLayer({
+      id: "lineas-base",
+      type: "line",
+      source: "lineas-metro",
+      layout: {
+        "line-join": "round",
+        "line-cap": "round"
+      },
+      paint: {
+        "line-color": "#FF5722",
+        "line-width": 3
+      }
+    });
+
+    // // 3) Capa de halo al pasar el mouse (opcional)
+    // map.addLayer({
+    //   id: "lineas-hover",
+    //   type: "line",
+    //   source: "lineas-metro",
+    //   layout: { "line-join": "round", "line-cap": "round" },
+    //   paint: {
+    //     "line-color": "#000000",
+    //     "line-width": 6,
+    //     "line-opacity": [
+    //       "case",
+    //       ["boolean", ["feature-state", "hover"], false],
+    //       0.25,   // cuando está en hover
+    //       0       // si no
+    //     ]
+    //   }
+    // });
+
+    // 4) Ajustar la vista a la extensión del GeoJSON
+    try {
+      const res = await fetch(cfg.geojsonUrl);
+      const data = await res.json();
+
+      // fitBounds robusto para LineString / MultiLineString / FeatureCollection
+      const bounds = new mapboxgl.LngLatBounds();
+      const addCoords = (coords) => {
+        if (!coords) return;
+        if (typeof coords[0] === "number") {
+          bounds.extend(coords); // [lng, lat]
+        } else {
+          coords.forEach(addCoords);
+        }
+      };
+
+      if (data.type === "FeatureCollection") {
+        data.features.forEach(f => addCoords(f.geometry.coordinates));
+      } else if (data.type === "Feature") {
+        addCoords(data.geometry.coordinates);
+      } else {
+        addCoords(data.coordinates);
+      }
+
+      if (!bounds.isEmpty()) {
+        map.fitBounds(bounds, { padding: 40, duration: 900 });
+      }
+    } catch (e) {
+      console.warn("No se pudo calcular fitBounds:", e);
+    }
+
+    // // 5) Interacciones (hover + click para ver propiedades)
+    // let hoveredId = null;
+
+    // map.on("mousemove", "lineas-base", (e) => {
+    //   map.getCanvas().style.cursor = "pointer";
+    //   if (!e.features?.length) return;
+    //   const f = e.features[0];
+    //   if (hoveredId !== f.id) {
+    //     if (hoveredId !== null) {
+    //       map.setFeatureState({ source: "lineas-metro", id: hoveredId }, { hover: false });
+    //     }
+    //     hoveredId = f.id;
+    //     map.setFeatureState({ source: "lineas-metro", id: hoveredId }, { hover: true });
+    //   }
+    // });
+
+    // map.on("mouseleave", "lineas-base", () => {
+    //   map.getCanvas().style.cursor = "";
+    //   if (hoveredId !== null) {
+    //     map.setFeatureState({ source: "lineas-metro", id: hoveredId }, { hover: false });
+    //     hoveredId = null;
+    //   }
+    // });
+
+    // map.on("click", "lineas-base", (e) => {
+    //   if (!e.features?.length) return;
+    //   const props = e.features[0].properties || {};
+    //   const html = `
+    //     <div style="font-size:13px">
+    //       <strong>Línea seleccionada</strong><br/>
+    //       ${Object.keys(props).length ? `<pre style="white-space:pre-wrap;margin:6px 0 0">${JSON.stringify(props, null, 2)}</pre>` : "Sin propiedades"}
+    //     </div>`;
+    //   new mapboxgl.Popup().setLngLat(e.lngLat).setHTML(html).addTo(map);
+    // });
+  });
+})();
+
