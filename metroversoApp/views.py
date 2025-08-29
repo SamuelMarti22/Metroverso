@@ -1,13 +1,14 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.http import JsonResponse
+from django.utils import translation
 
 from .assets import stationGraphs
 from .utils import functions
 
 def map(request):
-    # Render the map template
-    return render(request, 'map.html')
+    language_code = translation.get_language()
+    return render(request, 'map.html', {'LANGUAGE_CODE': language_code})
 
 def callRute(request):
     start = request.GET.get('inputStart')  # Default to 'A01' if not provided

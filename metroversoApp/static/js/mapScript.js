@@ -93,10 +93,7 @@ function updateUserLocation(position) {
     }`;
     btn3.innerHTML = `<i class="bi bi-geo-alt"></i> ${
       closestStationsToUser[2]?.properties.ID || ""
-    }`;
-    document.getElementById(
-      "btnUserLocation"
-    ).innerHTML = `<i class="bi bi-person"></i> Mi ubicación`;
+    }`
   }
 
   if (!userMarker) {
@@ -654,7 +651,6 @@ let selectedStationLocation = null;
 
 document.getElementById("btnClosestStation1").onclick = function () {
   if (closestStationsToUser[0]) {
-    this.innerText = closestStationsToUser[0].properties.ID;
     selectedStationLocation = closestStationsToUser[0].geometry.coordinates;
     pickStartingPoint(selectedStationLocation);
     map.flyTo({ center: selectedStationLocation });
@@ -662,7 +658,6 @@ document.getElementById("btnClosestStation1").onclick = function () {
 };
 document.getElementById("btnClosestStation2").onclick = function () {
   if (closestStationsToUser[1]) {
-    this.innerText = closestStationsToUser[1].properties.ID;
     selectedStationLocation = closestStationsToUser[1].geometry.coordinates;
     pickStartingPoint(selectedStationLocation);
     map.flyTo({ center: selectedStationLocation });
@@ -670,7 +665,6 @@ document.getElementById("btnClosestStation2").onclick = function () {
 };
 document.getElementById("btnClosestStation3").onclick = function () {
   if (closestStationsToUser[2]) {
-    this.innerText = closestStationsToUser[2].properties.ID;
     selectedStationLocation = closestStationsToUser[2].geometry.coordinates;
     pickStartingPoint(selectedStationLocation);
     map.flyTo({ center: selectedStationLocation });
@@ -680,3 +674,9 @@ document.getElementById("btnUserLocation").onclick = function () {
   pickStartingPoint(userLocation);
   map.flyTo({ center: userLocation });
 };
+
+function changeLanguage(lang) {
+  document.getElementById("language-input").value = lang;
+  document.getElementById("language-form").submit();
+}
+
