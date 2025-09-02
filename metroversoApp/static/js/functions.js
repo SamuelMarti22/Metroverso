@@ -65,7 +65,7 @@ window.showAutoClosingAlert = function(alertBox, alertMessage, messageText) {
     }, 5000);
 };
 
-// Función para resolver input de estación (ID o nombre) a ID
+// Function to resolve station input (ID or name) to ID
 window.resolveStationInput = function(input) {
     if (!input || typeof input !== 'string') {
         return null;
@@ -73,28 +73,28 @@ window.resolveStationInput = function(input) {
     
     const cleanInput = input.trim().toUpperCase();
     
-    // Primero verificar si es un ID directo
+    // First check if it's a direct ID
     if (stationNames[cleanInput]) {
         return cleanInput;
     }
     
-    // Si no es un ID, buscar por nombre (case-insensitive)
+    // If it's not an ID, search by name (case-insensitive)
     for (const [id, name] of Object.entries(stationNames)) {
         if (name.toUpperCase() === cleanInput) {
             return id;
         }
     }
     
-    // Si no se encuentra, retornar null
+    // If not found, return null
     return null;
 };
 
-// Función para obtener el nombre de una estación por ID
+// Function to get station name by ID
 window.getStationName = function(id) {
     return stationNames[id] || id;
 };
 
-// Función para obtener sugerencias de estaciones basadas en input parcial
+// Function to get station suggestions based on partial input
 window.getStationSuggestions = function(partialInput) {
     if (!partialInput || partialInput.length < 2) {
         return [];
@@ -103,24 +103,24 @@ window.getStationSuggestions = function(partialInput) {
     const suggestions = [];
     const cleanInput = partialInput.trim().toLowerCase();
     
-    // Buscar por ID
+    // Search by ID
     for (const [id, name] of Object.entries(stationNames)) {
         if (id.toLowerCase().includes(cleanInput)) {
             suggestions.push({ id, name, type: 'ID' });
         }
     }
     
-    // Buscar por nombre
+    // Search by name
     for (const [id, name] of Object.entries(stationNames)) {
         if (name.toLowerCase().includes(cleanInput)) {
-            // Evitar duplicados si ya está en la lista por ID
+            // Avoid duplicates if already in the list by ID
             if (!suggestions.find(s => s.id === id)) {
-                suggestions.push({ id, name, type: 'Nombre' });
+                suggestions.push({ id, name, type: 'Name' });
             }
         }
     }
     
-    // Ordenar por relevancia (exact matches primero, luego por longitud)
+    // Sort by relevance (exact matches first, then by length)
     suggestions.sort((a, b) => {
         const aExact = a.id.toLowerCase() === cleanInput || a.name.toLowerCase() === cleanInput;
         const bExact = b.id.toLowerCase() === cleanInput || b.name.toLowerCase() === cleanInput;
@@ -131,11 +131,11 @@ window.getStationSuggestions = function(partialInput) {
         return a.name.length - b.name.length;
     });
     
-    return suggestions.slice(0, 10); // Limitar a 10 sugerencias
+    return suggestions.slice(0, 10); // Limit to 10 suggestions
 };
 
 window.validateInputsAndStations = function(startInput, endInput, stationPoints, validateFn) {
-    // Resolver inputs a IDs de estación
+    // Resolve inputs to station IDs
     const startId = resolveStationInput(startInput);
     const endId = resolveStationInput(endInput);
     
@@ -147,7 +147,7 @@ window.validateInputsAndStations = function(startInput, endInput, stationPoints,
         return { valid: false, message: "No se encontró la ubicación de destino" };
     }
     
-    // Buscar los puntos de estación usando los IDs resueltos
+    // Find station points using resolved IDs
     const startPoint = stationPoints.find(p => p.properties.ID === startId);
     const endPoint = stationPoints.find(p => p.properties.ID === endId);
 
