@@ -328,3 +328,101 @@ body {
     color: #6c757d; 
     margin: 0 .25rem;
 }
+
+/* Alert styles */
+#alerta-validacion {
+    z-index: 9999 !important;
+    max-width: 600px !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+    transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out !important;
+    opacity: 0;
+    visibility: hidden;
+}
+
+#alerta-validacion.show {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Estilos para las sugerencias de autocompletado */
+.suggestions-container {
+    position: absolute;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.suggestion-item {
+    padding: 10px 15px;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 14px;
+    transition: background-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestion-item:hover {
+    background-color: #f8f9fa;
+}
+
+.suggestion-item:active {
+    background-color: #e9ecef;
+}
+
+.suggestion-item strong {
+    color: #212529;
+    font-weight: 600;
+}
+
+.suggestion-item .station-id {
+    color: #6c757d;
+    font-size: 12px;
+    font-family: 'Courier New', monospace;
+    background-color: #f8f9fa;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.suggestion-item .station-type {
+    color: #adb5bd;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-left: auto;
+}
+
+/* Scrollbar personalizado para las sugerencias */
+.suggestions-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.suggestions-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.suggestions-container::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.suggestions-container::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Mejoras para los campos de input */
+.divRute input:focus {
+    border-color: #20c997 !important;
+    box-shadow: 0 0 0 0.2rem rgba(32, 201, 151, 0.25) !important;
+}

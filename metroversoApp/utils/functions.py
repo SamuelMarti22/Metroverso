@@ -84,9 +84,14 @@ def calculeRute(star, destination):
         # Analyze transfers
         transfer_info = analyze_route_transfers(rute)
 
+        # Check if the trip can be made according to the schedule
+        from metroversoApp.assets.stationGraphs import can_make_trip_now_graph
+        can_make_trip = can_make_trip_now_graph(G, star, destination)
+
         print("Rute:", rute)
         print("Distance:", round(distance, 2)*100, "kilometers")
         print("Transfer info:", transfer_info)
+
         
     except nx.NetworkXNoPath:
         print("No path found between the specified nodes.")
@@ -98,5 +103,6 @@ def calculeRute(star, destination):
             'transfer_stations': [],
             'line_segments': []
         }
+        can_make_trip = False
 
-    return list(rute), distance, transfer_info
+    return list(rute), distance, transfer_info, can_make_trip

@@ -7,4 +7,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', metroversoViews.map),
     path('view/callRute', metroversoViews.callRute, name='callRute'),
+    path('view/getServiceHours', metroversoViews.getServiceHours, name='getServiceHours'),
 ]

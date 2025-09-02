@@ -2,6 +2,7 @@ import networkx as nx
 from math import sqrt
 import math
 import json
+import datetime
 
 # 📍 Función para calcular distancia euclidiana (plana)
 def euclidiana(coord1, coord2):
@@ -2316,15 +2317,141 @@ for i in range(0, 3):  # De K00 a K03
 #     destino = f"C3-003RLC-{str(i + 1).zfill(4)}"
 #     G.add_edge(origen, destino, weight=euclidiana(C3_003RLC[origen], C3_003RLC[destino]))
 
+
+# Add transfer penalty between different lines
 for u, v, data in G.edges(data=True):
     if u[0] != v[0]:
-        data["weight"] += 5  # Penalización de trasbordo
+        data["weight"] += 5  # Transfer penalty
 
 rute = nx.dijkstra_path(G, source="O02", target="O13", weight="weight")
 distancia = nx.dijkstra_path_length(G, source="A06", target="M02", weight="weight")
 
 print("Rute:", rute)
 print("Distance:", round(distancia, 2), "minutes")
+
+
+# --- UTILITIES FOR SCHEDULE AND DATES ---
+
+def _service_window(start_time: datetime.datetime):
+    """Returns (open_time, close_time) according to the day of start_time."""
+    if start_time.weekday() == 6:  # Sunday
+        open_time  = start_time.replace(hour=5,  minute=0, second=0, microsecond=0)
+        close_time = start_time.replace(hour=22, minute=0, second=0, microsecond=0)
+    else:  # Monday to Saturday
+        open_time  = start_time.replace(hour=4,  minute=30, second=0, microsecond=0)
+        close_time = start_time.replace(hour=23, minute=0, second=0, microsecond=0)
+    return open_time, close_time
+
+def _now():
+    """
+    Current time - using datetime.now() for consistency across environments.
+    """
+    return datetime.datetime.now()
+
+
+def get_current_service_hours():
+    """
+    Returns the current service hours as a formatted string.
+    """
+    now = _now()
+    open_time, close_time = _service_window(now)
+    
+    # Format the times as HH:MM
+    open_str = open_time.strftime("%H:%M")
+    close_str = close_time.strftime("%H:%M")
+    
+    # Get day name in Spanish
+    days = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+    day_name = days[now.weekday()]
+    
+    return {
+        'day': day_name,
+        'open_time': open_str,
+        'close_time': close_str,
+        'is_operating': now >= open_time and now <= close_time
+    }
+
+
+# --- BOOLEANS FOR FRONTEND (VIA BACKEND) ---
+
+def can_make_trip(start_time: datetime.datetime, trip_duration_min: int) -> bool:
+    """
+    Returns True if a trip of 'trip_duration_min' starting at 'start_time'
+    both starts and ends within the metro operating hours.
+    """
+    open_time, close_time = _service_window(start_time)
+    end_time = start_time + datetime.timedelta(minutes=trip_duration_min)
+    result = (start_time >= open_time) and (end_time <= close_time)
+    return result
+
+def can_make_trip_now_duration(trip_duration_min: int) -> bool:
+    """
+    Shortcut: takes the current backend time and evaluates with the already calculated duration.
+    """
+    start_time = _now()
+    return can_make_trip(start_time, trip_duration_min)
+
+def can_make_trip_now_graph(G: nx.Graph, source: str, target: str) -> bool:
+    """
+    Calculates duration with Dijkstra (using already penalized weights in G)
+    and evaluates against the current backend time. Returns bool.
+    """
+    try:
+        trip_duration_min = nx.dijkstra_path_length(G, source=source, target=target, weight="weight")
+    except nx.NetworkXNoPath:
+        print(f"No path found between {source} and {target}")
+        return False
+    
+    now = _now()
+    result = can_make_trip(now, int(trip_duration_min))
+    return result
+
+def get_time(date_str: str, time_str: str) -> datetime.datetime:
+    """Builds a datetime from 'YYYY-MM-DD' and 'HH:MM'."""
+    return datetime.datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M")
+
+# Test function to verify the logic
+def test_can_make_trip_logic():
+    """
+    Test function to verify that the can_make_trip logic works correctly.
+    This will help us understand why the alert is not showing when it should.
+    """
+    print("=== TESTING CAN_MAKE_TRIP LOGIC ===")
+    
+    # Test current time
+    now = _now()
+    print(f"Current time: {now}")
+    
+    # Test service window
+    open_time, close_time = _service_window(now)
+    print(f"Service window: {open_time} to {close_time}")
+    
+    # Test different trip durations
+    test_durations = [30, 60, 120, 180, 240]  # minutes
+    
+    for duration in test_durations:
+        end_time = now + datetime.timedelta(minutes=duration)
+        can_make = (now >= open_time) and (end_time <= close_time)
+        print(f"Trip duration {duration}min: Start {now.time()} -> End {end_time.time()} -> Can make: {can_make}")
+    
+    # Test specific scenario: what if we're outside service hours?
+    # Let's simulate a time outside service hours
+    if now.weekday() == 6:  # Sunday
+        test_time = now.replace(hour=3, minute=0, second=0, microsecond=0)  # 3 AM Sunday
+    else:
+        test_time = now.replace(hour=2, minute=0, second=0, microsecond=0)  # 2 AM weekday
+    
+    test_open, test_close = _service_window(test_time)
+    print(f"\nTest time outside service: {test_time}")
+    print(f"Service window for test time: {test_open} to {test_close}")
+    
+    for duration in test_durations:
+        end_time = test_time + datetime.timedelta(minutes=duration)
+        can_make = (test_time >= test_open) and (end_time <= test_close)
+        print(f"Trip duration {duration}min: Start {test_time.time()} -> End {end_time.time()} -> Can make: {can_make}")
+
+# Uncomment the line below to run the test
+# test_can_make_trip_logic()
 
 # # Dibujar el grafo
 # plt.figure(figsize=(10, 7))

@@ -417,21 +417,52 @@ function closestStations(userPoint, maxDistance) {
 console.log("Map initialized");
 map.on("load", () => {
   startLocationTracking();
+  loadServiceHours(); // Load service hours when page loads
+  
+  // Inicializar funcionalidades de autocompletado
+  setupInputSuggestions();
 });
 
-map.on("click", "points-layer", (e) => {
-  const feature = e.features[0];
+// Function to load and display service hours
+function loadServiceHours() {
+  fetch('/view/getServiceHours')
+    .then((res) => res.json())
+    .then((data) => {
+      displayServiceHours(data.service_hours);
+    })
+    .catch((error) => {
+      console.error('Error loading service hours:', error);
+    });
+}
 
-  new mapboxgl.Popup()
-    .setLngLat(feature.geometry.coordinates)
-    .setHTML(
-      `
-      <b>ID:</b> ${feature.properties.ID || "Sin ID"}<br>
-      <b>Distance:</b> ${feature.properties.distance || "N/A"}
-  `
-    )
-    .addTo(map);
-});
+// Function to display service hours
+function displayServiceHours(serviceHours) {
+  let infoContainer = document.getElementById("serviceHoursInfo");
+  if (!infoContainer) {
+    infoContainer = document.createElement("div");
+    infoContainer.id = "serviceHoursInfo";
+    infoContainer.style.marginTop = "10px";
+    infoContainer.style.padding = "10px";
+    infoContainer.style.backgroundColor = "#f8f9fa";
+    infoContainer.style.borderRadius = "5px";
+    document.querySelector(".divRute").appendChild(infoContainer);
+  }
+
+  if (serviceHours) {
+    const statusClass = serviceHours.is_operating ? 'text-success' : 'text-danger';
+    const statusText = serviceHours.is_operating ? 'Operando' : 'Cerrado';
+    
+    const html = `
+      <h6 class="mb-2">🕒 Horario de Operación</h6>
+      <p class="mb-1"><strong>${serviceHours.day}:</strong> ${serviceHours.open_time} - ${serviceHours.close_time}</p>
+      <p class="mb-0 ${statusClass}"><strong>Estado:</strong> ${statusText}</p>
+    `;
+    
+    infoContainer.innerHTML = html;
+  }
+}
+
+// Removed popup functionality to keep only custom dropdown suggestions
 
 // Function to go to user location
 document.querySelector(".userLocation").addEventListener("click", function () {
@@ -465,15 +496,15 @@ document.getElementById("btnSearchRute").addEventListener("click", function () {
     return;
   }
 
-  const { startPoint, endPoint } = validationResult;
+  const { startPoint, endPoint, startId, endId, startName, endName } = validationResult;
 
   // Hide alert if all is valid
   alertBox.style.display = "none";
 
-  console.log(`Inicio: ${inputStart}, Destino: ${inputDestination}`);
+  console.log(`Inicio: ${startName} (${startId}), Destino: ${endName} (${endId})`);
 
   fetch(
-    `/view/callRute?inputStart=${inputStart}&inputDestination=${inputDestination}`
+    `/view/callRute?inputStart=${startId}&inputDestination=${endId}`
   )
     .then((res) => res.json())
     .then((data) => {
@@ -481,7 +512,23 @@ document.getElementById("btnSearchRute").addEventListener("click", function () {
       console.log("Distancia:", data.distance);
       console.log("Información de transferencias:", data.transfer_info);
 
-      displayTransferInfo(data.transfer_info, data.rute);
+      // Check if the trip can be made according to the schedule
+      if (data.can_make_trip === false || String(data.can_make_trip).toLowerCase() === "false") {
+        const alertBox = document.getElementById("alerta-validacion");
+        const alertMessage = document.getElementById("mensaje-alerta");
+        
+        showAutoClosingAlert(
+          alertBox,
+          alertMessage,
+          "⚠️ El viaje no se puede completar dentro del horario de operación del metro."
+        );
+        return; // Do not continue showing the route
+      }
+
+              displayTransferInfo(data.transfer_info, data.rute);
+              
+              // Update service hours display with new data
+              displayServiceHours(data.service_hours);
     });
 
   // Adjust map view to include both points
@@ -490,6 +537,8 @@ document.getElementById("btnSearchRute").addEventListener("click", function () {
   bounds.extend(endPoint.geometry.coordinates);
   map.fitBounds(bounds, { padding: 40 });
 });
+
+
 
 function displayTransferInfo(transferInfo, route) {
   let infoContainer = document.getElementById("routeInfo");
@@ -680,3 +729,110 @@ document.getElementById("btnUserLocation").onclick = function () {
   pickStartingPoint(userLocation);
   map.flyTo({ center: userLocation });
 };
+
+
+
+// Función para mostrar sugerencias en tiempo real
+function setupInputSuggestions() {
+    const startInput = document.getElementById('inputStart');
+    const destInput = document.getElementById('inputDestination');
+    
+    if (startInput) {
+        startInput.addEventListener('input', function() {
+            showInputSuggestions(this, 'startSuggestions');
+        });
+        
+        startInput.addEventListener('focus', function() {
+            showInputSuggestions(this, 'startSuggestions');
+        });
+    }
+    
+    if (destInput) {
+        destInput.addEventListener('input', function() {
+            showInputSuggestions(this, 'destSuggestions');
+        });
+        
+        destInput.addEventListener('focus', function() {
+            showInputSuggestions(this, 'destSuggestions');
+        });
+    }
+}
+
+// Función para mostrar sugerencias de input
+function showInputSuggestions(inputElement, containerId) {
+    const value = inputElement.value.trim();
+    
+    // Remover contenedor de sugerencias existente
+    let existingContainer = document.getElementById(containerId);
+    if (existingContainer) {
+        existingContainer.remove();
+    }
+    
+    if (value.length < 2) return;
+    
+    const suggestions = getStationSuggestions(value);
+    if (suggestions.length === 0) return;
+    
+    // Crear contenedor de sugerencias
+    const container = document.createElement('div');
+    container.id = containerId;
+    container.className = 'suggestions-container';
+    container.style.cssText = `
+        position: absolute;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 1000;
+        width: ${inputElement.offsetWidth}px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    `;
+    
+    // Añadir sugerencias
+    suggestions.forEach(suggestion => {
+        const item = document.createElement('div');
+        item.className = 'suggestion-item';
+        item.style.cssText = `
+            padding: 8px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        `;
+        item.innerHTML = `
+            <strong>${suggestion.name}</strong> 
+            <span class="station-id">${suggestion.id}</span>
+        `;
+        
+        item.addEventListener('click', function() {
+            inputElement.value = suggestion.name;
+            container.remove();
+        });
+        
+        item.addEventListener('mouseenter', function() {
+            this.style.backgroundColor = '#f8f9fa';
+        });
+        
+        item.addEventListener('mouseleave', function() {
+            this.style.backgroundColor = 'white';
+        });
+        
+        container.appendChild(item);
+    });
+    
+    // Posicionar contenedor
+    const rect = inputElement.getBoundingClientRect();
+    container.style.top = `${rect.bottom + window.scrollY}px`;
+    container.style.left = `${rect.left + window.scrollX}px`;
+    
+    // Añadir al DOM
+    document.body.appendChild(container);
+    
+    // Cerrar sugerencias al hacer clic fuera
+    document.addEventListener('click', function closeSuggestions(e) {
+        if (!container.contains(e.target) && e.target !== inputElement) {
+            container.remove();
+            document.removeEventListener('click', closeSuggestions);
+        }
+    });
+}
