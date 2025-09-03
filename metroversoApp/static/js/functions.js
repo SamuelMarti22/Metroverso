@@ -186,13 +186,14 @@ window.renderRouteChain = function(route, transferInfo){
       }
     }
 
-    // Generates the spans
+    // Generates the spans with station names instead of IDs
     var parts = [];
     for (var j = 0; j < route.length; j++) {
       var st = String(route[j] || "");
+      var stationName = getStationName(st);
       var isTransfer = !!transferSet[st];
       var cls = isTransfer ? "station transfer" : "station";
-      parts.push('<span class="' + cls + '">' + st + '</span>');
+      parts.push('<span class="' + cls + '">' + stationName + '</span>');
     }
 
     // Unites with the separator

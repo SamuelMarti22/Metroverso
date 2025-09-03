@@ -563,7 +563,8 @@ function displayTransferInfo(transferInfo, route) {
     html += `<p><strong>Estaciones de transferencia:</strong></p>`;
     html += `<ul>`;
     transferInfo.transfer_stations.forEach((station) => {
-      html += `<li>Transferencia en: <strong>${station}</strong></li>`;
+      const stationName = window.getStationName(station);
+      html += `<li>Transferencia en: <strong>${stationName}</strong></li>`;
     });
     html += `</ul>`;
   } else {
@@ -584,8 +585,10 @@ function displayTransferInfo(transferInfo, route) {
       const nextStation =
         curr.stations.length > 1 ? curr.stations[1] : transferStation;
 
+      const transferStationName = window.getStationName(transferStation);
+      const nextStationName = window.getStationName(nextStation);
       transferHints.push(
-        `En <strong>${transferStation}</strong> cambia a la línea <strong>${newLine}</strong> y dirígete a <strong>${nextStation}</strong>.`
+        `En <strong>${transferStationName}</strong> cambia a la línea <strong>${newLine}</strong> y dirígete a <strong>${nextStationName}</strong>.`
       );
     }
 
