@@ -36,6 +36,18 @@ SPEEDS = {
     "Z": 18,   # Cable 
 }
 
+def add_station(G, station_id, coords, line_key="A"):
+    """
+    Agrega un nodo al grafo con coordenadas y línea.
+    - G: grafo NetworkX
+    - station_id: string, ej. "A01"
+    - coords: [lon, lat]
+    - line_key: identificador de línea
+    """
+    lon, lat = coords
+    if station_id not in G:
+        G.add_node(station_id, pos=(lon, lat), line=line_key)
+
 def add_edge_time(G, coords_dict, u, v, line_key, transfer_min=0.3):
     """Añade arista u<->v con peso en minutos.
     line_key: clave para SPEEDS según la línea (ej. 'A','B','K'...).
@@ -46,7 +58,7 @@ def add_edge_time(G, coords_dict, u, v, line_key, transfer_min=0.3):
 
     G.add_edge(
         u, v,
-        weight=round(time_min,2),              # 👈 ahora el peso es TIEMPO (min)
+        weight=round(time_min,2),              # ahora el peso es TIEMPO (min)
         time_min=time_min,
         distance_km=d_km,
         speed_kmh=speed,
@@ -82,6 +94,9 @@ lineaA = {
     "A21": [-75.62644764544693, 6.152742930466616],  # La Estrella
 }
 
+#Nodos Linea A:
+for station_id, coords in lineaA.items():
+    add_station(G, station_id, coords, line_key="A")
 
 #Conexiones Linea A:
 
@@ -96,6 +111,10 @@ lineaL = {
 }
 
 #Conexiones Linea L:
+
+#Nodos Linea L:
+for station_id, coords in lineaL.items():
+    add_station(G, station_id, coords, line_key="L")
 
 add_edge_time(G, lineaL, "L01", "L02", line_key="L")
 
@@ -121,6 +140,10 @@ linea1 = {
     "M17": [-75.55293799, 6.282932],  # Berlín
     "M18": [-75.55665899, 6.285200132],  # Parque Aranjuez
 }
+
+#Nodos Linea 1:
+for station_id, coords in linea1.items():
+    add_station(G, station_id, coords, line_key="1")
 
 #Conexiones Linea 1:
 
@@ -167,6 +190,10 @@ linea2 = {
     "X20": [-75.55665899, 6.285200132],  # Parque Aranjuez
 }
 
+#Nodos Linea 2:
+for station_id, coords in linea2.items():
+    add_station(G, station_id, coords, line_key="2")
+
 #Conexiones Linea 2:
 
 for i in range(0, 20):  # De X00 a X20
@@ -191,6 +218,10 @@ lineaB = {
     "B05": [-75.60374625, 6.25808821],  # Santa Lucía
     "B06": [-75.6136642, 6.256780931],  # San Javier
 }
+#Nodos Linea B:
+for station_id, coords in lineaB.items():
+    add_station(G, station_id, coords, line_key="B")
+
 
 #Conexiones Linea B:
 
@@ -206,7 +237,7 @@ for i in range(0, 6):  # De B00 a B06
 
 lineaT = {
     "A11": [-75.56967864286219, 6.247175927579917], #San Antonio
-    "X11": [-75.56609179, 6.247080223],  # San José
+    "T01": [-75.565386212474, 6.2473291696231],  # San José
     "T02": [-75.56199329, 6.245588625], # Pabellon del Agua
     "T03": [-75.55876266, 6.24395102],  # Bicentenario
     "T04": [-75.5539, 6.241399227],     # Buenos Aires
@@ -216,14 +247,18 @@ lineaT = {
     "T08": [-75.54013974, 6.233150212], # Oriente
 }
 
+#Nodos Linea T:
+for station_id, coords in lineaT.items():
+    add_station(G, station_id, coords, line_key="T")
+
 #Conexiones Linea T:
 
 for i in range(0, 8):  # De T00 a T08
     if i == 0:
         origen = f"A11"
-        destino = f"X11"
+        destino = f"T01"
     elif i == 1:
-        origen = f"X11"
+        origen = f"T01"
         destino = f"T{str(i+1).zfill(2)}"
     else:
         origen = f"T{str(i).zfill(2)}"
@@ -237,6 +272,11 @@ lineaZ = {
     "Z01": [-75.54447595, 6.24526309],  # El Pinal
     "Z02": [-75.5413945, 6.24761518],   # 13 de Noviembre
 }
+
+#Nodos Linea Z:
+for station_id, coords in lineaZ.items():
+    add_station(G, station_id, coords, line_key="Z")
+
 
 #Conexiones Linea Z:
 
@@ -256,6 +296,10 @@ lineaJ = {
     "B06": [-75.6136642, 6.256780931],  # San Javier
 }
 
+#Nodos Linea J:
+for station_id, coords in lineaJ.items():
+    add_station(G, station_id, coords, line_key="J")
+
 #Conexiones Linea J:
 
 for i in range(0, 3):  # De J00 a J03
@@ -273,6 +317,10 @@ lineaH = {
     "H01": [-75.53637212, 6.236645415], # Las Torres
     "H02": [-75.52867948, 6.234874544], # Villa Sierra
 }
+
+#Nodos Linea H:
+for station_id, coords in lineaH.items():
+    add_station(G, station_id, coords, line_key="H")
 
 #Conexiones Linea H:
 
@@ -303,6 +351,10 @@ lineaO = {
     "M02": [-75.60102788, 6.231177752],  # La Palma
 }
 
+#Nodos Linea O:
+for station_id, coords in lineaO.items():
+    add_station(G, station_id, coords, line_key="O")
+
 #Conexiones Linea O:
 
 for i in range(1, 13):  # De O01 a O13
@@ -331,6 +383,11 @@ lineaP = {
     "P03": [-75.58233359, 6.30599902], # El progreso
 }
 
+#Nodos Linea P:
+for station_id, coords in lineaP.items():
+    add_station(G, station_id, coords, line_key="P")
+
+
 #Conexiones Linea P:
 
 for i in range(0, 3):  # De P00 a P03
@@ -348,6 +405,11 @@ lineaK = {
     "K02": [-75.54814136, 6.295122597], # Popular
     "L01": [-75.54184763, 6.29272255],  # Santo Domingo
 }
+
+#Nodos Linea K:
+for station_id, coords in lineaK.items():
+    add_station(G, station_id, coords, line_key="K")
+
 
 #Conexiones Linea K:
 

@@ -80,6 +80,7 @@ def calculeRute(star, destination):
     try: 
         rute = nx.dijkstra_path(G, source=star, target=destination, weight="weight")
         distance = nx.dijkstra_path_length(G, source=star, target=destination, weight="weight")
+        rute_coords = [G.nodes[n]["pos"] for n in rute]
         
         # coords_ruta = [rute[nodo] for nodo in rute]
         # print(coords_ruta)
@@ -87,9 +88,12 @@ def calculeRute(star, destination):
         # Analyze transfers
         transfer_info = analyze_route_transfers(rute)
 
+        #print("Rute_coords:", rute_coords)
         print("Rute:", rute)
         print("Distance:", round(distance, 2)*100, "kilometers")
         print("Transfer info:", transfer_info)
+        print("Rute_coords:", rute_coords)
+        
         
     except nx.NetworkXNoPath:
         print("No path found between the specified nodes.")
@@ -102,4 +106,4 @@ def calculeRute(star, destination):
             'line_segments': []
         }
 
-    return list(rute), distance, transfer_info
+    return list(rute), distance, transfer_info,rute_coords
