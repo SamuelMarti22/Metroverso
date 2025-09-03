@@ -265,9 +265,6 @@ turf.point([-75.55316802, 6.27839345], { ID: "X18", name: "Las Esmeraldas" }),
 turf.point([-75.55293799, 6.282932], { ID: "X19", name: "Berlín" }),
 turf.point([-75.55665899, 6.285200132], { ID: "X20", name: "Parque Aranjuez" }),
 
-// test
-turf.point([60.879146,416.205827], { ID: "ZW" }),
-
 // // Points for C6-001
 //   turf.point([-75.5573494869921, 6.300018519748982], { ID: "C6-001-01" }),
 //   turf.point([-75.55589655334563, 6.304679211463447], { ID: "C6-001-02" }),

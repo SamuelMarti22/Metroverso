@@ -29,6 +29,168 @@ const UPDATE_INTERVAL = 1000; // Update interval in milliseconds
 const STATION_UPDATE_THRESHOLD = 10; // Update stations when user moves more than 10 meters
 let linesStations = null;
 
+// Carga el GeoJSON y lo guarda en la global
+async function loadLinesStations() {
+  const cfg = window.APP_CONFIG || {};
+  if (!cfg.geojsonUrl) {
+    console.error("Falta geojsonUrl en APP_CONFIG");
+    return null;
+  }
+
+  try {
+    const res = await fetch(cfg.geojsonUrl, {
+      credentials: "same-origin",
+      headers: { "Accept": "application/json" }
+    });
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+
+    linesStations = await res.json();
+    console.log("GeoJSON cargado en linesStations:", linesStations);
+    return linesStations;
+  } catch (err) {
+    console.error("Error cargando GeoJSON:", err);
+    return null;
+  }
+}
+
+loadLinesStations()
+
+// Function to show/hide the closest stations box
+function setClosestStationsBoxVisible(visible) {
+  const box = document.getElementById("closestStationsBox");
+  box.style.display = visible ? "" : "none";
+}
+
+// Function to update user location
+function updateUserLocation(position) {
+  const userLat = position.coords.latitude;
+  const userLng = position.coords.longitude;
+  const accuracy = position.coords.accuracy;
+  const currentTime = Date.now();
+
+  // Limit very frequent updates
+  if (currentTime - lastUpdateTime < UPDATE_INTERVAL) {
+    return;
+  }
+
+  console.log("Location accuracy:", Math.round(accuracy * 100) / 100, "m");
+  //if (accuracy > 100) {
+  //    console.warn("Low location precision");
+  //    return;
+  //}
+
+  const newUserLocation = [userLng, userLat];
+
+  // Check if user has moved significantly before updating closest stations
+  let shouldUpdateStations = false;
+  if (!lastUserLocation) {
+    shouldUpdateStations = true; // First time getting location
+  } else {
+    const distance = turf.distance(
+      turf.point(lastUserLocation),
+      turf.point(newUserLocation),
+      { units: "meters" }
+    );
+    if (distance > STATION_UPDATE_THRESHOLD) {
+      shouldUpdateStations = true;
+    }
+  }
+
+  userLocation = newUserLocation;
+  lastUpdateTime = currentTime;
+
+  // Show the box if there is userLocation, hide if not
+  setClosestStationsBoxVisible(true);
+
+  // Update closest stations only if user has moved significantly
+  if (shouldUpdateStations) {
+    closestStationsToUser = closestPoints(turf.point(userLocation), 2000);
+    closestStations(turf.point(userLocation), 2000);
+    lastUserLocation = [...userLocation];
+
+    // Update the button text with the station name/id
+    const btn1 = document.getElementById("btnClosestStation1");
+    const btn2 = document.getElementById("btnClosestStation2");
+    const btn3 = document.getElementById("btnClosestStation3");
+    btn1.innerHTML = `<i class="bi bi-geo-alt"></i> ${closestStationsToUser[0]?.properties.ID || ""
+      }`;
+    btn2.innerHTML = `<i class="bi bi-geo-alt"></i> ${closestStationsToUser[1]?.properties.ID || ""
+      }`;
+    btn3.innerHTML = `<i class="bi bi-geo-alt"></i> ${closestStationsToUser[2]?.properties.ID || ""
+      }`;
+    document.getElementById(
+      "btnUserLocation"
+    ).innerHTML = `<i class="bi bi-person"></i> Mi ubicación`;
+  }
+
+  if (!userMarker) {
+    // Create custom marker
+    const markerElement = document.createElement("div");
+    markerElement.innerHTML = "📍";
+    markerElement.style.fontSize = "20px";
+    markerElement.style.cursor = "pointer";
+
+    userMarker = new mapboxgl.Marker({ element: markerElement })
+      .setLngLat([userLng, userLat])
+      .setPopup(
+        new mapboxgl.Popup({
+          closeButton: false,
+          offset: [0, -10],
+        }).setText("Tu ubicación")
+      )
+      .addTo(map);
+  } else {
+    // If marker already exists, just update its position
+    userMarker.setLngLat([userLng, userLat]);
+  }
+}
+
+// Function to start optimized tracking
+function startLocationTracking() {
+  watchId = navigator.geolocation.watchPosition(
+    updateUserLocation,
+    handleLocationError,
+    {
+      enableHighAccuracy: true,
+      timeout: 5000,
+      maximumAge: UPDATE_INTERVAL,
+    }
+  );
+}
+
+// Function to handle location errors
+function handleLocationError(error) {
+  console.warn("Could not get location:", error.message);
+
+  switch (error.code) {
+    case error.PERMISSION_DENIED:
+      console.warn("Permission denied to access location.");
+      break;
+    case error.POSITION_UNAVAILABLE:
+      alert("Location information is not available.");
+      break;
+    case error.TIMEOUT:
+      alert("Location request timed out.");
+      break;
+    default:
+      alert("Error getting location.");
+      break;
+  }
+}
+
+// Function to get walking route
+async function walkingRoute(start, end) {
+  const query = await fetch(
+    `https://api.mapbox.com/directions/v5/mapbox/walking/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&geometries=geojson&overview=full&approaches=unrestricted;unrestricted&access_token=${mapboxgl.accessToken}`,
+    { method: "GET" }
+  );
+  const json = await query.json();
+  const data = json.routes[0];
+  return data;
+}
+
 // Fallback para la línea T (tu geojson tal cual)
 const lineT = {
   "type": "FeatureCollection",
@@ -1719,138 +1881,6 @@ const lineP = {
   ]
 }
 
-const lineA = {
-  "type": "FeatureCollection",
-  "features": [
-    {
-      "type": "Feature",
-      "properties": {
-        "sistema": "METRO",
-        "itinerario": "Niquía - La Estrella",
-        "linea": "A"
-      },
-      "geometry": {
-        "type": "LineString",
-        "coordinates": [
-          [-75.54426910322798, 6.337853626702383],  // A01 - Niquía
-          [-75.55373230475944, 6.329958711908574],  // A02 - Bello
-          [-75.55534580389958, 6.316001342229484],  // A03 - Madera
-          [-75.55851194186361, 6.299961957796953],  // A04 - Acevedo
-          [-75.56470061709405, 6.290310300270889],  // A05 - Tricentenario
-          [-75.56938422818597, 6.278324369727542],  // A06 - Caribe
-          [-75.5657915298572, 6.269405972933399],   // A07 - Universidad
-          [-75.56327830924161, 6.2640097938723756], // A08 - Hospital
-          [-75.56613343894547, 6.256898815797797],  // A09 - Prado
-          [-75.5681765179859, 6.2505897004873106],  // A10 - Parque Berrío
-          [-75.56967864286219, 6.247175927579917],  // A11 - San Antonio
-          [-75.57142080003668, 6.242929792653825],  // A12 - Alpujarra
-          [-75.57316494840505, 6.238417946555231],  // A13 - Exposiciones
-          [-75.57563364841289, 6.230039107985888],  // A14 - Industriales
-          [-75.57811744976053, 6.211997461468826],  // A15 - Poblado
-          [-75.58181103813159, 6.193916517461162],  // A16 - Aguacatala
-          [-75.5860746825908, 6.186147651589707],   // A17 - Ayurá
-          [-75.59705548923098, 6.174707717040306],  // A18 - Envigado
-          [-75.60677051560722, 6.162934718982683],  // A19 - Itagüi
-          [-75.61600511782902, 6.157818058477744],  // A20 - Sabaneta
-          [-75.62644764544693, 6.152742930466616]   // A21 - La Estrella
-        ]
-      }
-    }
-  ]
-};
-
-const lineB = {
-  "type": "FeatureCollection",
-  "features": [
-    {
-      "type": "Feature",
-      "properties": {
-        "sistema": "METRO",
-        "itinerario": "San Antonio - San Javier",
-        "linea": "B"
-      },
-      "geometry": {
-        "type": "LineString",
-        "coordinates": [
-          [-75.56967864286219, 6.247175927579917],  // A11 - San Antonio
-          [-75.57515198, 6.249053572],              // B01 - Cisneros
-          [-75.58294171, 6.252984046],              // B02 - Suramericana
-          [-75.58825637, 6.253335629],              // B03 - Estadio
-          [-75.5977437, 6.258709043],               // B04 - Floresta
-          [-75.60374625, 6.25808821],               // B05 - Santa Lucía
-          [-75.6136642, 6.256780931]                // B06 - San Javier
-        ]
-      }
-    }
-  ]
-};
-
-const lineL = {
-  "type": "FeatureCollection",
-  "features": [
-    {
-      "type": "Feature",
-      "properties": {
-        "sistema": "CABLE",
-        "itinerario": "Santo Domingo - Arví",
-        "linea": "L"
-      },
-      "geometry": {
-        "type": "LineString",
-        "coordinates": [
-          [-75.54184763, 6.29272255],               // L01 - Santo Domingo
-          [-75.50297173, 6.281545751]               // L02 - Arví
-        ]
-      }
-    }
-  ]
-};
-
-const lineJ = {
-  "type": "FeatureCollection",
-  "features": [
-    {
-      "type": "Feature",
-      "properties": {
-        "sistema": "CABLE",
-        "itinerario": "La Aurora - San Javier",
-        "linea": "J"
-      },
-      "geometry": {
-        "type": "LineString",
-        "coordinates": [
-          [-75.61420338, 6.281093175],              // J00 - La Aurora
-          [-75.61401716, 6.275360769],              // J01 - Vallejuelos
-          [-75.61370257, 6.26567653],               // J02 - JuanXXIII
-          [-75.6136642, 6.256780931]                // B06 - San Javier
-        ]
-      }
-    }
-  ]
-};
-
-const lineH = {
-  "type": "FeatureCollection",
-  "features": [
-    {
-      "type": "Feature",
-      "properties": {
-        "sistema": "CABLE",
-        "itinerario": "Oriente - Villa Sierra",
-        "linea": "H"
-      },
-      "geometry": {
-        "type": "LineString",
-        "coordinates": [
-          [-75.54013974, 6.233150212],              // T08 - Oriente
-          [-75.53637212, 6.236645415],              // H01 - Las Torres
-          [-75.52867948, 6.234874544]               // H02 - Villa Sierra
-        ]
-      }
-    }
-  ]
-};
-
 const lineZ = {
   "type": "FeatureCollection",
   "features": [
@@ -1877,168 +1907,244 @@ const lineZ = {
   ]
 }
 
-// Carga el GeoJSON y lo guarda en la global
-async function loadLinesStations() {
-  const cfg = window.APP_CONFIG || {};
-  if (!cfg.geojsonUrl) {
-    console.error("Falta geojsonUrl en APP_CONFIG");
-    return null;
+function getLine(lineValue) {
+  if (!linesStations || linesStations.type !== "FeatureCollection") {
+    console.error("linesStations no está cargado todavía");
+    return { type: "FeatureCollection", features: [] };
   }
+  const features = linesStations.features.filter(
+    f => f?.properties?.["linea"] === lineValue
+  );
+  return { type: "FeatureCollection", features };
+}
 
-  try {
-    const res = await fetch(cfg.geojsonUrl, {
-      credentials: "same-origin",
-      headers: { "Accept": "application/json" }
-    });
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
+function findCoordIndex(lineFC, target, eps = 1e-9) {
+  console.log("Buscando coordenada", target, "en línea con", lineFC.features, "features");
+  const almostEq = (a, b) => Math.abs(a - b) < eps;
+  const isSameCoord = (c) => almostEq(c[0], target[0]) && almostEq(c[1], target[1]);
+
+  for (const f of lineFC.features) {
+    const coords = f.geometry.coordinates;
+    const idx = coords.findIndex(isSameCoord);
+    if (idx !== -1) return idx;
+  }
+  return -1;
+}
+
+function paintLineSegment(lineInput, startIndex, endIndex, sourceId = "sub-line", layerId = "sub-line-layer",rute, rute_coords) {
+  // Acepta Feature o FeatureCollection
+  let feature = null;
+  if (!lineInput) {
+    console.error("[paintLineSegment] lineInput es null/undefined");
+    return;
+  } else if (lineInput.type === "Feature") {
+    feature = lineInput;
+  } else if (lineInput.type === "FeatureCollection") {
+    if (!lineInput.features?.length) {
+      console.error("[paintLineSegment] FeatureCollection vacío");
+      return;
     }
-
-    linesStations = await res.json();
-    console.log("GeoJSON cargado en linesStations:", linesStations);
-    return linesStations;
-  } catch (err) {
-    console.error("Error cargando GeoJSON:", err);
-    return null;
-  }
-}
-
-// Function to show/hide the closest stations box
-function setClosestStationsBoxVisible(visible) {
-  const box = document.getElementById("closestStationsBox");
-  box.style.display = visible ? "" : "none";
-}
-
-// Function to update user location
-function updateUserLocation(position) {
-  const userLat = position.coords.latitude;
-  const userLng = position.coords.longitude;
-  const accuracy = position.coords.accuracy;
-  const currentTime = Date.now();
-
-  // Limit very frequent updates
-  if (currentTime - lastUpdateTime < UPDATE_INTERVAL) {
+    feature = lineInput.features[0];
+  } else {
+    console.error("[paintLineSegment] lineInput no es Feature ni FeatureCollection:", lineInput);
     return;
   }
 
-  console.log("Location accuracy:", Math.round(accuracy * 100) / 100, "m");
-  //if (accuracy > 100) {
-  //    console.warn("Low location precision");
-  //    return;
-  //}
+  // Validar que sea LineString y que existan coords
+  const geom = feature.geometry;
+  if (!geom || geom.type !== "LineString" || !Array.isArray(geom.coordinates)) {
+    console.error("[paintLineSegment] geometry inválida o no LineString:", geom);
+    return;
+  }
 
-  const newUserLocation = [userLng, userLat];
+  const coords = geom.coordinates;
+  if (!Number.isInteger(startIndex) || !Number.isInteger(endIndex)) {
+    console.error("[paintLineSegment] índices no son enteros:", startIndex, endIndex);
+    return;
+  }
 
-  // Check if user has moved significantly before updating closest stations
-  let shouldUpdateStations = false;
-  if (!lastUserLocation) {
-    shouldUpdateStations = true; // First time getting location
+  // Normalizar y acotar índices
+  const iMin = Math.max(0, Math.min(startIndex, endIndex));
+  const iMax = Math.min(coords.length - 1, Math.max(startIndex, endIndex));
+
+  if (iMin === iMax) {
+    console.warn("[paintLineSegment] tramo de un solo punto, necesita al menos 2:", iMin, iMax);
+    return;
+  }
+
+  const segmentCoords = coords.slice(iMin, iMax + 1);
+  if (segmentCoords.length < 2) {
+    console.warn("[paintLineSegment] segmento < 2 puntos, no se pinta");
+    return;
+  }
+
+  const segment = {
+    type: "Feature",
+    geometry: { type: "LineString", coordinates: segmentCoords },
+    properties: { ...(feature.properties || {}), _slice: [iMin, iMax] }
+  };
+
+  // Pintar / actualizar
+  if (map.getSource(sourceId)) {
+    map.getSource(sourceId).setData(segment);
   } else {
-    const distance = turf.distance(
-      turf.point(lastUserLocation),
-      turf.point(newUserLocation),
-      { units: "meters" }
-    );
-    if (distance > STATION_UPDATE_THRESHOLD) {
-      shouldUpdateStations = true;
+    map.addSource(sourceId, { type: "geojson", data: segment });
+    map.addLayer({
+      id: layerId,
+      type: "line",
+      source: sourceId,
+      layout: { "line-join": "round", "line-cap": "round" },
+      paint: { "line-color": "#FF0000", "line-width": 4 }
+    });
+  }
+}
+
+const COLOR_BY_LINE = {
+  "A": "#FF3B30",
+  "B": "#008CFF",
+  "O": "#2ECC71",
+  "Z": "#9B59B6",
+  "X": "#F39C12",
+  "M": "#34495E",
+  "K": "#34495E",
+  "P": "#34495E"
+};
+
+
+
+function addNodesRouteToMap(rute, rute_coords) {
+  if (!Array.isArray(rute) || !Array.isArray(rute_coords)) return;
+  if (rute.length < 2 || rute_coords.length < 2) return;
+
+  for (let i = 0; i < rute.length - 1; i++) {
+    const fromId = rute[i];
+    const toId   = rute[i + 1];
+    const fromCoord = rute_coords[i];
+    const toCoord   = rute_coords[i + 1];
+    if (!fromCoord || !toCoord) continue;
+
+    const sourceId = `sub-line-${i+1}`;
+    const layerId  = `sub-line-layer-${i+1}`;
+
+    const fromLineVal = fromId.charAt(0);
+    const toLineVal   = toId.charAt(0);
+
+    // ===== Trasbordo detectado (cambio de letra) =====
+    if (fromLineVal !== toLineVal) {
+      // Caso especial: si la nueva línea es T, pinta SIEMPRE el GeoJSON fallback de T completo
+      if (toLineVal === "T") {
+        const featT = lineT.features[0];
+        const endIdxT = featT.geometry.coordinates.length - 1;
+        paintLineSegment(featT, 0, endIdxT, sourceId, layerId);
+        const colorT = COLOR_BY_LINE?.T || "#00A9A5";
+        if (map.getLayer(layerId)) {
+          map.setPaintProperty(layerId, "line-color", colorT);
+          map.setPaintProperty(layerId, "line-width", 4);
+        }
+       }
+
+        if (toLineVal === "X") {
+        const featX= lineX.features[0];
+        const endIdxX = featX.geometry.coordinates.length - 1;
+        paintLineSegment(featX, 0, endIdxX, sourceId, layerId);
+        const colorT = COLOR_BY_LINE?.T || "#00A9A5";
+        if (map.getLayer(layerId)) {
+          map.setPaintProperty(layerId, "line-color", colorT);
+          map.setPaintProperty(layerId, "line-width", 4);
+        }
+       }
+
+        if (toLineVal === "M" && toId.charAt(1) === "1") {
+        const featM = lineM.features[0];
+        const endIdxM = featM.geometry.coordinates.length - 1;
+        paintLineSegment(featM, 0, endIdxM, sourceId, layerId);
+        const colorT = COLOR_BY_LINE?.M || "#00A9A5";
+        if (map.getLayer(layerId)) {
+          map.setPaintProperty(layerId, "line-color", colorT);
+          map.setPaintProperty(layerId, "line-width", 4);
+        }
+       }
+      
+      if (toLineVal === "M" && toId.charAt(1) === "0") {
+        const featM = lineM0.features[0];
+        const endIdxM = featM.geometry.coordinates.length - 1;
+        paintLineSegment(featM, 0, endIdxM, sourceId, layerId);
+        const colorT = COLOR_BY_LINE?.M || "#00A9A5";
+        if (map.getLayer(layerId)) {
+          map.setPaintProperty(layerId, "line-color", colorT);
+          map.setPaintProperty(layerId, "line-width", 4);
+        }
+       }
+
+        if (toLineVal === "O" && toId.charAt(1) === "0") {
+        const featO = lineO.features[0];
+        const endIdxO = featO.geometry.coordinates.length - 1;
+        paintLineSegment(featO, 0, endIdxO, sourceId, layerId);
+        const colorT = COLOR_BY_LINE?.O || "#00A9A5";
+        if (map.getLayer(layerId)) {
+          map.setPaintProperty(layerId, "line-color", colorT);
+          map.setPaintProperty(layerId, "line-width", 4);
+        }
+       }
+
+        if (toLineVal === "K") {
+        const featK = lineK.features[0];
+        const endIdxK = featK.geometry.coordinates.length - 1;
+        paintLineSegment(featK, 0, endIdxK, sourceId, layerId);
+        const colorT = COLOR_BY_LINE?.K || "#00A9A5";
+        if (map.getLayer(layerId)) {
+          map.setPaintProperty(layerId, "line-color", colorT);
+          map.setPaintProperty(layerId, "line-width", 4);
+        }
+       }
+
+
+        if (toLineVal === "P") {
+        const featP = lineP.features[0];
+        const endIdxP = featP.geometry.coordinates.length - 1;
+        paintLineSegment(featP, 0, endIdxP, sourceId, layerId);
+        const colorT = COLOR_BY_LINE?.P || "#00A9A5";
+        if (map.getLayer(layerId)) {
+          map.setPaintProperty(layerId, "line-color", colorT);
+          map.setPaintProperty(layerId, "line-width", 4);
+        }
+       }
+
+        if (toLineVal === "Z") {
+        const featZ = lineZ.features[0];
+        const endIdxZ = featZ.geometry.coordinates.length - 1;
+        paintLineSegment(featZ, 0, endIdxZ, sourceId, layerId);
+        const colorT = COLOR_BY_LINE?.Z || "#00A9A5";
+        if (map.getLayer(layerId)) {
+          map.setPaintProperty(layerId, "line-color", colorT);
+          map.setPaintProperty(layerId, "line-width", 4);
+        }
+       }
+      
     }
-  }
 
-  userLocation = newUserLocation;
-  lastUpdateTime = currentTime;
+    // ===== Caso normal: misma línea =====
+    const lineFC  = getLine(fromLineVal);
+    const startIdx = findCoordIndex(lineFC, fromCoord);
+    const endIdx   = findCoordIndex(lineFC, toCoord);
 
-  // Show the box if there is userLocation, hide if not
-  setClosestStationsBoxVisible(true);
-
-  // Update closest stations only if user has moved significantly
-  if (shouldUpdateStations) {
-    closestStationsToUser = closestPoints(turf.point(userLocation), 2000);
-    closestStations(turf.point(userLocation), 2000);
-    lastUserLocation = [...userLocation];
-
-    // Update the button text with the station name/id
-    const btn1 = document.getElementById("btnClosestStation1");
-    const btn2 = document.getElementById("btnClosestStation2");
-    const btn3 = document.getElementById("btnClosestStation3");
-    btn1.innerHTML = `<i class="bi bi-geo-alt"></i> ${
-      closestStationsToUser[0]?.properties.ID || ""
-    }`;
-    btn2.innerHTML = `<i class="bi bi-geo-alt"></i> ${
-      closestStationsToUser[1]?.properties.ID || ""
-    }`;
-    btn3.innerHTML = `<i class="bi bi-geo-alt"></i> ${
-      closestStationsToUser[2]?.properties.ID || ""
-    }`;
-    document.getElementById(
-      "btnUserLocation"
-    ).innerHTML = `<i class="bi bi-person"></i> Mi ubicación`;
-  }
-
-  if (!userMarker) {
-    // Create custom marker
-    const markerElement = document.createElement("div");
-    markerElement.innerHTML = "📍";
-    markerElement.style.fontSize = "20px";
-    markerElement.style.cursor = "pointer";
-
-    userMarker = new mapboxgl.Marker({ element: markerElement })
-      .setLngLat([userLng, userLat])
-      .setPopup(
-        new mapboxgl.Popup({
-          closeButton: false,
-          offset: [0, -10],
-        }).setText("Tu ubicación")
-      )
-      .addTo(map);
-  } else {
-    // If marker already exists, just update its position
-    userMarker.setLngLat([userLng, userLat]);
-  }
-}
-
-// Function to start optimized tracking
-function startLocationTracking() {
-  watchId = navigator.geolocation.watchPosition(
-    updateUserLocation,
-    handleLocationError,
-    {
-      enableHighAccuracy: true,
-      timeout: 5000,
-      maximumAge: UPDATE_INTERVAL,
+    if (startIdx !== -1 && endIdx !== -1) {
+      // Pinta tramo dentro de la misma línea
+      paintLineSegment(lineFC, startIdx, endIdx, sourceId, layerId);
+      const color = COLOR_BY_LINE?.[fromLineVal] || "#FF0000";
+      if (map.getLayer(layerId)) {
+        map.setPaintProperty(layerId, "line-color", color);
+        map.setPaintProperty(layerId, "line-width", 4);
+      }
+      continue;
     }
-  );
-}
 
-// Function to handle location errors
-function handleLocationError(error) {
-  console.warn("Could not get location:", error.message);
-
-  switch (error.code) {
-    case error.PERMISSION_DENIED:
-      console.warn("Permission denied to access location.");
-      break;
-    case error.POSITION_UNAVAILABLE:
-      alert("Location information is not available.");
-      break;
-    case error.TIMEOUT:
-      alert("Location request timed out.");
-      break;
-    default:
-      alert("Error getting location.");
-      break;
+    // Si por alguna razón no encontramos índices (pero no es trasbordo), omite tramo
+    console.warn(`[addNodesRouteToMap] No se hallaron índices en la línea ${fromLineVal} para tramo ${fromId}→${toId}`);
   }
 }
 
-// Function to get walking route
-async function walkingRoute(start, end) {
-  const query = await fetch(
-    `https://api.mapbox.com/directions/v5/mapbox/walking/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&geometries=geojson&overview=full&approaches=unrestricted;unrestricted&access_token=${mapboxgl.accessToken}`,
-    { method: "GET" }
-  );
-  const json = await query.json();
-  const data = json.routes[0];
-  return data;
-}
+
 
 // Function to add route to map
 function addRouteToMap(route, routeId = "walking-route") {
@@ -2292,66 +2398,21 @@ function closestStations(userPoint, maxDistance) {
 console.log("Map initialized");
 map.on("load", () => {
   startLocationTracking();
-  loadServiceHours(); // Load service hours when page loads
-  
-  // Cargar el GeoJSON de las líneas del metro
-  loadLinesStations();
-   
-  // Inicializar funcionalidades de autocompletado
-  setupInputSuggestions();
 });
 
-// Function to load and display service hours
-function loadServiceHours() {
-  fetch('/view/getServiceHours')
-    .then((res) => res.json())
-    .then((data) => {
-      displayServiceHours(data.service_hours);
-    })
-    .catch((error) => {
-      console.error('Error loading service hours:', error);
-    });
-}
+map.on("click", "points-layer", (e) => {
+  const feature = e.features[0];
 
-// Function to display service hours
-function displayServiceHours(serviceHours, usesLineL = false) {
-  let infoContainer = document.getElementById("serviceHoursInfo");
-  if (!infoContainer) {
-    infoContainer = document.createElement("div");
-    infoContainer.id = "serviceHoursInfo";
-    infoContainer.style.marginTop = "10px";
-    infoContainer.style.padding = "10px";
-    infoContainer.style.backgroundColor = "#f8f9fa";
-    infoContainer.style.borderRadius = "5px";
-    document.querySelector(".divRute").appendChild(infoContainer);
-  }
-
-  if (serviceHours) {
-    const statusClass = serviceHours.is_operating ? 'text-success' : 'text-danger';
-    const statusText = serviceHours.is_operating ? 'Operando' : 'Cerrado';
-    
-    let html = '';
-    
-    if (usesLineL) {
-      html = `
-        <h6 class="mb-2">🕒 Horario de Operación - Línea L</h6>
-        <p class="mb-1"><strong>${serviceHours.day}:</strong> ${serviceHours.open_time} - ${serviceHours.close_time}</p>
-        <p class="mb-1 text-info"><small><strong>Nota:</strong> La Línea L tiene horario especial: Lunes a Sábado 9:00-18:00, Domingos 8:30-18:00</small></p>
-        <p class="mb-0 ${statusClass}"><strong>Estado:</strong> ${statusText}</p>
-      `;
-    } else {
-      html = `
-        <h6 class="mb-2">🕒 Horario de Operación</h6>
-        <p class="mb-1"><strong>${serviceHours.day}:</strong> ${serviceHours.open_time} - ${serviceHours.close_time}</p>
-        <p class="mb-0 ${statusClass}"><strong>Estado:</strong> ${statusText}</p>
-      `;
-    }
-    
-    infoContainer.innerHTML = html;
-  }
-}
-
-// Removed popup functionality to keep only custom dropdown suggestions
+  new mapboxgl.Popup()
+    .setLngLat(feature.geometry.coordinates)
+    .setHTML(
+      `
+      <b>ID:</b> ${feature.properties.ID || "Sin ID"}<br>
+      <b>Distance:</b> ${feature.properties.distance || "N/A"}
+  `
+    )
+    .addTo(map);
+});
 
 // Function to go to user location
 document.querySelector(".userLocation").addEventListener("click", function () {
@@ -2368,9 +2429,6 @@ document.querySelector(".userLocation").addEventListener("click", function () {
 
 // Rute finding function
 document.getElementById("btnSearchRute").addEventListener("click", function () {
-  // Clear any existing route visualization
-  clearRouteVisualization();
-  
   const inputStart = document.getElementById("inputStart").value;
   const inputDestination = document.getElementById("inputDestination").value;
 
@@ -2388,56 +2446,25 @@ document.getElementById("btnSearchRute").addEventListener("click", function () {
     return;
   }
 
-  const { startPoint, endPoint, startId, endId, startName, endName } = validationResult;
+  const { startPoint, endPoint } = validationResult;
 
   // Hide alert if all is valid
   alertBox.style.display = "none";
 
-  console.log(`Inicio: ${startName} (${startId}), Destino: ${endName} (${endId})`);
+  console.log(`Inicio: ${inputStart}, Destino: ${inputDestination}`);
 
   fetch(
-    `/view/callRute?inputStart=${startId}&inputDestination=${endId}`
+    `/view/callRute?inputStart=${inputStart}&inputDestination=${inputDestination}`
   )
     .then((res) => res.json())
-        .then((data) => {
+    .then((data) => {
       console.log("Ruta:", data.rute);
       console.log("Distancia:", data.distance);
       console.log("Información de transferencias:", data.transfer_info);
+      console.log("Coordenada de la ruta:", data.rute_coords);
 
-      // Check if the trip can be made according to the schedule
-      if (data.can_make_trip === false || String(data.can_make_trip).toLowerCase() === "false") {
-        const alertBox = document.getElementById("alerta-validacion");
-        const alertMessage = document.getElementById("mensaje-alerta");
-        
-        let alertMessageText = "⚠️ El viaje no se puede completar dentro del horario de operación del metro.";
-        
-        // Special message for Line L
-        if (data.uses_line_l) {
-          alertMessageText = "⚠️ El viaje no se puede completar dentro del horario de operación de la Línea L (9:00-18:00 L-S, 8:30-18:00 Dom).";
-        }
-        
-        showAutoClosingAlert(alertBox, alertMessage, alertMessageText);
-        return; // Do not continue showing the route
-      }
-
-      // Display the route information
       displayTransferInfo(data.transfer_info, data.rute);
-      
-      // Display the route on the map
-      if (data.rute && data.rute_coords) {
-        addNodesRouteToMap(data.rute, data.rute_coords);
-      }
-      
-      // Update service hours display with new data
-      if (data.service_hours) {
-        displayServiceHours(data.service_hours, data.uses_line_l);
-      }
-    })
-    .catch((error) => {
-      console.error("Error fetching route:", error);
-      const alertBox = document.getElementById("alerta-validacion");
-      const alertMessage = document.getElementById("mensaje-alerta");
-      showAutoClosingAlert(alertBox, alertMessage, "Error al obtener la ruta. Inténtalo de nuevo.");
+      addNodesRouteToMap(data.rute, data.rute_coords);
     });
 
   // Adjust map view to include both points
@@ -2446,8 +2473,6 @@ document.getElementById("btnSearchRute").addEventListener("click", function () {
   bounds.extend(endPoint.geometry.coordinates);
   map.fitBounds(bounds, { padding: 40 });
 });
-
-
 
 function displayTransferInfo(transferInfo, route) {
   let infoContainer = document.getElementById("routeInfo");
@@ -2472,8 +2497,7 @@ function displayTransferInfo(transferInfo, route) {
     html += `<p><strong>Estaciones de transferencia:</strong></p>`;
     html += `<ul>`;
     transferInfo.transfer_stations.forEach((station) => {
-      const stationName = window.getStationName(station);
-      html += `<li>Transferencia en: <strong>${stationName}</strong></li>`;
+      html += `<li>Transferencia en: <strong>${station}</strong></li>`;
     });
     html += `</ul>`;
   } else {
@@ -2494,10 +2518,8 @@ function displayTransferInfo(transferInfo, route) {
       const nextStation =
         curr.stations.length > 1 ? curr.stations[1] : transferStation;
 
-      const transferStationName = window.getStationName(transferStation);
-      const nextStationName = window.getStationName(nextStation);
       transferHints.push(
-        `En <strong>${transferStationName}</strong> cambia a la línea <strong>${newLine}</strong> y dirígete a <strong>${nextStationName}</strong>.`
+        `En <strong>${transferStation}</strong> cambia a la línea <strong>${newLine}</strong> y dirígete a <strong>${nextStation}</strong>.`
       );
     }
 
@@ -2510,420 +2532,6 @@ function displayTransferInfo(transferInfo, route) {
       `;
   }
   infoContainer.innerHTML = html;
-}
-
-// Route visualization functions
-function paintLineSegment(lineInput, startIndex, endIndex, sourceId = "sub-line", layerId = "sub-line-layer") {
-  if (!lineInput) {
-    console.error("[paintLineSegment] lineInput es null/undefined");
-    return;
-  }
-
-  if (!lineInput.features || lineInput.features.length === 0) {
-    console.error("[paintLineSegment] FeatureCollection vacío");
-    return;
-  }
-
-  if (lineInput.type !== "Feature" && lineInput.type !== "FeatureCollection") {
-    console.error("[paintLineSegment] lineInput no es Feature ni FeatureCollection:", lineInput);
-    return;
-  }
-
-  const geom = lineInput.type === "Feature" ? lineInput.geometry : lineInput.features[0].geometry;
-  if (!geom || geom.type !== "LineString" || !geom.coordinates || geom.coordinates.length < 2) {
-    console.error("[paintLineSegment] geometry inválida o no LineString:", geom);
-    return;
-  }
-
-  if (!Number.isInteger(startIndex) || !Number.isInteger(endIndex)) {
-    console.error("[paintLineSegment] índices no son enteros:", startIndex, endIndex);
-    return;
-  }
-
-  const iMin = Math.min(startIndex, endIndex);
-  const iMax = Math.max(startIndex, endIndex);
-
-  if (iMin === iMax) {
-    console.warn("[paintLineSegment] tramo de un solo punto, necesita al menos 2:", iMin, iMax);
-    return;
-  }
-
-  if (iMax - iMin < 1) {
-    console.warn("[paintLineSegment] segmento < 2 puntos, no se pinta");
-    return;
-  }
-
-  const segmentCoords = geom.coordinates.slice(iMin, iMax + 1);
-  const segmentGeom = { type: "LineString", coordinates: segmentCoords };
-
-  // Remove existing source and layer if they exist
-  if (map.getSource(sourceId)) {
-    map.removeLayer(layerId);
-    map.removeSource(sourceId);
-  }
-
-  map.addSource(sourceId, {
-    type: "geojson",
-    data: {
-      type: "Feature",
-      properties: {},
-      geometry: segmentGeom,
-    },
-  });
-
-  map.addLayer({
-    id: layerId,
-    type: "line",
-    source: sourceId,
-    layout: {
-      "line-join": "round",
-      "line-cap": "round",
-    },
-    paint: {
-      "line-color": "#FF6B6B",
-      "line-width": 6,
-      "line-opacity": 0.8,
-    },
-  });
-}
-
-// Function to get a specific metro line from the loaded GeoJSON
-function getLine(lineValue) {
-  if (!linesStations || linesStations.type !== "FeatureCollection") {
-    console.error("linesStations no está cargado todavía");
-    return { type: "FeatureCollection", features: [] };
-  }
-  const features = linesStations.features.filter(
-    f => f?.properties?.["linea"] === lineValue
-  );
-  return { type: "FeatureCollection", features };
-}
-
-// Función para encontrar el índice de coordenadas en una línea
-function findCoordIndex(lineFC, target, eps = 1e-9) {
-  console.log("Buscando coordenada", target, "en línea con", lineFC.features, "features");
-  const almostEq = (a, b) => Math.abs(a - b) < eps;
-  const isSameCoord = (c) => almostEq(c[0], target[0]) && almostEq(c[1], target[1]);
-
-  for (const f of lineFC.features) {
-    const coords = f.geometry.coordinates;
-    const idx = coords.findIndex(isSameCoord);
-    if (idx !== -1) return idx;
-  }
-  return -1;
-}
-
-function addNodesRouteToMap(rute, rute_coords) {
-  if (!Array.isArray(rute) || !Array.isArray(rute_coords)) return;
-  if (rute.length < 2 || rute_coords.length < 2) return;
-
-  // Clear any existing route visualization
-  clearRouteVisualization();
-
-  if (!linesStations) {
-    console.warn("linesStations no está cargado, usando visualización simple");
-    // Fallback to simple visualization
-    for (let i = 0; i < rute.length - 1; i++) {
-      const fromId = rute[i];
-      const toId = rute[i + 1];
-      const fromCoord = rute_coords[i];
-      const toCoord = rute_coords[i + 1];
-      
-      if (!fromCoord || !toCoord) continue;
-
-      const sourceId = `route-segment-${i + 1}`;
-      const layerId = `route-segment-layer-${i + 1}`;
-
-      const segmentGeometry = {
-        type: "LineString",
-        coordinates: [fromCoord, toCoord]
-      };
-
-      if (map.getSource(sourceId)) {
-        map.removeLayer(layerId);
-        map.removeSource(sourceId);
-      }
-
-      map.addSource(sourceId, {
-        type: "geojson",
-        data: {
-          type: "Feature",
-          properties: {},
-          geometry: segmentGeometry,
-        },
-      });
-
-      map.addLayer({
-        id: layerId,
-        type: "line",
-        source: sourceId,
-        layout: {
-          "line-join": "round",
-          "line-cap": "round",
-        },
-        paint: {
-          "line-color": "#FF6B6B",
-          "line-width": 6,
-          "line-opacity": 0.8,
-        },
-      });
-    }
-    return;
-  }
-
-  // Advanced visualization using the actual metro lines
-  for (let i = 0; i < rute.length - 1; i++) {
-    const fromId = rute[i];
-    const toId = rute[i + 1];
-    const fromCoord = rute_coords[i];
-    const toCoord = rute_coords[i + 1];
-    
-    if (!fromCoord || !toCoord) continue;
-
-    const sourceId = `sub-line-${i+1}`;
-    const layerId = `sub-line-layer-${i+1}`;
-
-    const fromLineVal = fromId.charAt(0);
-    const toLineVal = toId.charAt(0);
-
-    // ===== Trasbordo detectado (cambio de letra) =====
-    if (fromLineVal !== toLineVal) {
-      // Caso especial: si la nueva línea es T, pinta SIEMPRE el GeoJSON fallback de T completo
-      if (toLineVal === "T") {
-        const featT = lineT?.features?.[0];
-        if (featT) {
-          const endIdxT = featT.geometry.coordinates.length - 1;
-          paintLineSegment(featT, 0, endIdxT, sourceId, layerId);
-          const colorT = COLOR_BY_LINE?.T || "#00A9A5";
-          if (map.getLayer(layerId)) {
-            map.setPaintProperty(layerId, "line-color", colorT);
-            map.setPaintProperty(layerId, "line-width", 4);
-          }
-        }
-      }
-
-      if (toLineVal === "X") {
-        const featX = lineX?.features?.[0];
-        if (featX) {
-          const endIdxX = featX.geometry.coordinates.length - 1;
-          paintLineSegment(featX, 0, endIdxX, sourceId, layerId);
-          const colorX = COLOR_BY_LINE?.X || "#F39C12";
-          if (map.getLayer(layerId)) {
-            map.setPaintProperty(layerId, "line-color", colorX);
-            map.setPaintProperty(layerId, "line-width", 4);
-          }
-        }
-      }
-
-      if (toLineVal === "M" && toId.charAt(1) === "1") {
-        const featM = lineM?.features?.[0];
-        if (featM) {
-          const endIdxM = featM.geometry.coordinates.length - 1;
-          paintLineSegment(featM, 0, endIdxM, sourceId, layerId);
-          const colorM = COLOR_BY_LINE?.M || "#34495E";
-          if (map.getLayer(layerId)) {
-            map.setPaintProperty(layerId, "line-color", colorM);
-            map.setPaintProperty(layerId, "line-width", 4);
-          }
-        }
-      }
-      
-      if (toLineVal === "M" && toId.charAt(1) === "0") {
-        const featM = lineM0?.features?.[0];
-        if (featM) {
-          const endIdxM = featM.geometry.coordinates.length - 1;
-          paintLineSegment(featM, 0, endIdxM, sourceId, layerId);
-          const colorM = COLOR_BY_LINE?.M || "#34495E";
-          if (map.getLayer(layerId)) {
-            map.setPaintProperty(layerId, "line-color", colorM);
-            map.setPaintProperty(layerId, "line-width", 4);
-          }
-        }
-      }
-
-      if (toLineVal === "O" && toId.charAt(1) === "0") {
-        const featO = lineO?.features?.[0];
-        if (featO) {
-          const endIdxO = featO.geometry.coordinates.length - 1;
-          paintLineSegment(featO, 0, endIdxO, sourceId, layerId);
-          const colorO = COLOR_BY_LINE?.O || "#2ECC71";
-          if (map.getLayer(layerId)) {
-            map.setPaintProperty(layerId, "line-color", colorO);
-            map.setPaintProperty(layerId, "line-width", 4);
-          }
-        }
-      }
-
-      if (toLineVal === "K") {
-        const featK = lineK?.features?.[0];
-        if (featK) {
-          const endIdxK = featK.geometry.coordinates.length - 1;
-          paintLineSegment(featK, 0, endIdxK, sourceId, layerId);
-          const colorK = COLOR_BY_LINE?.K || "#34495E";
-          if (map.getLayer(layerId)) {
-            map.setPaintProperty(layerId, "line-color", colorK);
-            map.setPaintProperty(layerId, "line-width", 4);
-          }
-        }
-      }
-
-      if (toLineVal === "P") {
-        const featP = lineP?.features?.[0];
-        if (featP) {
-          const endIdxP = featP.geometry.coordinates.length - 1;
-          paintLineSegment(featP, 0, endIdxP, sourceId, layerId);
-          const colorP = COLOR_BY_LINE?.P || "#34495E";
-          if (map.getLayer(layerId)) {
-            map.setPaintProperty(layerId, "line-color", colorP);
-            map.setPaintProperty(layerId, "line-width", 4);
-          }
-        }
-      }
-
-      if (toLineVal === "Z") {
-        const featZ = lineZ?.features?.[0];
-        if (featZ) {
-          const endIdxZ = featZ.geometry.coordinates.length - 1;
-          paintLineSegment(featZ, 0, endIdxZ, sourceId, layerId);
-          const colorZ = COLOR_BY_LINE?.Z || "#9B59B6";
-          if (map.getLayer(layerId)) {
-            map.setPaintProperty(layerId, "line-color", colorZ);
-            map.setPaintProperty(layerId, "line-width", 4);
-          }
-        }
-      }
-      
-      if (toLineVal === "B") {
-        const featB = lineB?.features?.[0];
-        if (featB) {
-          const endIdxB = featB.geometry.coordinates.length - 1;
-          paintLineSegment(featB, 0, endIdxB, sourceId, layerId);
-          const colorB = COLOR_BY_LINE?.B || "#008CFF";
-          if (map.getLayer(layerId)) {
-            map.setPaintProperty(layerId, "line-color", colorB);
-            map.setPaintProperty(layerId, "line-width", 4);
-          }
-        }
-      }
-
-      if (toLineVal === "A") {
-        const featA = lineA?.features?.[0];
-        if (featA) {
-          const endIdxA = featA.geometry.coordinates.length - 1;
-          paintLineSegment(featA, 0, endIdxA, sourceId, layerId);
-          const colorA = COLOR_BY_LINE?.A || "#FF3B30";
-          if (map.getLayer(layerId)) {
-            map.setPaintProperty(layerId, "line-color", colorA);
-            map.setPaintProperty(layerId, "line-width", 4);
-          }
-        }
-      }
-
-      if (toLineVal === "L") {
-        const featL = lineL?.features?.[0];
-        if (featL) {
-          const endIdxL = featL.geometry.coordinates.length - 1;
-          paintLineSegment(featL, 0, endIdxL, sourceId, layerId);
-          const colorL = COLOR_BY_LINE?.L || "#00A9A5";
-          if (map.getLayer(layerId)) {
-            map.setPaintProperty(layerId, "line-color", colorL);
-            map.setPaintProperty(layerId, "line-width", 4);
-          }
-        }
-      }
-
-      if (toLineVal === "J") {
-        const featJ = lineJ?.features?.[0];
-        if (featJ) {
-          const endIdxJ = featJ.geometry.coordinates.length - 1;
-          paintLineSegment(featJ, 0, endIdxJ, sourceId, layerId);
-          const colorJ = COLOR_BY_LINE?.J || "#E74C3C";
-          if (map.getLayer(layerId)) {
-            map.setPaintProperty(layerId, "line-color", colorJ);
-            map.setPaintProperty(layerId, "line-width", 4);
-          }
-        }
-      }
-
-      if (toLineVal === "H") {
-        const featH = lineH?.features?.[0];
-        if (featH) {
-          const endIdxH = featH.geometry.coordinates.length - 1;
-          paintLineSegment(featH, 0, endIdxH, sourceId, layerId);
-          const colorH = COLOR_BY_LINE?.H || "#9B59B6";
-          if (map.getLayer(layerId)) {
-            map.setPaintProperty(layerId, "line-color", colorH);
-            map.setPaintProperty(layerId, "line-width", 4);
-          }
-        }
-      }
-    }
-
-    // ===== Caso normal: misma línea =====
-    const lineFC = getLine(fromLineVal);
-    const startIdx = findCoordIndex(lineFC, fromCoord);
-    const endIdx = findCoordIndex(lineFC, toCoord);
-
-    if (startIdx !== -1 && endIdx !== -1) {
-      // Pinta tramo dentro de la misma línea
-      paintLineSegment(lineFC, startIdx, endIdx, sourceId, layerId);
-      const color = COLOR_BY_LINE?.[fromLineVal] || "#FF0000";
-      if (map.getLayer(layerId)) {
-        map.setPaintProperty(layerId, "line-color", color);
-        map.setPaintProperty(layerId, "line-width", 4);
-      }
-      continue;
-    }
-
-    // Si por alguna razón no encontramos índices (pero no es trasbordo), omite tramo
-    console.warn(`[addNodesRouteToMap] No se hallaron índices en la línea ${fromLineVal} para tramo ${fromId}→${toId}`);
-  }
-}
-
-// Color mapping for metro lines
-const COLOR_BY_LINE = {
-  "A": "#FF3B30",
-  "B": "#008CFF", 
-  "O": "#2ECC71",
-  "Z": "#9B59B6",
-  "X": "#F39C12",
-  "M": "#34495E",
-  "K": "#34495E",
-  "P": "#34495E",
-  "L": "#00A9A5",
-  "J": "#E74C3C",
-  "H": "#9B59B6",
-  "T": "#00A9A5"
-};
-
-function clearRouteVisualization() {
-  // Remove all route-related sources and layers
-  const sourcesToRemove = [];
-  const layersToRemove = [];
-  
-  map.getStyle().sources && Object.keys(map.getStyle().sources).forEach(sourceId => {
-    if (sourceId.startsWith('route-segment-') || sourceId.startsWith('sub-line')) {
-      sourcesToRemove.push(sourceId);
-    }
-  });
-  
-  map.getStyle().layers && map.getStyle().layers.forEach(layer => {
-    if (layer.id.startsWith('route-segment-layer-') || layer.id.startsWith('sub-line-layer')) {
-      layersToRemove.push(layer.id);
-    }
-  });
-  
-  layersToRemove.forEach(layerId => {
-    if (map.getLayer(layerId)) {
-      map.removeLayer(layerId);
-    }
-  });
-  
-  sourcesToRemove.forEach(sourceId => {
-    if (map.getSource(sourceId)) {
-      map.removeSource(sourceId);
-    }
-  });
 }
 
 // Handle sidebar active states
@@ -3056,111 +2664,119 @@ document.getElementById("btnUserLocation").onclick = function () {
   map.flyTo({ center: userLocation });
 };
 
+// // Cargar Lineas_Sistema_Metro
+// (function () {
+//   const cfg = window.APP_CONFIG || {};
+//   if (!cfg.geojsonUrl) {
+//     console.error("Falta geojsonUrl en APP_CONFIG");
+//     return;
+//   }
 
+//   map.on("load", async () => {
+//     // 1) Agregar la fuente GeoJSON
+//     map.addSource("lineas-metro", {
+//       type: "geojson",
+//       data: cfg.geojsonUrl
+//     });
 
-// Función para mostrar sugerencias en tiempo real
-function setupInputSuggestions() {
-    const startInput = document.getElementById('inputStart');
-    const destInput = document.getElementById('inputDestination');
-    
-    if (startInput) {
-        startInput.addEventListener('input', function() {
-            showInputSuggestions(this, 'startSuggestions');
-        });
-        
-        startInput.addEventListener('focus', function() {
-            showInputSuggestions(this, 'startSuggestions');
-        });
-    }
-    
-    if (destInput) {
-        destInput.addEventListener('input', function() {
-            showInputSuggestions(this, 'destSuggestions');
-        });
-        
-        destInput.addEventListener('focus', function() {
-            showInputSuggestions(this, 'destSuggestions');
-        });
-    }
-}
+//     // 2) Capa base (línea)
+//     map.addLayer({
+//       id: "lineas-base",
+//       type: "line",
+//       source: "lineas-metro",
+//       layout: {
+//         "line-join": "round",
+//         "line-cap": "round"
+//       },
+//       paint: {
+//         "line-color": "#FF5722",
+//         "line-width": 3
+//       }
+//     });
 
-// Función para mostrar sugerencias de input
-function showInputSuggestions(inputElement, containerId) {
-    const value = inputElement.value.trim();
-    
-    // Remover contenedor de sugerencias existente
-    let existingContainer = document.getElementById(containerId);
-    if (existingContainer) {
-        existingContainer.remove();
-    }
-    
-    if (value.length < 2) return;
-    
-    const suggestions = getStationSuggestions(value);
-    if (suggestions.length === 0) return;
-    
-    // Crear contenedor de sugerencias
-    const container = document.createElement('div');
-    container.id = containerId;
-    container.className = 'suggestions-container';
-    container.style.cssText = `
-        position: absolute;
-        background: white;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        max-height: 200px;
-        overflow-y: auto;
-        z-index: 1000;
-        width: ${inputElement.offsetWidth}px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    `;
-    
-    // Añadir sugerencias
-    suggestions.forEach(suggestion => {
-        const item = document.createElement('div');
-        item.className = 'suggestion-item';
-        item.style.cssText = `
-            padding: 8px 12px;
-            cursor: pointer;
-            border-bottom: 1px solid #eee;
-            font-size: 14px;
-        `;
-        // Extract line from station ID (first character)
-        const line = suggestion.id.charAt(0);
-        item.innerHTML = `
-            <strong>${suggestion.name}</strong> 
-            <span class="station-id">Línea ${line}</span>
-        `;
-        
-        item.addEventListener('click', function() {
-            inputElement.value = suggestion.name;
-            container.remove();
-        });
-        
-        item.addEventListener('mouseenter', function() {
-            this.style.backgroundColor = '#f8f9fa';
-        });
-        
-        item.addEventListener('mouseleave', function() {
-            this.style.backgroundColor = 'white';
-        });
-        
-        container.appendChild(item);
-    });
-    
-    // Posicionar contenedor
-    const rect = inputElement.getBoundingClientRect();
-    container.style.top = `${rect.bottom + window.scrollY}px`;
-    container.style.left = `${rect.left + window.scrollX}px`;
-    
-    // Añadir al DOM
-    document.body.appendChild(container);
-    
-    // Cerrar sugerencias al hacer clic fuera
-    document.addEventListener('click', function closeSuggestions(e) {
-        if (!container.contains(e.target) && e.target !== inputElement) {
-            container.remove();
-            document.removeEventListener('click', closeSuggestions);
-        }
-    });
-}
+//     // // 3) Capa de halo al pasar el mouse (opcional)
+//     // map.addLayer({
+//     //   id: "lineas-hover",
+//     //   type: "line",
+//     //   source: "lineas-metro",
+//     //   layout: { "line-join": "round", "line-cap": "round" },
+//     //   paint: {
+//     //     "line-color": "#000000",
+//     //     "line-width": 6,
+//     //     "line-opacity": [
+//     //       "case",
+//     //       ["boolean", ["feature-state", "hover"], false],
+//     //       0.25,   // cuando está en hover
+//     //       0       // si no
+//     //     ]
+//     //   }
+//     // });
+
+//     // 4) Ajustar la vista a la extensión del GeoJSON
+//     try {
+//       const res = await fetch(cfg.geojsonUrl);
+//       const data = await res.json();
+
+//       // fitBounds robusto para LineString / MultiLineString / FeatureCollection
+//       const bounds = new mapboxgl.LngLatBounds();
+//       const addCoords = (coords) => {
+//         if (!coords) return;
+//         if (typeof coords[0] === "number") {
+//           bounds.extend(coords); // [lng, lat]
+//         } else {
+//           coords.forEach(addCoords);
+//         }
+//       };
+
+//       if (data.type === "FeatureCollection") {
+//         data.features.forEach(f => addCoords(f.geometry.coordinates));
+//       } else if (data.type === "Feature") {
+//         addCoords(data.geometry.coordinates);
+//       } else {
+//         addCoords(data.coordinates);
+//       }
+
+//       if (!bounds.isEmpty()) {
+//         map.fitBounds(bounds, { padding: 40, duration: 900 });
+//       }
+//     } catch (e) {
+//       console.warn("No se pudo calcular fitBounds:", e);
+//     }
+
+//     // // 5) Interacciones (hover + click para ver propiedades)
+//     // let hoveredId = null;
+
+//     // map.on("mousemove", "lineas-base", (e) => {
+//     //   map.getCanvas().style.cursor = "pointer";
+//     //   if (!e.features?.length) return;
+//     //   const f = e.features[0];
+//     //   if (hoveredId !== f.id) {
+//     //     if (hoveredId !== null) {
+//     //       map.setFeatureState({ source: "lineas-metro", id: hoveredId }, { hover: false });
+//     //     }
+//     //     hoveredId = f.id;
+//     //     map.setFeatureState({ source: "lineas-metro", id: hoveredId }, { hover: true });
+//     //   }
+//     // });
+
+//     // map.on("mouseleave", "lineas-base", () => {
+//     //   map.getCanvas().style.cursor = "";
+//     //   if (hoveredId !== null) {
+//     //     map.setFeatureState({ source: "lineas-metro", id: hoveredId }, { hover: false });
+//     //     hoveredId = null;
+//     //   }
+//     // });
+
+//     // map.on("click", "lineas-base", (e) => {
+//     //   if (!e.features?.length) return;
+//     //   const props = e.features[0].properties || {};
+//     //   const html = `
+//     //     <div style="font-size:13px">
+//     //       <strong>Línea seleccionada</strong><br/>
+//     //       ${Object.keys(props).length ? `<pre style="white-space:pre-wrap;margin:6px 0 0">${JSON.stringify(props, null, 2)}</pre>` : "Sin propiedades"}
+//     //     </div>`;
+//     //   new mapboxgl.Popup().setLngLat(e.lngLat).setHTML(html).addTo(map);
+//     // });
+//   });
+// })();
+

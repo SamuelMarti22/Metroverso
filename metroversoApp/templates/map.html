@@ -22,6 +22,12 @@
     <link rel="stylesheet" href="{% static 'css/Stylemap.css' %}" />
 
     <!--JS/js-->
+    <script>
+      // Configuration for the application
+      window.APP_CONFIG = {
+        geojsonUrl: "{% static 'geojson/Lineas_Sistema_Metro.geojson' %}"
+      };
+    </script>
     <script
       src="{% static 'js/dataTurf.js' %}"
       onload="console.log('dataTurf cargado');"
