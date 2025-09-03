@@ -802,9 +802,11 @@ function showInputSuggestions(inputElement, containerId) {
             border-bottom: 1px solid #eee;
             font-size: 14px;
         `;
+        // Extract line from station ID (first character)
+        const line = suggestion.id.charAt(0);
         item.innerHTML = `
             <strong>${suggestion.name}</strong> 
-            <span class="station-id">${suggestion.id}</span>
+            <span class="station-id">Línea ${line}</span>
         `;
         
         item.addEventListener('click', function() {
