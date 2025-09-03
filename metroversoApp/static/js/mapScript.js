@@ -29,67 +29,642 @@ const UPDATE_INTERVAL = 1000; // Update interval in milliseconds
 const STATION_UPDATE_THRESHOLD = 10; // Update stations when user moves more than 10 meters
 let linesStations = null;
 
-// Fallback para la línea T (tu geojson tal cual)
-const lineT = {
-  "type": "FeatureCollection",
-  "features": [
-    {
-      "type": "Feature",
-      "properties": {
-        "sistema": "T",
-        "itinerario": "San Antonio - Oriente",
-        "SHAPE__Length": 4171.290908849139,
-        "objectid": 16,
-        "linea": "T"
-      },
-      "geometry": {
-        "type": "LineString",
-        "coordinates": [
-          [-75.56915715039199, 6.246997810738122, 35],
-          [-75.56899648037718, 6.246939945485565, 35],
-          [-75.56868243787234, 6.246816641725021, 35],
-          [-75.56863898947934, 6.246801958141261, 35],
-          [-75.5684612421816,  6.246735418152711, 35],
-          [-75.56842800287549, 6.246724214257357, 35],
-          [-75.56839065228664, 6.246716433443648, 35],
-          [-75.56837017849911, 6.24671548107932,  35],
-          [-75.56835366554779, 6.246716566178844, 35],
-          [-75.56833734489106, 6.246719288554154, 35],
-          [-75.56831358204062, 6.246726402291096, 35],
-          [-75.56828405655207, 6.24674124071165,  35],
-          [-75.56827055373681, 6.246750796919175, 35],
-          [-75.56825213882898, 6.246767599008234, 35],
-          [-75.56823555544017, 6.246787030293802, 35],
-          [-75.56821518520813, 6.246815646668387, 35],
-          [-75.56777413984516, 6.247477583982717, 35],
-          [-75.56760308628654, 6.247722127517463, 35],
-          [-75.56755248001966, 6.247796650409316, 35],
-          [-75.56747938991894, 6.247910291096805, 35],
-          [-75.5673819699176,  6.248073005429736, 35],
-          [-75.56736150490096, 6.248104248662065, 35],
-          [-75.5673436250127,  6.248126656226177, 35],
-          [-75.56733018363724, 6.248140484874192, 35],
-          [-75.56731516137629, 6.248153243563244, 35],
-          [-75.56729902430665, 6.248164352301732, 35],
-          [-75.56728188168067, 6.248173796994328, 35],
-          [-75.56725459891993, 6.248184643726838, 35],
-          [-75.56723564435359, 6.248189546965976, 35],
-          [-75.56721629645746, 6.248192532735308, 35],
-          [-75.56718695187114, 6.248193357715456, 35],
-          [-75.56715790485785, 6.248189803621637, 35],
-          [-75.56712976300503, 6.248182147755637, 35],
-          [-75.56709475198284, 6.248167632622551, 35],
-          [-75.56687073633016, 6.248049446669951, 35],
-          [-75.56604518633229, 6.247640077001546, 35],
-          [-75.56595580344352, 6.247598197106262, 35],
-          [-75.56580587917092, 6.247535515597956, 35],
-          [-75.56573944012176, 6.247505681040304, 35],
-          [ -75.56538621247405, 6.247329169623094, 35.0],
-        ]
-      }
+
+
+// Carga el GeoJSON y lo guarda en la global
+async function loadLinesStations() {
+  const cfg = window.APP_CONFIG || {};
+  if (!cfg.geojsonUrl) {
+    console.error("Falta geojsonUrl en APP_CONFIG");
+    return null;
+  }
+
+  try {
+    const res = await fetch(cfg.geojsonUrl, {
+      credentials: "same-origin",
+      headers: { "Accept": "application/json" }
+    });
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
     }
-  ]
-};
+
+    linesStations = await res.json();
+    console.log("GeoJSON cargado en linesStations:", linesStations);
+    return linesStations;
+  } catch (err) {
+    console.error("Error cargando GeoJSON:", err);
+    return null;
+  }
+}
+
+// Function to show/hide the closest stations box
+function setClosestStationsBoxVisible(visible) {
+  const box = document.getElementById("closestStationsBox");
+  box.style.display = visible ? "" : "none";
+}
+
+// Function to update user location
+function updateUserLocation(position) {
+  const userLat = position.coords.latitude;
+  const userLng = position.coords.longitude;
+  const accuracy = position.coords.accuracy;
+  const currentTime = Date.now();
+
+  // Limit very frequent updates
+  if (currentTime - lastUpdateTime < UPDATE_INTERVAL) {
+    return;
+  }
+
+  console.log("Location accuracy:", Math.round(accuracy * 100) / 100, "m");
+  //if (accuracy > 100) {
+  //    console.warn("Low location precision");
+  //    return;
+  //}
+
+  const newUserLocation = [userLng, userLat];
+
+  // Check if user has moved significantly before updating closest stations
+  let shouldUpdateStations = false;
+  if (!lastUserLocation) {
+    shouldUpdateStations = true; // First time getting location
+  } else {
+    const distance = turf.distance(
+      turf.point(lastUserLocation),
+      turf.point(newUserLocation),
+      { units: "meters" }
+    );
+    if (distance > STATION_UPDATE_THRESHOLD) {
+      shouldUpdateStations = true;
+    }
+  }
+
+  userLocation = newUserLocation;
+  lastUpdateTime = currentTime;
+
+  // Show the box if there is userLocation, hide if not
+  setClosestStationsBoxVisible(true);
+
+  // Update closest stations only if user has moved significantly
+  if (shouldUpdateStations) {
+    closestStationsToUser = closestPoints(turf.point(userLocation), 2000);
+    closestStations(turf.point(userLocation), 2000);
+    lastUserLocation = [...userLocation];
+
+    // Update the button text with the station name/id
+    const btn1 = document.getElementById("btnClosestStation1");
+    const btn2 = document.getElementById("btnClosestStation2");
+    const btn3 = document.getElementById("btnClosestStation3");
+    btn1.innerHTML = `<i class="bi bi-geo-alt"></i> ${
+      closestStationsToUser[0]?.properties.ID || ""
+    }`;
+    btn2.innerHTML = `<i class="bi bi-geo-alt"></i> ${
+      closestStationsToUser[1]?.properties.ID || ""
+    }`;
+    btn3.innerHTML = `<i class="bi bi-geo-alt"></i> ${
+      closestStationsToUser[2]?.properties.ID || ""
+    }`;
+    document.getElementById(
+      "btnUserLocation"
+    ).innerHTML = `<i class="bi bi-person"></i> Mi ubicación`;
+  }
+
+  if (!userMarker) {
+    // Create custom marker
+    const markerElement = document.createElement("div");
+    markerElement.innerHTML = "📍";
+    markerElement.style.fontSize = "20px";
+    markerElement.style.cursor = "pointer";
+
+    userMarker = new mapboxgl.Marker({ element: markerElement })
+      .setLngLat([userLng, userLat])
+      .setPopup(
+        new mapboxgl.Popup({
+          closeButton: false,
+          offset: [0, -10],
+        }).setText("Tu ubicación")
+      )
+      .addTo(map);
+  } else {
+    // If marker already exists, just update its position
+    userMarker.setLngLat([userLng, userLat]);
+  }
+}
+
+// Function to start optimized tracking
+function startLocationTracking() {
+  watchId = navigator.geolocation.watchPosition(
+    updateUserLocation,
+    handleLocationError,
+    {
+      enableHighAccuracy: true,
+      timeout: 5000,
+      maximumAge: UPDATE_INTERVAL,
+    }
+  );
+}
+
+// Function to handle location errors
+function handleLocationError(error) {
+  console.warn("Could not get location:", error.message);
+
+  switch (error.code) {
+    case error.PERMISSION_DENIED:
+      console.warn("Permission denied to access location.");
+      break;
+    case error.POSITION_UNAVAILABLE:
+      alert("Location information is not available.");
+      break;
+    case error.TIMEOUT:
+      alert("Location request timed out.");
+      break;
+    default:
+      alert("Error getting location.");
+      break;
+  }
+}
+
+// Function to get walking route
+async function walkingRoute(start, end) {
+  const query = await fetch(
+    `https://api.mapbox.com/directions/v5/mapbox/walking/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&geometries=geojson&overview=full&approaches=unrestricted;unrestricted&access_token=${mapboxgl.accessToken}`,
+    { method: "GET" }
+  );
+  const json = await query.json();
+  const data = json.routes[0];
+  return data;
+}
+
+// Function to add route to map
+function addRouteToMap(route, routeId = "walking-route") {
+  // Remove existing route if it exists
+  if (map.getSource(routeId)) {
+    map.removeLayer(routeId);
+    map.removeSource(routeId);
+  }
+
+  // Add route source and layer
+  map.addSource(routeId, {
+    type: "geojson",
+    data: {
+      type: "Feature",
+      properties: {},
+      geometry: route.geometry,
+    },
+  });
+
+  map.addLayer({
+    id: routeId,
+    type: "line",
+    source: routeId,
+    layout: {
+      "line-join": "round",
+      "line-cap": "round",
+    },
+    paint: {
+      "line-color": "#4CAF50",
+      "line-width": 4,
+      "line-opacity": 0.8,
+      "line-dasharray": [2, 2],
+    },
+  });
+}
+
+// Function to get walking route to origin
+function walkingRouteToOrigin() {
+  const firstPoint = closestStationsToOrigin[0];
+  if (markerOrigin) {
+    walkingRoute(
+      [markerOrigin.getLngLat().lng, markerOrigin.getLngLat().lat],
+      firstPoint.geometry.coordinates
+    )
+      .then((route) => {
+        if (route.distance > 2000) {
+          const alertBox = document.getElementById("alerta-validacion");
+          const alertMessage = document.getElementById("mensaje-alerta");
+          showAutoClosingAlert(
+            alertBox,
+            alertMessage,
+            "La distancia del origen a la primera estación es mayor a 2 km"
+          );
+        }
+        addRouteToMap(route, "routeToOrigin");
+
+        if (map.getLayer("routeToOrigin-label"))
+          map.removeLayer("routeToOrigin-label");
+        if (map.getSource("routeToOrigin-label"))
+          map.removeSource("routeToOrigin-label");
+        map.addSource("routeToOrigin-label", {
+          type: "geojson",
+          data: {
+            type: "FeatureCollection",
+            features: [
+              {
+                type: "Feature",
+                geometry: route.geometry,
+                properties: {
+                  distance: `${(route.distance / 1000).toFixed(2)} km`,
+                },
+              },
+            ],
+          },
+        });
+        map.addLayer({
+          id: "routeToOrigin-label",
+          type: "symbol",
+          source: "routeToOrigin-label",
+          layout: {
+            "symbol-placement": "line",
+            "text-field": ["get", "distance"],
+            "text-size": 16,
+            "text-offset": [0, 0.5],
+          },
+          paint: {
+            "text-color": "#000000",
+            "text-halo-color": "#FFFFFF",
+            "text-halo-width": 2,
+          },
+        });
+      })
+      .catch((error) => {
+        console.error("Error getting route:", error);
+      });
+  }
+}
+
+// Function to get walking route to destination
+function walkingRouteToDestination() {
+  const lastPoint = closestStationsToDestination[0];
+  if (markerDestiny) {
+    walkingRoute(lastPoint.geometry.coordinates, [
+      markerDestiny.getLngLat().lng,
+      markerDestiny.getLngLat().lat,
+    ])
+      .then((route) => {
+        if (route.distance > 2000) {
+          const alertBox = document.getElementById("alerta-validacion");
+          const alertMessage = document.getElementById("mensaje-alerta");
+          showAutoClosingAlert(
+            alertBox,
+            alertMessage,
+            "La estación más cercana al destino está a más de 2 km"
+          );
+        }
+        addRouteToMap(route, "routeToDestination");
+
+        if (map.getLayer("routeToDestination-label"))
+          map.removeLayer("routeToDestination-label");
+        if (map.getSource("routeToDestination-label"))
+          map.removeSource("routeToDestination-label");
+        map.addSource("routeToDestination-label", {
+          type: "geojson",
+          data: {
+            type: "FeatureCollection",
+            features: [
+              {
+                type: "Feature",
+                geometry: route.geometry,
+                properties: {
+                  distance: `${(route.distance / 1000).toFixed(2)} km`,
+                },
+              },
+            ],
+          },
+        });
+        map.addLayer({
+          id: "routeToDestination-label",
+          type: "symbol",
+          source: "routeToDestination-label",
+          layout: {
+            "symbol-placement": "line",
+            "text-field": ["get", "distance"],
+            "text-size": 16,
+            "text-offset": [0, 0.5],
+          },
+          paint: {
+            "text-color": "#000000",
+            "text-halo-color": "#FFFFFF",
+            "text-halo-width": 2,
+          },
+        });
+      })
+      .catch((error) => {
+        console.error("Error getting route:", error);
+      });
+  }
+}
+
+// Function to find the closest stations to the user location
+function closestStations(userPoint, maxDistance) {
+  // Remove existing layers and sources if they exist
+  if (map.getLayer("distance-labels")) map.removeLayer("distance-labels");
+  if (map.getLayer("points-layer")) map.removeLayer("points-layer");
+  if (map.getLayer("lines-layer")) map.removeLayer("lines-layer");
+  if (map.getSource("points")) map.removeSource("points");
+  if (map.getSource("lines")) map.removeSource("lines");
+
+  if (inRoute) return; // Skip if in route mode
+
+  const top3 = closestPoints(userPoint, 2000);
+  console.log("Closest points:", top3);
+
+  const pointsGeoJSON = {
+    type: "FeatureCollection",
+    features: top3.map((p) => ({
+      type: "Feature",
+      geometry: p.geometry,
+      properties: {
+        ID: p.properties.ID,
+      },
+    })),
+  };
+
+  const linesGeoJSON = {
+    type: "FeatureCollection",
+    features: top3.map((p) => {
+      const distance = turf.distance(userPoint, p, { units: "meters" });
+
+      return {
+        type: "Feature",
+        geometry: {
+          type: "LineString",
+          coordinates: [userPoint.geometry.coordinates, p.geometry.coordinates],
+        },
+        properties: {
+          distance: `${distance.toFixed(0)} m`, // round to meters
+        },
+      };
+    }),
+  };
+
+  map.addSource("points", { type: "geojson", data: pointsGeoJSON });
+  map.addSource("lines", { type: "geojson", data: linesGeoJSON });
+
+  map.addLayer({
+    id: "lines-layer",
+    type: "line",
+    source: "lines",
+    layout: {
+      "line-join": "round",
+      "line-cap": "round",
+    },
+    paint: {
+      "line-color": "#FF0000",
+      "line-width": 2,
+    },
+  });
+
+  map.addLayer({
+    id: "points-layer",
+    type: "circle",
+    source: "points",
+    paint: {
+      "circle-color": "#FF0000",
+      "circle-radius": 6,
+      "circle-stroke-width": 2,
+      "circle-stroke-color": "#FFFFFF",
+    },
+  });
+
+  map.addLayer({
+    id: "distance-labels",
+    type: "symbol",
+    source: "lines",
+    layout: {
+      "symbol-placement": "line",
+      "text-field": ["get", "distance"],
+      "text-size": 14,
+      "text-offset": [0, 0.5],
+    },
+    paint: {
+      "text-color": "#000000",
+      "text-halo-color": "#FFFFFF",
+      "text-halo-width": 1,
+    },
+  });
+}
+
+console.log("Map initialized");
+map.on("load", () => {
+  startLocationTracking();
+  loadServiceHours(); // Load service hours when page loads
+  
+  // Cargar el GeoJSON de las líneas del metro
+  loadLinesStations();
+   
+  // Inicializar funcionalidades de autocompletado
+  setupInputSuggestions();
+});
+
+// Function to load and display service hours
+function loadServiceHours() {
+  fetch('/view/getServiceHours')
+    .then((res) => res.json())
+    .then((data) => {
+      displayServiceHours(data.service_hours);
+    })
+    .catch((error) => {
+      console.error('Error loading service hours:', error);
+    });
+}
+
+// Function to display service hours
+function displayServiceHours(serviceHours, usesLineL = false) {
+  let infoContainer = document.getElementById("serviceHoursInfo");
+  if (!infoContainer) {
+    infoContainer = document.createElement("div");
+    infoContainer.id = "serviceHoursInfo";
+    infoContainer.style.marginTop = "10px";
+    infoContainer.style.padding = "10px";
+    infoContainer.style.backgroundColor = "#f8f9fa";
+    infoContainer.style.borderRadius = "5px";
+    document.querySelector(".divRute").appendChild(infoContainer);
+  }
+
+  if (serviceHours) {
+    const statusClass = serviceHours.is_operating ? 'text-success' : 'text-danger';
+    const statusText = serviceHours.is_operating ? 'Operando' : 'Cerrado';
+    
+    let html = '';
+    
+    if (usesLineL) {
+      html = `
+        <h6 class="mb-2">🕒 Horario de Operación - Línea L</h6>
+        <p class="mb-1"><strong>${serviceHours.day}:</strong> ${serviceHours.open_time} - ${serviceHours.close_time}</p>
+        <p class="mb-1 text-info"><small><strong>Nota:</strong> La Línea L tiene horario especial: Lunes a Sábado 9:00-18:00, Domingos 8:30-18:00</small></p>
+        <p class="mb-0 ${statusClass}"><strong>Estado:</strong> ${statusText}</p>
+      `;
+    } else {
+      html = `
+        <h6 class="mb-2">🕒 Horario de Operación</h6>
+        <p class="mb-1"><strong>${serviceHours.day}:</strong> ${serviceHours.open_time} - ${serviceHours.close_time}</p>
+        <p class="mb-0 ${statusClass}"><strong>Estado:</strong> ${statusText}</p>
+      `;
+    }
+    
+    infoContainer.innerHTML = html;
+  }
+}
+
+// Removed popup functionality to keep only custom dropdown suggestions
+
+// Function to go to user location
+document.querySelector(".userLocation").addEventListener("click", function () {
+  if (userMarker) {
+    map.flyTo({
+      center: userMarker.getLngLat(),
+      zoom: 15,
+      essential: true,
+    });
+  } else {
+    alert("Could not find location.");
+  }
+});
+
+// Rute finding function
+document.getElementById("btnSearchRute").addEventListener("click", function () {
+  // Clear any existing route visualization
+  clearRouteVisualization();
+  
+  const inputStart = document.getElementById("inputStart").value;
+  const inputDestination = document.getElementById("inputDestination").value;
+
+  const alertBox = document.getElementById("alerta-validacion");
+  const alertMessage = document.getElementById("mensaje-alerta");
+
+  const validationResult = validateInputsAndStations(
+    inputStart,
+    inputDestination,
+    pointsStations,
+    validateLocation
+  );
+  if (!validationResult.valid) {
+    showAutoClosingAlert(alertBox, alertMessage, validationResult.message);
+    return;
+  }
+
+  const { startPoint, endPoint, startId, endId, startName, endName } = validationResult;
+
+  // Hide alert if all is valid
+  alertBox.style.display = "none";
+
+  console.log(`Inicio: ${startName} (${startId}), Destino: ${endName} (${endId})`);
+
+  fetch(
+    `/view/callRute?inputStart=${startId}&inputDestination=${endId}`
+  )
+    .then((res) => res.json())
+        .then((data) => {
+      console.log("Ruta:", data.rute);
+      console.log("Distancia:", data.distance);
+      console.log("Información de transferencias:", data.transfer_info);
+
+      // Check if the trip can be made according to the schedule
+      if (data.can_make_trip === false || String(data.can_make_trip).toLowerCase() === "false") {
+        const alertBox = document.getElementById("alerta-validacion");
+        const alertMessage = document.getElementById("mensaje-alerta");
+        
+        let alertMessageText = "⚠️ El viaje no se puede completar dentro del horario de operación del metro.";
+        
+        // Special message for Line L
+        if (data.uses_line_l) {
+          alertMessageText = "⚠️ El viaje no se puede completar dentro del horario de operación de la Línea L (9:00-18:00 L-S, 8:30-18:00 Dom).";
+        }
+        
+        showAutoClosingAlert(alertBox, alertMessage, alertMessageText);
+        return; // Do not continue showing the route
+      }
+
+      // Display the route information
+      displayTransferInfo(data.transfer_info, data.rute);
+      
+      // Display the route on the map
+      if (data.rute && data.rute_coords) {
+        addNodesRouteToMap(data.rute, data.rute_coords);
+      }
+      
+      // Update service hours display with new data
+      if (data.service_hours) {
+        displayServiceHours(data.service_hours, data.uses_line_l);
+      }
+    })
+    .catch((error) => {
+      console.error("Error fetching route:", error);
+      const alertBox = document.getElementById("alerta-validacion");
+      const alertMessage = document.getElementById("mensaje-alerta");
+      showAutoClosingAlert(alertBox, alertMessage, "Error al obtener la ruta. Inténtalo de nuevo.");
+    });
+
+  // Adjust map view to include both points
+  const bounds = new mapboxgl.LngLatBounds();
+  bounds.extend(startPoint.geometry.coordinates);
+  bounds.extend(endPoint.geometry.coordinates);
+  map.fitBounds(bounds, { padding: 40 });
+});
+
+
+
+function displayTransferInfo(transferInfo, route) {
+  let infoContainer = document.getElementById("routeInfo");
+  if (!infoContainer) {
+    infoContainer = document.createElement("div");
+    infoContainer.id = "routeInfo";
+    infoContainer.style.marginTop = "10px";
+    infoContainer.style.padding = "10px";
+    infoContainer.style.backgroundColor = "#f8f9fa";
+    infoContainer.style.borderRadius = "5px";
+    document.querySelector(".divRute").appendChild(infoContainer);
+  }
+
+  let html = `<h6>Información de Ruta</h6>`;
+  html +=
+    '<p class="route-chain"><strong>Ruta completa:</strong> ' +
+    window.renderRouteChain(route, transferInfo) +
+    "</p>";
+
+  if (transferInfo.requires_transfer) {
+    html += `<p><strong>Se requieren ${transferInfo.transfer_count} transferencia(s)</strong></p>`;
+    html += `<p><strong>Estaciones de transferencia:</strong></p>`;
+    html += `<ul>`;
+    transferInfo.transfer_stations.forEach((station) => {
+      const stationName = window.getStationName(station);
+      html += `<li>Transferencia en: <strong>${stationName}</strong></li>`;
+    });
+    html += `</ul>`;
+  } else {
+    html += `<p><strong>No se requieren transferencias</strong></p>`;
+    html += `<p>Viaje directo en la línea ${transferInfo.line_segments[0]?.line}</p>`;
+  }
+
+  // How to make transfers
+  if (transferInfo.requires_transfer) {
+    const segs = transferInfo.line_segments;
+    const transferHints = [];
+
+    for (let i = 1; i < segs.length; i++) {
+      const prev = segs[i - 1];
+      const curr = segs[i];
+      const transferStation = prev.stations[prev.stations.length - 1];
+      const newLine = curr.line;
+      const nextStation =
+        curr.stations.length > 1 ? curr.stations[1] : transferStation;
+
+      const transferStationName = window.getStationName(transferStation);
+      const nextStationName = window.getStationName(nextStation);
+      transferHints.push(
+        `En <strong>${transferStationName}</strong> cambia a la línea <strong>${newLine}</strong> y dirígete a <strong>${nextStationName}</strong>.`
+      );
+    }
+
+    html += `
+          <hr class="my-2">
+          <h6 class="mb-2 text-success fw-bold">seguimiento de transbordos</h6>
+          <div class="small">
+          ${transferHints.map((h) => `<div>• ${h}</div>`).join("")}
+          </div>
+      `;
+  }
+  infoContainer.innerHTML = html;
+}
 
 const lineX = 
 {
@@ -409,6 +984,68 @@ const lineX =
   ]
 };
 
+
+// Fallback para la línea T (tu geojson tal cual)
+const lineT = {
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "sistema": "T",
+        "itinerario": "San Antonio - Oriente",
+        "SHAPE__Length": 4171.290908849139,
+        "objectid": 16,
+        "linea": "T"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-75.56915715039199, 6.246997810738122, 35],
+          [-75.56899648037718, 6.246939945485565, 35],
+          [-75.56868243787234, 6.246816641725021, 35],
+          [-75.56863898947934, 6.246801958141261, 35],
+          [-75.5684612421816,  6.246735418152711, 35],
+          [-75.56842800287549, 6.246724214257357, 35],
+          [-75.56839065228664, 6.246716433443648, 35],
+          [-75.56837017849911, 6.24671548107932,  35],
+          [-75.56835366554779, 6.246716566178844, 35],
+          [-75.56833734489106, 6.246719288554154, 35],
+          [-75.56831358204062, 6.246726402291096, 35],
+          [-75.56828405655207, 6.24674124071165,  35],
+          [-75.56827055373681, 6.246750796919175, 35],
+          [-75.56825213882898, 6.246767599008234, 35],
+          [-75.56823555544017, 6.246787030293802, 35],
+          [-75.56821518520813, 6.246815646668387, 35],
+          [-75.56777413984516, 6.247477583982717, 35],
+          [-75.56760308628654, 6.247722127517463, 35],
+          [-75.56755248001966, 6.247796650409316, 35],
+          [-75.56747938991894, 6.247910291096805, 35],
+          [-75.5673819699176,  6.248073005429736, 35],
+          [-75.56736150490096, 6.248104248662065, 35],
+          [-75.5673436250127,  6.248126656226177, 35],
+          [-75.56733018363724, 6.248140484874192, 35],
+          [-75.56731516137629, 6.248153243563244, 35],
+          [-75.56729902430665, 6.248164352301732, 35],
+          [-75.56728188168067, 6.248173796994328, 35],
+          [-75.56725459891993, 6.248184643726838, 35],
+          [-75.56723564435359, 6.248189546965976, 35],
+          [-75.56721629645746, 6.248192532735308, 35],
+          [-75.56718695187114, 6.248193357715456, 35],
+          [-75.56715790485785, 6.248189803621637, 35],
+          [-75.56712976300503, 6.248182147755637, 35],
+          [-75.56709475198284, 6.248167632622551, 35],
+          [-75.56687073633016, 6.248049446669951, 35],
+          [-75.56604518633229, 6.247640077001546, 35],
+          [-75.56595580344352, 6.247598197106262, 35],
+          [-75.56580587917092, 6.247535515597956, 35],
+          [-75.56573944012176, 6.247505681040304, 35],
+          [ -75.56538621247405, 6.247329169623094, 35.0],
+        ]
+      }
+    }
+  ]
+};
 
 const lineM = {
   "type": "FeatureCollection",
@@ -1719,138 +2356,6 @@ const lineP = {
   ]
 }
 
-const lineA = {
-  "type": "FeatureCollection",
-  "features": [
-    {
-      "type": "Feature",
-      "properties": {
-        "sistema": "METRO",
-        "itinerario": "Niquía - La Estrella",
-        "linea": "A"
-      },
-      "geometry": {
-        "type": "LineString",
-        "coordinates": [
-          [-75.54426910322798, 6.337853626702383],  // A01 - Niquía
-          [-75.55373230475944, 6.329958711908574],  // A02 - Bello
-          [-75.55534580389958, 6.316001342229484],  // A03 - Madera
-          [-75.55851194186361, 6.299961957796953],  // A04 - Acevedo
-          [-75.56470061709405, 6.290310300270889],  // A05 - Tricentenario
-          [-75.56938422818597, 6.278324369727542],  // A06 - Caribe
-          [-75.5657915298572, 6.269405972933399],   // A07 - Universidad
-          [-75.56327830924161, 6.2640097938723756], // A08 - Hospital
-          [-75.56613343894547, 6.256898815797797],  // A09 - Prado
-          [-75.5681765179859, 6.2505897004873106],  // A10 - Parque Berrío
-          [-75.56967864286219, 6.247175927579917],  // A11 - San Antonio
-          [-75.57142080003668, 6.242929792653825],  // A12 - Alpujarra
-          [-75.57316494840505, 6.238417946555231],  // A13 - Exposiciones
-          [-75.57563364841289, 6.230039107985888],  // A14 - Industriales
-          [-75.57811744976053, 6.211997461468826],  // A15 - Poblado
-          [-75.58181103813159, 6.193916517461162],  // A16 - Aguacatala
-          [-75.5860746825908, 6.186147651589707],   // A17 - Ayurá
-          [-75.59705548923098, 6.174707717040306],  // A18 - Envigado
-          [-75.60677051560722, 6.162934718982683],  // A19 - Itagüi
-          [-75.61600511782902, 6.157818058477744],  // A20 - Sabaneta
-          [-75.62644764544693, 6.152742930466616]   // A21 - La Estrella
-        ]
-      }
-    }
-  ]
-};
-
-const lineB = {
-  "type": "FeatureCollection",
-  "features": [
-    {
-      "type": "Feature",
-      "properties": {
-        "sistema": "METRO",
-        "itinerario": "San Antonio - San Javier",
-        "linea": "B"
-      },
-      "geometry": {
-        "type": "LineString",
-        "coordinates": [
-          [-75.56967864286219, 6.247175927579917],  // A11 - San Antonio
-          [-75.57515198, 6.249053572],              // B01 - Cisneros
-          [-75.58294171, 6.252984046],              // B02 - Suramericana
-          [-75.58825637, 6.253335629],              // B03 - Estadio
-          [-75.5977437, 6.258709043],               // B04 - Floresta
-          [-75.60374625, 6.25808821],               // B05 - Santa Lucía
-          [-75.6136642, 6.256780931]                // B06 - San Javier
-        ]
-      }
-    }
-  ]
-};
-
-const lineL = {
-  "type": "FeatureCollection",
-  "features": [
-    {
-      "type": "Feature",
-      "properties": {
-        "sistema": "CABLE",
-        "itinerario": "Santo Domingo - Arví",
-        "linea": "L"
-      },
-      "geometry": {
-        "type": "LineString",
-        "coordinates": [
-          [-75.54184763, 6.29272255],               // L01 - Santo Domingo
-          [-75.50297173, 6.281545751]               // L02 - Arví
-        ]
-      }
-    }
-  ]
-};
-
-const lineJ = {
-  "type": "FeatureCollection",
-  "features": [
-    {
-      "type": "Feature",
-      "properties": {
-        "sistema": "CABLE",
-        "itinerario": "La Aurora - San Javier",
-        "linea": "J"
-      },
-      "geometry": {
-        "type": "LineString",
-        "coordinates": [
-          [-75.61420338, 6.281093175],              // J00 - La Aurora
-          [-75.61401716, 6.275360769],              // J01 - Vallejuelos
-          [-75.61370257, 6.26567653],               // J02 - JuanXXIII
-          [-75.6136642, 6.256780931]                // B06 - San Javier
-        ]
-      }
-    }
-  ]
-};
-
-const lineH = {
-  "type": "FeatureCollection",
-  "features": [
-    {
-      "type": "Feature",
-      "properties": {
-        "sistema": "CABLE",
-        "itinerario": "Oriente - Villa Sierra",
-        "linea": "H"
-      },
-      "geometry": {
-        "type": "LineString",
-        "coordinates": [
-          [-75.54013974, 6.233150212],              // T08 - Oriente
-          [-75.53637212, 6.236645415],              // H01 - Las Torres
-          [-75.52867948, 6.234874544]               // H02 - Villa Sierra
-        ]
-      }
-    }
-  ]
-};
-
 const lineZ = {
   "type": "FeatureCollection",
   "features": [
@@ -1877,717 +2382,9 @@ const lineZ = {
   ]
 }
 
-// Carga el GeoJSON y lo guarda en la global
-async function loadLinesStations() {
-  const cfg = window.APP_CONFIG || {};
-  if (!cfg.geojsonUrl) {
-    console.error("Falta geojsonUrl en APP_CONFIG");
-    return null;
-  }
 
-  try {
-    const res = await fetch(cfg.geojsonUrl, {
-      credentials: "same-origin",
-      headers: { "Accept": "application/json" }
-    });
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
-    }
 
-    linesStations = await res.json();
-    console.log("GeoJSON cargado en linesStations:", linesStations);
-    return linesStations;
-  } catch (err) {
-    console.error("Error cargando GeoJSON:", err);
-    return null;
-  }
-}
-
-// Function to show/hide the closest stations box
-function setClosestStationsBoxVisible(visible) {
-  const box = document.getElementById("closestStationsBox");
-  box.style.display = visible ? "" : "none";
-}
-
-// Function to update user location
-function updateUserLocation(position) {
-  const userLat = position.coords.latitude;
-  const userLng = position.coords.longitude;
-  const accuracy = position.coords.accuracy;
-  const currentTime = Date.now();
-
-  // Limit very frequent updates
-  if (currentTime - lastUpdateTime < UPDATE_INTERVAL) {
-    return;
-  }
-
-  console.log("Location accuracy:", Math.round(accuracy * 100) / 100, "m");
-  //if (accuracy > 100) {
-  //    console.warn("Low location precision");
-  //    return;
-  //}
-
-  const newUserLocation = [userLng, userLat];
-
-  // Check if user has moved significantly before updating closest stations
-  let shouldUpdateStations = false;
-  if (!lastUserLocation) {
-    shouldUpdateStations = true; // First time getting location
-  } else {
-    const distance = turf.distance(
-      turf.point(lastUserLocation),
-      turf.point(newUserLocation),
-      { units: "meters" }
-    );
-    if (distance > STATION_UPDATE_THRESHOLD) {
-      shouldUpdateStations = true;
-    }
-  }
-
-  userLocation = newUserLocation;
-  lastUpdateTime = currentTime;
-
-  // Show the box if there is userLocation, hide if not
-  setClosestStationsBoxVisible(true);
-
-  // Update closest stations only if user has moved significantly
-  if (shouldUpdateStations) {
-    closestStationsToUser = closestPoints(turf.point(userLocation), 2000);
-    closestStations(turf.point(userLocation), 2000);
-    lastUserLocation = [...userLocation];
-
-    // Update the button text with the station name/id
-    const btn1 = document.getElementById("btnClosestStation1");
-    const btn2 = document.getElementById("btnClosestStation2");
-    const btn3 = document.getElementById("btnClosestStation3");
-    btn1.innerHTML = `<i class="bi bi-geo-alt"></i> ${
-      closestStationsToUser[0]?.properties.ID || ""
-    }`;
-    btn2.innerHTML = `<i class="bi bi-geo-alt"></i> ${
-      closestStationsToUser[1]?.properties.ID || ""
-    }`;
-    btn3.innerHTML = `<i class="bi bi-geo-alt"></i> ${
-      closestStationsToUser[2]?.properties.ID || ""
-    }`;
-    document.getElementById(
-      "btnUserLocation"
-    ).innerHTML = `<i class="bi bi-person"></i> Mi ubicación`;
-  }
-
-  if (!userMarker) {
-    // Create custom marker
-    const markerElement = document.createElement("div");
-    markerElement.innerHTML = "📍";
-    markerElement.style.fontSize = "20px";
-    markerElement.style.cursor = "pointer";
-
-    userMarker = new mapboxgl.Marker({ element: markerElement })
-      .setLngLat([userLng, userLat])
-      .setPopup(
-        new mapboxgl.Popup({
-          closeButton: false,
-          offset: [0, -10],
-        }).setText("Tu ubicación")
-      )
-      .addTo(map);
-  } else {
-    // If marker already exists, just update its position
-    userMarker.setLngLat([userLng, userLat]);
-  }
-}
-
-// Function to start optimized tracking
-function startLocationTracking() {
-  watchId = navigator.geolocation.watchPosition(
-    updateUserLocation,
-    handleLocationError,
-    {
-      enableHighAccuracy: true,
-      timeout: 5000,
-      maximumAge: UPDATE_INTERVAL,
-    }
-  );
-}
-
-// Function to handle location errors
-function handleLocationError(error) {
-  console.warn("Could not get location:", error.message);
-
-  switch (error.code) {
-    case error.PERMISSION_DENIED:
-      console.warn("Permission denied to access location.");
-      break;
-    case error.POSITION_UNAVAILABLE:
-      alert("Location information is not available.");
-      break;
-    case error.TIMEOUT:
-      alert("Location request timed out.");
-      break;
-    default:
-      alert("Error getting location.");
-      break;
-  }
-}
-
-// Function to get walking route
-async function walkingRoute(start, end) {
-  const query = await fetch(
-    `https://api.mapbox.com/directions/v5/mapbox/walking/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&geometries=geojson&overview=full&approaches=unrestricted;unrestricted&access_token=${mapboxgl.accessToken}`,
-    { method: "GET" }
-  );
-  const json = await query.json();
-  const data = json.routes[0];
-  return data;
-}
-
-// Function to add route to map
-function addRouteToMap(route, routeId = "walking-route") {
-  // Remove existing route if it exists
-  if (map.getSource(routeId)) {
-    map.removeLayer(routeId);
-    map.removeSource(routeId);
-  }
-
-  // Add route source and layer
-  map.addSource(routeId, {
-    type: "geojson",
-    data: {
-      type: "Feature",
-      properties: {},
-      geometry: route.geometry,
-    },
-  });
-
-  map.addLayer({
-    id: routeId,
-    type: "line",
-    source: routeId,
-    layout: {
-      "line-join": "round",
-      "line-cap": "round",
-    },
-    paint: {
-      "line-color": "#4CAF50",
-      "line-width": 4,
-      "line-opacity": 0.8,
-      "line-dasharray": [2, 2],
-    },
-  });
-}
-
-// Function to get walking route to origin
-function walkingRouteToOrigin() {
-  const firstPoint = closestStationsToOrigin[0];
-  if (markerOrigin) {
-    walkingRoute(
-      [markerOrigin.getLngLat().lng, markerOrigin.getLngLat().lat],
-      firstPoint.geometry.coordinates
-    )
-      .then((route) => {
-        if (route.distance > 2000) {
-          const alertBox = document.getElementById("alerta-validacion");
-          const alertMessage = document.getElementById("mensaje-alerta");
-          showAutoClosingAlert(
-            alertBox,
-            alertMessage,
-            "La distancia del origen a la primera estación es mayor a 2 km"
-          );
-        }
-        addRouteToMap(route, "routeToOrigin");
-
-        if (map.getLayer("routeToOrigin-label"))
-          map.removeLayer("routeToOrigin-label");
-        if (map.getSource("routeToOrigin-label"))
-          map.removeSource("routeToOrigin-label");
-        map.addSource("routeToOrigin-label", {
-          type: "geojson",
-          data: {
-            type: "FeatureCollection",
-            features: [
-              {
-                type: "Feature",
-                geometry: route.geometry,
-                properties: {
-                  distance: `${(route.distance / 1000).toFixed(2)} km`,
-                },
-              },
-            ],
-          },
-        });
-        map.addLayer({
-          id: "routeToOrigin-label",
-          type: "symbol",
-          source: "routeToOrigin-label",
-          layout: {
-            "symbol-placement": "line",
-            "text-field": ["get", "distance"],
-            "text-size": 16,
-            "text-offset": [0, 0.5],
-          },
-          paint: {
-            "text-color": "#000000",
-            "text-halo-color": "#FFFFFF",
-            "text-halo-width": 2,
-          },
-        });
-      })
-      .catch((error) => {
-        console.error("Error getting route:", error);
-      });
-  }
-}
-
-// Function to get walking route to destination
-function walkingRouteToDestination() {
-  const lastPoint = closestStationsToDestination[0];
-  if (markerDestiny) {
-    walkingRoute(lastPoint.geometry.coordinates, [
-      markerDestiny.getLngLat().lng,
-      markerDestiny.getLngLat().lat,
-    ])
-      .then((route) => {
-        if (route.distance > 2000) {
-          const alertBox = document.getElementById("alerta-validacion");
-          const alertMessage = document.getElementById("mensaje-alerta");
-          showAutoClosingAlert(
-            alertBox,
-            alertMessage,
-            "La estación más cercana al destino está a más de 2 km"
-          );
-        }
-        addRouteToMap(route, "routeToDestination");
-
-        if (map.getLayer("routeToDestination-label"))
-          map.removeLayer("routeToDestination-label");
-        if (map.getSource("routeToDestination-label"))
-          map.removeSource("routeToDestination-label");
-        map.addSource("routeToDestination-label", {
-          type: "geojson",
-          data: {
-            type: "FeatureCollection",
-            features: [
-              {
-                type: "Feature",
-                geometry: route.geometry,
-                properties: {
-                  distance: `${(route.distance / 1000).toFixed(2)} km`,
-                },
-              },
-            ],
-          },
-        });
-        map.addLayer({
-          id: "routeToDestination-label",
-          type: "symbol",
-          source: "routeToDestination-label",
-          layout: {
-            "symbol-placement": "line",
-            "text-field": ["get", "distance"],
-            "text-size": 16,
-            "text-offset": [0, 0.5],
-          },
-          paint: {
-            "text-color": "#000000",
-            "text-halo-color": "#FFFFFF",
-            "text-halo-width": 2,
-          },
-        });
-      })
-      .catch((error) => {
-        console.error("Error getting route:", error);
-      });
-  }
-}
-
-// Function to find the closest stations to the user location
-function closestStations(userPoint, maxDistance) {
-  // Remove existing layers and sources if they exist
-  if (map.getLayer("distance-labels")) map.removeLayer("distance-labels");
-  if (map.getLayer("points-layer")) map.removeLayer("points-layer");
-  if (map.getLayer("lines-layer")) map.removeLayer("lines-layer");
-  if (map.getSource("points")) map.removeSource("points");
-  if (map.getSource("lines")) map.removeSource("lines");
-
-  if (inRoute) return; // Skip if in route mode
-
-  const top3 = closestPoints(userPoint, 2000);
-  console.log("Closest points:", top3);
-
-  const pointsGeoJSON = {
-    type: "FeatureCollection",
-    features: top3.map((p) => ({
-      type: "Feature",
-      geometry: p.geometry,
-      properties: {
-        ID: p.properties.ID,
-      },
-    })),
-  };
-
-  const linesGeoJSON = {
-    type: "FeatureCollection",
-    features: top3.map((p) => {
-      const distance = turf.distance(userPoint, p, { units: "meters" });
-
-      return {
-        type: "Feature",
-        geometry: {
-          type: "LineString",
-          coordinates: [userPoint.geometry.coordinates, p.geometry.coordinates],
-        },
-        properties: {
-          distance: `${distance.toFixed(0)} m`, // round to meters
-        },
-      };
-    }),
-  };
-
-  map.addSource("points", { type: "geojson", data: pointsGeoJSON });
-  map.addSource("lines", { type: "geojson", data: linesGeoJSON });
-
-  map.addLayer({
-    id: "lines-layer",
-    type: "line",
-    source: "lines",
-    layout: {
-      "line-join": "round",
-      "line-cap": "round",
-    },
-    paint: {
-      "line-color": "#FF0000",
-      "line-width": 2,
-    },
-  });
-
-  map.addLayer({
-    id: "points-layer",
-    type: "circle",
-    source: "points",
-    paint: {
-      "circle-color": "#FF0000",
-      "circle-radius": 6,
-      "circle-stroke-width": 2,
-      "circle-stroke-color": "#FFFFFF",
-    },
-  });
-
-  map.addLayer({
-    id: "distance-labels",
-    type: "symbol",
-    source: "lines",
-    layout: {
-      "symbol-placement": "line",
-      "text-field": ["get", "distance"],
-      "text-size": 14,
-      "text-offset": [0, 0.5],
-    },
-    paint: {
-      "text-color": "#000000",
-      "text-halo-color": "#FFFFFF",
-      "text-halo-width": 1,
-    },
-  });
-}
-
-console.log("Map initialized");
-map.on("load", () => {
-  startLocationTracking();
-  loadServiceHours(); // Load service hours when page loads
-  
-  // Cargar el GeoJSON de las líneas del metro
-  loadLinesStations();
-   
-  // Inicializar funcionalidades de autocompletado
-  setupInputSuggestions();
-});
-
-// Function to load and display service hours
-function loadServiceHours() {
-  fetch('/view/getServiceHours')
-    .then((res) => res.json())
-    .then((data) => {
-      displayServiceHours(data.service_hours);
-    })
-    .catch((error) => {
-      console.error('Error loading service hours:', error);
-    });
-}
-
-// Function to display service hours
-function displayServiceHours(serviceHours, usesLineL = false) {
-  let infoContainer = document.getElementById("serviceHoursInfo");
-  if (!infoContainer) {
-    infoContainer = document.createElement("div");
-    infoContainer.id = "serviceHoursInfo";
-    infoContainer.style.marginTop = "10px";
-    infoContainer.style.padding = "10px";
-    infoContainer.style.backgroundColor = "#f8f9fa";
-    infoContainer.style.borderRadius = "5px";
-    document.querySelector(".divRute").appendChild(infoContainer);
-  }
-
-  if (serviceHours) {
-    const statusClass = serviceHours.is_operating ? 'text-success' : 'text-danger';
-    const statusText = serviceHours.is_operating ? 'Operando' : 'Cerrado';
-    
-    let html = '';
-    
-    if (usesLineL) {
-      html = `
-        <h6 class="mb-2">🕒 Horario de Operación - Línea L</h6>
-        <p class="mb-1"><strong>${serviceHours.day}:</strong> ${serviceHours.open_time} - ${serviceHours.close_time}</p>
-        <p class="mb-1 text-info"><small><strong>Nota:</strong> La Línea L tiene horario especial: Lunes a Sábado 9:00-18:00, Domingos 8:30-18:00</small></p>
-        <p class="mb-0 ${statusClass}"><strong>Estado:</strong> ${statusText}</p>
-      `;
-    } else {
-      html = `
-        <h6 class="mb-2">🕒 Horario de Operación</h6>
-        <p class="mb-1"><strong>${serviceHours.day}:</strong> ${serviceHours.open_time} - ${serviceHours.close_time}</p>
-        <p class="mb-0 ${statusClass}"><strong>Estado:</strong> ${statusText}</p>
-      `;
-    }
-    
-    infoContainer.innerHTML = html;
-  }
-}
-
-// Removed popup functionality to keep only custom dropdown suggestions
-
-// Function to go to user location
-document.querySelector(".userLocation").addEventListener("click", function () {
-  if (userMarker) {
-    map.flyTo({
-      center: userMarker.getLngLat(),
-      zoom: 15,
-      essential: true,
-    });
-  } else {
-    alert("Could not find location.");
-  }
-});
-
-// Rute finding function
-document.getElementById("btnSearchRute").addEventListener("click", function () {
-  // Clear any existing route visualization
-  clearRouteVisualization();
-  
-  const inputStart = document.getElementById("inputStart").value;
-  const inputDestination = document.getElementById("inputDestination").value;
-
-  const alertBox = document.getElementById("alerta-validacion");
-  const alertMessage = document.getElementById("mensaje-alerta");
-
-  const validationResult = validateInputsAndStations(
-    inputStart,
-    inputDestination,
-    pointsStations,
-    validateLocation
-  );
-  if (!validationResult.valid) {
-    showAutoClosingAlert(alertBox, alertMessage, validationResult.message);
-    return;
-  }
-
-  const { startPoint, endPoint, startId, endId, startName, endName } = validationResult;
-
-  // Hide alert if all is valid
-  alertBox.style.display = "none";
-
-  console.log(`Inicio: ${startName} (${startId}), Destino: ${endName} (${endId})`);
-
-  fetch(
-    `/view/callRute?inputStart=${startId}&inputDestination=${endId}`
-  )
-    .then((res) => res.json())
-        .then((data) => {
-      console.log("Ruta:", data.rute);
-      console.log("Distancia:", data.distance);
-      console.log("Información de transferencias:", data.transfer_info);
-
-      // Check if the trip can be made according to the schedule
-      if (data.can_make_trip === false || String(data.can_make_trip).toLowerCase() === "false") {
-        const alertBox = document.getElementById("alerta-validacion");
-        const alertMessage = document.getElementById("mensaje-alerta");
-        
-        let alertMessageText = "⚠️ El viaje no se puede completar dentro del horario de operación del metro.";
-        
-        // Special message for Line L
-        if (data.uses_line_l) {
-          alertMessageText = "⚠️ El viaje no se puede completar dentro del horario de operación de la Línea L (9:00-18:00 L-S, 8:30-18:00 Dom).";
-        }
-        
-        showAutoClosingAlert(alertBox, alertMessage, alertMessageText);
-        return; // Do not continue showing the route
-      }
-
-      // Display the route information
-      displayTransferInfo(data.transfer_info, data.rute);
-      
-      // Display the route on the map
-      if (data.rute && data.rute_coords) {
-        addNodesRouteToMap(data.rute, data.rute_coords);
-      }
-      
-      // Update service hours display with new data
-      if (data.service_hours) {
-        displayServiceHours(data.service_hours, data.uses_line_l);
-      }
-    })
-    .catch((error) => {
-      console.error("Error fetching route:", error);
-      const alertBox = document.getElementById("alerta-validacion");
-      const alertMessage = document.getElementById("mensaje-alerta");
-      showAutoClosingAlert(alertBox, alertMessage, "Error al obtener la ruta. Inténtalo de nuevo.");
-    });
-
-  // Adjust map view to include both points
-  const bounds = new mapboxgl.LngLatBounds();
-  bounds.extend(startPoint.geometry.coordinates);
-  bounds.extend(endPoint.geometry.coordinates);
-  map.fitBounds(bounds, { padding: 40 });
-});
-
-
-
-function displayTransferInfo(transferInfo, route) {
-  let infoContainer = document.getElementById("routeInfo");
-  if (!infoContainer) {
-    infoContainer = document.createElement("div");
-    infoContainer.id = "routeInfo";
-    infoContainer.style.marginTop = "10px";
-    infoContainer.style.padding = "10px";
-    infoContainer.style.backgroundColor = "#f8f9fa";
-    infoContainer.style.borderRadius = "5px";
-    document.querySelector(".divRute").appendChild(infoContainer);
-  }
-
-  let html = `<h6>Información de Ruta</h6>`;
-  html +=
-    '<p class="route-chain"><strong>Ruta completa:</strong> ' +
-    window.renderRouteChain(route, transferInfo) +
-    "</p>";
-
-  if (transferInfo.requires_transfer) {
-    html += `<p><strong>Se requieren ${transferInfo.transfer_count} transferencia(s)</strong></p>`;
-    html += `<p><strong>Estaciones de transferencia:</strong></p>`;
-    html += `<ul>`;
-    transferInfo.transfer_stations.forEach((station) => {
-      const stationName = window.getStationName(station);
-      html += `<li>Transferencia en: <strong>${stationName}</strong></li>`;
-    });
-    html += `</ul>`;
-  } else {
-    html += `<p><strong>No se requieren transferencias</strong></p>`;
-    html += `<p>Viaje directo en la línea ${transferInfo.line_segments[0]?.line}</p>`;
-  }
-
-  // How to make transfers
-  if (transferInfo.requires_transfer) {
-    const segs = transferInfo.line_segments;
-    const transferHints = [];
-
-    for (let i = 1; i < segs.length; i++) {
-      const prev = segs[i - 1];
-      const curr = segs[i];
-      const transferStation = prev.stations[prev.stations.length - 1];
-      const newLine = curr.line;
-      const nextStation =
-        curr.stations.length > 1 ? curr.stations[1] : transferStation;
-
-      const transferStationName = window.getStationName(transferStation);
-      const nextStationName = window.getStationName(nextStation);
-      transferHints.push(
-        `En <strong>${transferStationName}</strong> cambia a la línea <strong>${newLine}</strong> y dirígete a <strong>${nextStationName}</strong>.`
-      );
-    }
-
-    html += `
-          <hr class="my-2">
-          <h6 class="mb-2 text-success fw-bold">seguimiento de transbordos</h6>
-          <div class="small">
-          ${transferHints.map((h) => `<div>• ${h}</div>`).join("")}
-          </div>
-      `;
-  }
-  infoContainer.innerHTML = html;
-}
-
-// Route visualization functions
-function paintLineSegment(lineInput, startIndex, endIndex, sourceId = "sub-line", layerId = "sub-line-layer") {
-  if (!lineInput) {
-    console.error("[paintLineSegment] lineInput es null/undefined");
-    return;
-  }
-
-  if (!lineInput.features || lineInput.features.length === 0) {
-    console.error("[paintLineSegment] FeatureCollection vacío");
-    return;
-  }
-
-  if (lineInput.type !== "Feature" && lineInput.type !== "FeatureCollection") {
-    console.error("[paintLineSegment] lineInput no es Feature ni FeatureCollection:", lineInput);
-    return;
-  }
-
-  const geom = lineInput.type === "Feature" ? lineInput.geometry : lineInput.features[0].geometry;
-  if (!geom || geom.type !== "LineString" || !geom.coordinates || geom.coordinates.length < 2) {
-    console.error("[paintLineSegment] geometry inválida o no LineString:", geom);
-    return;
-  }
-
-  if (!Number.isInteger(startIndex) || !Number.isInteger(endIndex)) {
-    console.error("[paintLineSegment] índices no son enteros:", startIndex, endIndex);
-    return;
-  }
-
-  const iMin = Math.min(startIndex, endIndex);
-  const iMax = Math.max(startIndex, endIndex);
-
-  if (iMin === iMax) {
-    console.warn("[paintLineSegment] tramo de un solo punto, necesita al menos 2:", iMin, iMax);
-    return;
-  }
-
-  if (iMax - iMin < 1) {
-    console.warn("[paintLineSegment] segmento < 2 puntos, no se pinta");
-    return;
-  }
-
-  const segmentCoords = geom.coordinates.slice(iMin, iMax + 1);
-  const segmentGeom = { type: "LineString", coordinates: segmentCoords };
-
-  // Remove existing source and layer if they exist
-  if (map.getSource(sourceId)) {
-    map.removeLayer(layerId);
-    map.removeSource(sourceId);
-  }
-
-  map.addSource(sourceId, {
-    type: "geojson",
-    data: {
-      type: "Feature",
-      properties: {},
-      geometry: segmentGeom,
-    },
-  });
-
-  map.addLayer({
-    id: layerId,
-    type: "line",
-    source: sourceId,
-    layout: {
-      "line-join": "round",
-      "line-cap": "round",
-    },
-    paint: {
-      "line-color": "#FF6B6B",
-      "line-width": 6,
-      "line-opacity": 0.8,
-    },
-  });
-}
-
-// Function to get a specific metro line from the loaded GeoJSON
+// Function to clear existing route visualization
 function getLine(lineValue) {
   if (!linesStations || linesStations.type !== "FeatureCollection") {
     console.error("linesStations no está cargado todavía");
@@ -2598,6 +2395,7 @@ function getLine(lineValue) {
   );
   return { type: "FeatureCollection", features };
 }
+
 
 // Función para encontrar el índice de coordenadas en una línea
 function findCoordIndex(lineFC, target, eps = 1e-9) {
@@ -2613,256 +2411,189 @@ function findCoordIndex(lineFC, target, eps = 1e-9) {
   return -1;
 }
 
+// Route visualization functions
+function paintLineSegment(lineInput, startIndex, endIndex, sourceId = "sub-line", layerId = "sub-line-layer",rute, rute_coords) {
+  // Acepta Feature o FeatureCollection
+  let feature = null;
+  if (!lineInput) {
+    console.error("[paintLineSegment] lineInput es null/undefined");
+    return;
+  } else if (lineInput.type === "Feature") {
+    feature = lineInput;
+  } else if (lineInput.type === "FeatureCollection") {
+    if (!lineInput.features?.length) {
+      console.error("[paintLineSegment] FeatureCollection vacío");
+      return;
+    }
+    feature = lineInput.features[0];
+  } else {
+    console.error("[paintLineSegment] lineInput no es Feature ni FeatureCollection:", lineInput);
+    return;
+  }
+
+  // Validar que sea LineString y que existan coords
+  const geom = feature.geometry;
+  if (!geom || geom.type !== "LineString" || !Array.isArray(geom.coordinates)) {
+    console.error("[paintLineSegment] geometry inválida o no LineString:", geom);
+    return;
+  }
+
+  const coords = geom.coordinates;
+  if (!Number.isInteger(startIndex) || !Number.isInteger(endIndex)) {
+    console.error("[paintLineSegment] índices no son enteros:", startIndex, endIndex);
+    return;
+  }
+
+  // Normalizar y acotar índices
+  const iMin = Math.max(0, Math.min(startIndex, endIndex));
+  const iMax = Math.min(coords.length - 1, Math.max(startIndex, endIndex));
+
+  if (iMin === iMax) {
+    console.warn("[paintLineSegment] tramo de un solo punto, necesita al menos 2:", iMin, iMax);
+    return;
+  }
+
+  const segmentCoords = coords.slice(iMin, iMax + 1);
+  if (segmentCoords.length < 2) {
+    console.warn("[paintLineSegment] segmento < 2 puntos, no se pinta");
+    return;
+  }
+
+  const segment = {
+    type: "Feature",
+    geometry: { type: "LineString", coordinates: segmentCoords },
+    properties: { ...(feature.properties || {}), _slice: [iMin, iMax] }
+  };
+
+  // Pintar / actualizar
+  if (map.getSource(sourceId)) {
+    map.getSource(sourceId).setData(segment);
+  } else {
+    map.addSource(sourceId, { type: "geojson", data: segment });
+    map.addLayer({
+      id: layerId,
+      type: "line",
+      source: sourceId,
+      layout: { "line-join": "round", "line-cap": "round" },
+      paint: { "line-color": "#FF0000", "line-width": 4 }
+    });
+  }
+}
+
 function addNodesRouteToMap(rute, rute_coords) {
   if (!Array.isArray(rute) || !Array.isArray(rute_coords)) return;
   if (rute.length < 2 || rute_coords.length < 2) return;
 
-  // Clear any existing route visualization
-  clearRouteVisualization();
-
-  if (!linesStations) {
-    console.warn("linesStations no está cargado, usando visualización simple");
-    // Fallback to simple visualization
-    for (let i = 0; i < rute.length - 1; i++) {
-      const fromId = rute[i];
-      const toId = rute[i + 1];
-      const fromCoord = rute_coords[i];
-      const toCoord = rute_coords[i + 1];
-      
-      if (!fromCoord || !toCoord) continue;
-
-      const sourceId = `route-segment-${i + 1}`;
-      const layerId = `route-segment-layer-${i + 1}`;
-
-      const segmentGeometry = {
-        type: "LineString",
-        coordinates: [fromCoord, toCoord]
-      };
-
-      if (map.getSource(sourceId)) {
-        map.removeLayer(layerId);
-        map.removeSource(sourceId);
-      }
-
-      map.addSource(sourceId, {
-        type: "geojson",
-        data: {
-          type: "Feature",
-          properties: {},
-          geometry: segmentGeometry,
-        },
-      });
-
-      map.addLayer({
-        id: layerId,
-        type: "line",
-        source: sourceId,
-        layout: {
-          "line-join": "round",
-          "line-cap": "round",
-        },
-        paint: {
-          "line-color": "#FF6B6B",
-          "line-width": 6,
-          "line-opacity": 0.8,
-        },
-      });
-    }
-    return;
-  }
-
-  // Advanced visualization using the actual metro lines
   for (let i = 0; i < rute.length - 1; i++) {
     const fromId = rute[i];
-    const toId = rute[i + 1];
+    const toId   = rute[i + 1];
     const fromCoord = rute_coords[i];
-    const toCoord = rute_coords[i + 1];
-    
+    const toCoord   = rute_coords[i + 1];
     if (!fromCoord || !toCoord) continue;
 
     const sourceId = `sub-line-${i+1}`;
-    const layerId = `sub-line-layer-${i+1}`;
+    const layerId  = `sub-line-layer-${i+1}`;
 
     const fromLineVal = fromId.charAt(0);
-    const toLineVal = toId.charAt(0);
+    const toLineVal   = toId.charAt(0);
 
     // ===== Trasbordo detectado (cambio de letra) =====
     if (fromLineVal !== toLineVal) {
       // Caso especial: si la nueva línea es T, pinta SIEMPRE el GeoJSON fallback de T completo
       if (toLineVal === "T") {
-        const featT = lineT?.features?.[0];
-        if (featT) {
-          const endIdxT = featT.geometry.coordinates.length - 1;
-          paintLineSegment(featT, 0, endIdxT, sourceId, layerId);
-          const colorT = COLOR_BY_LINE?.T || "#00A9A5";
-          if (map.getLayer(layerId)) {
-            map.setPaintProperty(layerId, "line-color", colorT);
-            map.setPaintProperty(layerId, "line-width", 4);
-          }
+        const featT = lineT.features[0];
+        const endIdxT = featT.geometry.coordinates.length - 1;
+        paintLineSegment(featT, 0, endIdxT, sourceId, layerId);
+        const colorT = COLOR_BY_LINE?.T || "#00A9A5";
+        if (map.getLayer(layerId)) {
+          map.setPaintProperty(layerId, "line-color", colorT);
+          map.setPaintProperty(layerId, "line-width", 4);
         }
-      }
+       }
 
-      if (toLineVal === "X") {
-        const featX = lineX?.features?.[0];
-        if (featX) {
-          const endIdxX = featX.geometry.coordinates.length - 1;
-          paintLineSegment(featX, 0, endIdxX, sourceId, layerId);
-          const colorX = COLOR_BY_LINE?.X || "#F39C12";
-          if (map.getLayer(layerId)) {
-            map.setPaintProperty(layerId, "line-color", colorX);
-            map.setPaintProperty(layerId, "line-width", 4);
-          }
+        if (toLineVal === "X") {
+        const featX= lineX.features[0];
+        const endIdxX = featX.geometry.coordinates.length - 1;
+        paintLineSegment(featX, 0, endIdxX, sourceId, layerId);
+        const colorT = COLOR_BY_LINE?.T || "#00A9A5";
+        if (map.getLayer(layerId)) {
+          map.setPaintProperty(layerId, "line-color", colorT);
+          map.setPaintProperty(layerId, "line-width", 4);
         }
-      }
+       }
 
-      if (toLineVal === "M" && toId.charAt(1) === "1") {
-        const featM = lineM?.features?.[0];
-        if (featM) {
-          const endIdxM = featM.geometry.coordinates.length - 1;
-          paintLineSegment(featM, 0, endIdxM, sourceId, layerId);
-          const colorM = COLOR_BY_LINE?.M || "#34495E";
-          if (map.getLayer(layerId)) {
-            map.setPaintProperty(layerId, "line-color", colorM);
-            map.setPaintProperty(layerId, "line-width", 4);
-          }
+        if (toLineVal === "M" && toId.charAt(1) === "1") {
+        const featM = lineM.features[0];
+        const endIdxM = featM.geometry.coordinates.length - 1;
+        paintLineSegment(featM, 0, endIdxM, sourceId, layerId);
+        const colorT = COLOR_BY_LINE?.M || "#00A9A5";
+        if (map.getLayer(layerId)) {
+          map.setPaintProperty(layerId, "line-color", colorT);
+          map.setPaintProperty(layerId, "line-width", 4);
         }
-      }
+       }
       
       if (toLineVal === "M" && toId.charAt(1) === "0") {
-        const featM = lineM0?.features?.[0];
-        if (featM) {
-          const endIdxM = featM.geometry.coordinates.length - 1;
-          paintLineSegment(featM, 0, endIdxM, sourceId, layerId);
-          const colorM = COLOR_BY_LINE?.M || "#34495E";
-          if (map.getLayer(layerId)) {
-            map.setPaintProperty(layerId, "line-color", colorM);
-            map.setPaintProperty(layerId, "line-width", 4);
-          }
+        const featM = lineM0.features[0];
+        const endIdxM = featM.geometry.coordinates.length - 1;
+        paintLineSegment(featM, 0, endIdxM, sourceId, layerId);
+        const colorT = COLOR_BY_LINE?.M || "#00A9A5";
+        if (map.getLayer(layerId)) {
+          map.setPaintProperty(layerId, "line-color", colorT);
+          map.setPaintProperty(layerId, "line-width", 4);
         }
-      }
+       }
 
-      if (toLineVal === "O" && toId.charAt(1) === "0") {
-        const featO = lineO?.features?.[0];
-        if (featO) {
-          const endIdxO = featO.geometry.coordinates.length - 1;
-          paintLineSegment(featO, 0, endIdxO, sourceId, layerId);
-          const colorO = COLOR_BY_LINE?.O || "#2ECC71";
-          if (map.getLayer(layerId)) {
-            map.setPaintProperty(layerId, "line-color", colorO);
-            map.setPaintProperty(layerId, "line-width", 4);
-          }
+        if (toLineVal === "O" && toId.charAt(1) === "0") {
+        const featO = lineO.features[0];
+        const endIdxO = featO.geometry.coordinates.length - 1;
+        paintLineSegment(featO, 0, endIdxO, sourceId, layerId);
+        const colorT = COLOR_BY_LINE?.O || "#00A9A5";
+        if (map.getLayer(layerId)) {
+          map.setPaintProperty(layerId, "line-color", colorT);
+          map.setPaintProperty(layerId, "line-width", 4);
         }
-      }
+       }
 
-      if (toLineVal === "K") {
-        const featK = lineK?.features?.[0];
-        if (featK) {
-          const endIdxK = featK.geometry.coordinates.length - 1;
-          paintLineSegment(featK, 0, endIdxK, sourceId, layerId);
-          const colorK = COLOR_BY_LINE?.K || "#34495E";
-          if (map.getLayer(layerId)) {
-            map.setPaintProperty(layerId, "line-color", colorK);
-            map.setPaintProperty(layerId, "line-width", 4);
-          }
+        if (toLineVal === "K") {
+        const featK = lineK.features[0];
+        const endIdxK = featK.geometry.coordinates.length - 1;
+        paintLineSegment(featK, 0, endIdxK, sourceId, layerId);
+        const colorT = COLOR_BY_LINE?.K || "#00A9A5";
+        if (map.getLayer(layerId)) {
+          map.setPaintProperty(layerId, "line-color", colorT);
+          map.setPaintProperty(layerId, "line-width", 4);
         }
-      }
+       }
 
-      if (toLineVal === "P") {
-        const featP = lineP?.features?.[0];
-        if (featP) {
-          const endIdxP = featP.geometry.coordinates.length - 1;
-          paintLineSegment(featP, 0, endIdxP, sourceId, layerId);
-          const colorP = COLOR_BY_LINE?.P || "#34495E";
-          if (map.getLayer(layerId)) {
-            map.setPaintProperty(layerId, "line-color", colorP);
-            map.setPaintProperty(layerId, "line-width", 4);
-          }
-        }
-      }
 
-      if (toLineVal === "Z") {
-        const featZ = lineZ?.features?.[0];
-        if (featZ) {
-          const endIdxZ = featZ.geometry.coordinates.length - 1;
-          paintLineSegment(featZ, 0, endIdxZ, sourceId, layerId);
-          const colorZ = COLOR_BY_LINE?.Z || "#9B59B6";
-          if (map.getLayer(layerId)) {
-            map.setPaintProperty(layerId, "line-color", colorZ);
-            map.setPaintProperty(layerId, "line-width", 4);
-          }
+        if (toLineVal === "P") {
+        const featP = lineP.features[0];
+        const endIdxP = featP.geometry.coordinates.length - 1;
+        paintLineSegment(featP, 0, endIdxP, sourceId, layerId);
+        const colorT = COLOR_BY_LINE?.P || "#00A9A5";
+        if (map.getLayer(layerId)) {
+          map.setPaintProperty(layerId, "line-color", colorT);
+          map.setPaintProperty(layerId, "line-width", 4);
         }
-      }
-      
-      if (toLineVal === "B") {
-        const featB = lineB?.features?.[0];
-        if (featB) {
-          const endIdxB = featB.geometry.coordinates.length - 1;
-          paintLineSegment(featB, 0, endIdxB, sourceId, layerId);
-          const colorB = COLOR_BY_LINE?.B || "#008CFF";
-          if (map.getLayer(layerId)) {
-            map.setPaintProperty(layerId, "line-color", colorB);
-            map.setPaintProperty(layerId, "line-width", 4);
-          }
-        }
-      }
+       }
 
-      if (toLineVal === "A") {
-        const featA = lineA?.features?.[0];
-        if (featA) {
-          const endIdxA = featA.geometry.coordinates.length - 1;
-          paintLineSegment(featA, 0, endIdxA, sourceId, layerId);
-          const colorA = COLOR_BY_LINE?.A || "#FF3B30";
-          if (map.getLayer(layerId)) {
-            map.setPaintProperty(layerId, "line-color", colorA);
-            map.setPaintProperty(layerId, "line-width", 4);
-          }
-        }
-      }
-
-      if (toLineVal === "L") {
-        const featL = lineL?.features?.[0];
-        if (featL) {
-          const endIdxL = featL.geometry.coordinates.length - 1;
-          paintLineSegment(featL, 0, endIdxL, sourceId, layerId);
-          const colorL = COLOR_BY_LINE?.L || "#00A9A5";
-          if (map.getLayer(layerId)) {
-            map.setPaintProperty(layerId, "line-color", colorL);
-            map.setPaintProperty(layerId, "line-width", 4);
-          }
-        }
-      }
-
-      if (toLineVal === "J") {
-        const featJ = lineJ?.features?.[0];
-        if (featJ) {
-          const endIdxJ = featJ.geometry.coordinates.length - 1;
-          paintLineSegment(featJ, 0, endIdxJ, sourceId, layerId);
-          const colorJ = COLOR_BY_LINE?.J || "#E74C3C";
-          if (map.getLayer(layerId)) {
-            map.setPaintProperty(layerId, "line-color", colorJ);
-            map.setPaintProperty(layerId, "line-width", 4);
-          }
-        }
-      }
-
-      if (toLineVal === "H") {
-        const featH = lineH?.features?.[0];
-        if (featH) {
-          const endIdxH = featH.geometry.coordinates.length - 1;
-          paintLineSegment(featH, 0, endIdxH, sourceId, layerId);
-          const colorH = COLOR_BY_LINE?.H || "#9B59B6";
-          if (map.getLayer(layerId)) {
-            map.setPaintProperty(layerId, "line-color", colorH);
-            map.setPaintProperty(layerId, "line-width", 4);
-          }
+        if (toLineVal === "Z") {
+        const featZ = lineZ.features[0];
+        const endIdxZ = featZ.geometry.coordinates.length - 1;
+        paintLineSegment(featZ, 0, endIdxZ, sourceId, layerId);
+        const colorT = COLOR_BY_LINE?.Z || "#00A9A5";
+        if (map.getLayer(layerId)) {
+          map.setPaintProperty(layerId, "line-color", colorT);
+          map.setPaintProperty(layerId, "line-width", 4);
         }
       }
     }
 
     // ===== Caso normal: misma línea =====
-    const lineFC = getLine(fromLineVal);
+    const lineFC  = getLine(fromLineVal);
     const startIdx = findCoordIndex(lineFC, fromCoord);
-    const endIdx = findCoordIndex(lineFC, toCoord);
+    const endIdx   = findCoordIndex(lineFC, toCoord);
 
     if (startIdx !== -1 && endIdx !== -1) {
       // Pinta tramo dentro de la misma línea
@@ -2880,6 +2611,8 @@ function addNodesRouteToMap(rute, rute_coords) {
   }
 }
 
+
+
 // Color mapping for metro lines
 const COLOR_BY_LINE = {
   "A": "#FF3B30",
@@ -2895,6 +2628,7 @@ const COLOR_BY_LINE = {
   "H": "#9B59B6",
   "T": "#00A9A5"
 };
+
 
 function clearRouteVisualization() {
   // Remove all route-related sources and layers
