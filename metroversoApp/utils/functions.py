@@ -85,12 +85,23 @@ def calculeRute(star, destination):
         transfer_info = analyze_route_transfers(rute)
 
         # Check if the trip can be made according to the schedule
-        from metroversoApp.assets.stationGraphs import can_make_trip_now_graph
+        from metroversoApp.assets.stationGraphs import can_make_trip_now_graph, get_line_l_service_hours
         can_make_trip = can_make_trip_now_graph(G, star, destination)
+
+        # Check if route uses Line L
+        uses_line_l = any(station.startswith('L') for station in rute)
+        
+        # Get appropriate service hours
+        if uses_line_l:
+            service_hours = get_line_l_service_hours()
+        else:
+            from metroversoApp.assets.stationGraphs import get_current_service_hours
+            service_hours = get_current_service_hours()
 
         print("Rute:", rute)
         print("Distance:", round(distance, 2)*100, "kilometers")
         print("Transfer info:", transfer_info)
+        print("Uses Line L:", uses_line_l)
 
         
     except nx.NetworkXNoPath:
@@ -104,5 +115,7 @@ def calculeRute(star, destination):
             'line_segments': []
         }
         can_make_trip = False
+        service_hours = None
+        uses_line_l = False
 
-    return list(rute), distance, transfer_info, can_make_trip
+    return list(rute), distance, transfer_info, can_make_trip, service_hours, uses_line_l

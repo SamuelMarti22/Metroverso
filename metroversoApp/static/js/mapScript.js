@@ -436,7 +436,7 @@ function loadServiceHours() {
 }
 
 // Function to display service hours
-function displayServiceHours(serviceHours) {
+function displayServiceHours(serviceHours, usesLineL = false) {
   let infoContainer = document.getElementById("serviceHoursInfo");
   if (!infoContainer) {
     infoContainer = document.createElement("div");
@@ -452,11 +452,22 @@ function displayServiceHours(serviceHours) {
     const statusClass = serviceHours.is_operating ? 'text-success' : 'text-danger';
     const statusText = serviceHours.is_operating ? 'Operando' : 'Cerrado';
     
-    const html = `
-      <h6 class="mb-2">🕒 Horario de Operación</h6>
-      <p class="mb-1"><strong>${serviceHours.day}:</strong> ${serviceHours.open_time} - ${serviceHours.close_time}</p>
-      <p class="mb-0 ${statusClass}"><strong>Estado:</strong> ${statusText}</p>
-    `;
+    let html = '';
+    
+    if (usesLineL) {
+      html = `
+        <h6 class="mb-2">🕒 Horario de Operación - Línea L</h6>
+        <p class="mb-1"><strong>${serviceHours.day}:</strong> ${serviceHours.open_time} - ${serviceHours.close_time}</p>
+        <p class="mb-1 text-info"><small><strong>Nota:</strong> La Línea L tiene horario especial: Lunes a Sábado 9:00-18:00, Domingos 8:30-18:00</small></p>
+        <p class="mb-0 ${statusClass}"><strong>Estado:</strong> ${statusText}</p>
+      `;
+    } else {
+      html = `
+        <h6 class="mb-2">🕒 Horario de Operación</h6>
+        <p class="mb-1"><strong>${serviceHours.day}:</strong> ${serviceHours.open_time} - ${serviceHours.close_time}</p>
+        <p class="mb-0 ${statusClass}"><strong>Estado:</strong> ${statusText}</p>
+      `;
+    }
     
     infoContainer.innerHTML = html;
   }
@@ -512,23 +523,30 @@ document.getElementById("btnSearchRute").addEventListener("click", function () {
       console.log("Distancia:", data.distance);
       console.log("Información de transferencias:", data.transfer_info);
 
-      // Check if the trip can be made according to the schedule
-      if (data.can_make_trip === false || String(data.can_make_trip).toLowerCase() === "false") {
-        const alertBox = document.getElementById("alerta-validacion");
-        const alertMessage = document.getElementById("mensaje-alerta");
-        
-        showAutoClosingAlert(
-          alertBox,
-          alertMessage,
-          "⚠️ El viaje no se puede completar dentro del horario de operación del metro."
-        );
-        return; // Do not continue showing the route
-      }
+             // Check if the trip can be made according to the schedule
+       if (data.can_make_trip === false || String(data.can_make_trip).toLowerCase() === "false") {
+         const alertBox = document.getElementById("alerta-validacion");
+         const alertMessage = document.getElementById("mensaje-alerta");
+         
+         let alertMessageText = "⚠️ El viaje no se puede completar dentro del horario de operación del metro.";
+         
+         // Special message for Line L
+         if (data.uses_line_l) {
+           alertMessageText = "⚠️ El viaje no se puede completar dentro del horario de operación de la Línea L (9:00-18:00 L-S, 8:30-18:00 Dom).";
+         }
+         
+         showAutoClosingAlert(
+           alertBox,
+           alertMessage,
+           alertMessageText
+         );
+         return; // Do not continue showing the route
+       }
 
-              displayTransferInfo(data.transfer_info, data.rute);
-              
-              // Update service hours display with new data
-              displayServiceHours(data.service_hours);
+               displayTransferInfo(data.transfer_info, data.rute);
+               
+               // Update service hours display with new data
+               displayServiceHours(data.service_hours, data.uses_line_l);
     });
 
   // Adjust map view to include both points

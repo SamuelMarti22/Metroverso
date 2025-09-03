@@ -2342,11 +2342,29 @@ def _service_window(start_time: datetime.datetime):
         close_time = start_time.replace(hour=23, minute=0, second=0, microsecond=0)
     return open_time, close_time
 
+def _line_l_service_window(start_time: datetime.datetime):
+    """Returns (open_time, close_time) for Line L according to the day of start_time."""
+    if start_time.weekday() == 6:  # Sunday
+        open_time  = start_time.replace(hour=8,  minute=30, second=0, microsecond=0)
+        close_time = start_time.replace(hour=18, minute=0, second=0, microsecond=0)
+    else:  # Monday to Saturday
+        open_time  = start_time.replace(hour=9,  minute=0, second=0, microsecond=0)
+        close_time = start_time.replace(hour=18, minute=0, second=0, microsecond=0)
+    return open_time, close_time
+
 def _now():
     """
     Current time - using datetime.now() for consistency across environments.
     """
     return datetime.datetime.now()
+
+def _route_uses_line_l(route):
+    """
+    Returns True if the route uses Line L (stations starting with 'L').
+    """
+    if not route:
+        return False
+    return any(station.startswith('L') for station in route)
 
 
 def get_current_service_hours():
@@ -2371,15 +2389,45 @@ def get_current_service_hours():
         'is_operating': now >= open_time and now <= close_time
     }
 
+def get_line_l_service_hours():
+    """
+    Returns the current service hours for Line L as a formatted string.
+    """
+    now = _now()
+    open_time, close_time = _line_l_service_window(now)
+    
+    # Format the times as HH:MM
+    open_str = open_time.strftime("%H:%M")
+    close_str = close_time.strftime("%H:%M")
+    
+    # Get day name in Spanish
+    days = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+    day_name = days[now.weekday()]
+    
+    return {
+        'day': day_name,
+        'open_time': open_str,
+        'close_time': close_str,
+        'is_operating': now >= open_time and now <= close_time,
+        'is_line_l': True
+    }
+
 
 # --- BOOLEANS FOR FRONTEND (VIA BACKEND) ---
 
-def can_make_trip(start_time: datetime.datetime, trip_duration_min: int) -> bool:
+def can_make_trip(start_time: datetime.datetime, trip_duration_min: int, route=None) -> bool:
     """
     Returns True if a trip of 'trip_duration_min' starting at 'start_time'
     both starts and ends within the metro operating hours.
+    
+    If route is provided and uses Line L, applies Line L specific schedule.
     """
-    open_time, close_time = _service_window(start_time)
+    # Check if route uses Line L
+    if route and _route_uses_line_l(route):
+        open_time, close_time = _line_l_service_window(start_time)
+    else:
+        open_time, close_time = _service_window(start_time)
+    
     end_time = start_time + datetime.timedelta(minutes=trip_duration_min)
     result = (start_time >= open_time) and (end_time <= close_time)
     return result
@@ -2398,12 +2446,13 @@ def can_make_trip_now_graph(G: nx.Graph, source: str, target: str) -> bool:
     """
     try:
         trip_duration_min = nx.dijkstra_path_length(G, source=source, target=target, weight="weight")
+        route = nx.dijkstra_path(G, source=source, target=target, weight="weight")
     except nx.NetworkXNoPath:
         print(f"No path found between {source} and {target}")
         return False
     
     now = _now()
-    result = can_make_trip(now, int(trip_duration_min))
+    result = can_make_trip(now, int(trip_duration_min), route)
     return result
 
 def get_time(date_str: str, time_str: str) -> datetime.datetime:
