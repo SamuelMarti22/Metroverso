@@ -61,10 +61,10 @@ msgid "Horario de Operación"
 msgstr "Hours of Operation"
 
 msgid "Línea L"
-msgstr "Line L"
+msgstr "Arvi Station"
 
 msgid "Información Línea L"
-msgstr "Line L has special hours: Monday to Saturday 9:00-18:00, Sundays 8:30-18:00"
+msgstr "Arvi station has special hours: Monday to Saturday 9:00-18:00, Sundays 8:30-18:00"
 
 msgid "Nota"
 msgstr "Note"

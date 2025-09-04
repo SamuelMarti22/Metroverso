@@ -2404,8 +2404,8 @@ def _service_window(start_time: datetime.datetime):
         close_time = start_time.replace(hour=23, minute=0, second=0, microsecond=0)
     return open_time, close_time
 
-def _line_l_service_window(start_time: datetime.datetime):
-    """Returns (open_time, close_time) for Line L according to the day of start_time."""
+def _arvi_service_window(start_time: datetime.datetime):
+    """Returns (open_time, close_time) for Arvi station according to the day of start_time."""
     if start_time.weekday() == 6:  # Sunday
         open_time  = start_time.replace(hour=8,  minute=30, second=0, microsecond=0)
         close_time = start_time.replace(hour=18, minute=0, second=0, microsecond=0)
@@ -2420,13 +2420,15 @@ def _now():
     """
     return datetime.datetime.now()
 
-def _route_uses_line_l(route):
+
+
+def _route_includes_arvi(route):
     """
-    Returns True if the route uses Line L (stations starting with 'L').
+    Returns True if the route includes the Arvi station (L02).
     """
     if not route:
         return False
-    return any(station.startswith('L') for station in route)
+    return 'L02' in route
 
 
 def get_current_service_hours():
@@ -2447,12 +2449,12 @@ def get_current_service_hours():
         'is_operating': now >= open_time and now <= close_time
     }
 
-def get_line_l_service_hours():
+def get_arvi_service_hours():
     """
-    Returns the current service hours for Line L as a formatted string.
+    Returns the current service hours for Arvi station as a formatted string.
     """
     now = _now()
-    open_time, close_time = _line_l_service_window(now)
+    open_time, close_time = _arvi_service_window(now)
     
     # Format the times as HH:MM
     open_str = open_time.strftime("%H:%M")
@@ -2467,7 +2469,7 @@ def get_line_l_service_hours():
         'open_time': open_str,
         'close_time': close_str,
         'is_operating': now >= open_time and now <= close_time,
-        'is_line_l': True
+        'is_arvi_station': True
     }
 
 
@@ -2478,11 +2480,11 @@ def can_make_trip(start_time: datetime.datetime, trip_duration_min: int, route=N
     Returns True if a trip of 'trip_duration_min' starting at 'start_time'
     both starts and ends within the metro operating hours.
     
-    If route is provided and uses Line L, applies Line L specific schedule.
+    If route includes Arvi station (L02), applies Arvi specific schedule.
     """
-    # Check if route uses Line L
-    if route and _route_uses_line_l(route):
-        open_time, close_time = _line_l_service_window(start_time)
+    # Check if route includes Arvi station
+    if route and _route_includes_arvi(route):
+        open_time, close_time = _arvi_service_window(start_time)
     else:
         open_time, close_time = _service_window(start_time)
     

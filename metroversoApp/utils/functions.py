@@ -115,14 +115,15 @@ def calculeRute(star, destination):
         print("Rute_coords:", rute_coords)
         
         # Check if the trip can be made according to the schedule
-        from metroversoApp.assets.stationGraphs import can_make_trip_now_graph, get_current_service_hours, get_line_l_service_hours
+        from metroversoApp.assets.stationGraphs import can_make_trip_now_graph, get_current_service_hours, get_arvi_service_hours
         
-        uses_line_l = any(station.startswith('L') for station in rute)
+        # Check if route includes Arvi station (L02)
+        uses_arvi_station = 'L02' in rute
         can_make_trip = can_make_trip_now_graph(G, star, destination)
         
         # Get service hours information
-        if uses_line_l:
-            service_hours = get_line_l_service_hours()
+        if uses_arvi_station:
+            service_hours = get_arvi_service_hours()
         else:
             service_hours = get_current_service_hours()
         
@@ -139,7 +140,7 @@ def calculeRute(star, destination):
         rute_coords = []
         can_make_trip = False
         service_hours = None
-        uses_line_l = False
+        uses_arvi_station = False
     except Exception as e:
         print(f"Error in calculeRute: {e}")
         rute = []
@@ -153,6 +154,6 @@ def calculeRute(star, destination):
         rute_coords = []
         can_make_trip = False
         service_hours = None
-        uses_line_l = False
+        uses_arvi_station = False
 
-    return list(rute), distance, transfer_info, can_make_trip, service_hours, uses_line_l, rute_coords
+    return list(rute), distance, transfer_info, can_make_trip, service_hours, uses_arvi_station, rute_coords

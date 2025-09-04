@@ -465,7 +465,7 @@ function loadServiceHours() {
 }
 
 // Function to display service hours
-function displayServiceHours(serviceHours, usesLineL = false) {
+function displayServiceHours(serviceHours, usesArviStation = false) {
   let infoContainer = document.getElementById("serviceHoursInfo");
   if (!infoContainer) {
     infoContainer = document.createElement("div");
@@ -483,14 +483,16 @@ function displayServiceHours(serviceHours, usesLineL = false) {
     
     let html = '';
     
-    if (usesLineL) {
+    if (usesArviStation) {
+      // For Arvi station, use the day name directly from serviceHours.day
       html = `
-        <h6 class="mb-2">🕒 ${texts.operatingHours} - ${texts.lineL}</h6>
-        <p class="mb-1"><strong>${texts.days[serviceHours.day]}:</strong> ${serviceHours.open_time} - ${serviceHours.close_time}</p>
-        <p class="mb-1 text-info"><small><strong>${texts.note}:</strong> ${texts.infoLineL}</small></p>
+        <h6 class="mb-2">🕒 ${texts.operatingHours} - Estación Arvi</h6>
+        <p class="mb-1"><strong>${serviceHours.day}:</strong> ${serviceHours.open_time} - ${serviceHours.close_time}</p>
+        <p class="mb-1 text-info"><small><strong>${texts.note}:</strong> Horario especial para la estación Arvi</small></p>
         <p class="mb-0 ${statusClass}"><strong>${texts.state}:</strong> ${statusText}</p>
       `;
     } else {
+      // For normal metro, use the days array index
       html = `
         <h6 class="mb-2">🕒 ${texts.operatingHours}</h6>
         <p class="mb-1"><strong>${texts.days[serviceHours.day]}:</strong> ${serviceHours.open_time} - ${serviceHours.close_time}</p>
@@ -499,6 +501,44 @@ function displayServiceHours(serviceHours, usesLineL = false) {
     }
     
     infoContainer.innerHTML = html;
+  }
+}
+
+// Function to display Arvi-specific service hours (additional to general metro hours)
+function displayArviServiceHours(serviceHours) {
+  // Remove any existing Arvi service hours display
+  const existingArviContainer = document.getElementById("arviServiceHoursInfo");
+  if (existingArviContainer) {
+    existingArviContainer.remove();
+  }
+
+  if (serviceHours) {
+    const statusClass = serviceHours.is_operating ? 'text-success' : 'text-danger';
+    const statusText = serviceHours.is_operating ? texts.open : texts.closed;
+    
+    const arviContainer = document.createElement("div");
+    arviContainer.id = "arviServiceHoursInfo";
+    arviContainer.style.marginTop = "10px";
+    arviContainer.style.padding = "10px";
+    arviContainer.style.backgroundColor = "#e8f5e8";
+    arviContainer.style.borderRadius = "5px";
+    arviContainer.style.border = "1px solid #28a745";
+    
+         const html = `
+       <h6 class="mb-2">🕒 ${texts.operatingHours} - Estación Arvi</h6>
+       <p class="mb-1"><strong>${serviceHours.day}:</strong> ${serviceHours.open_time} - ${serviceHours.close_time}</p>
+       <p class="mb-0 ${statusClass}"><strong>${texts.state}:</strong> ${statusText}</p>
+     `;
+    
+         arviContainer.innerHTML = html;
+     
+     // Insert the Arvi service hours container after the normal service hours container
+     const normalServiceHoursContainer = document.getElementById("serviceHoursInfo");
+     if (normalServiceHoursContainer) {
+       normalServiceHoursContainer.parentNode.insertBefore(arviContainer, normalServiceHoursContainer.nextSibling);
+     } else {
+       document.querySelector(".divRute").appendChild(arviContainer);
+     }
   }
 }
 
@@ -521,6 +561,12 @@ document.querySelector(".userLocation").addEventListener("click", function () {
 document.getElementById("btnSearchRute").addEventListener("click", function () {
   // Clear any existing route visualization
   clearRouteVisualization();
+  
+  // Clear any existing Arvi service hours display
+  const existingArviContainer = document.getElementById("arviServiceHoursInfo");
+  if (existingArviContainer) {
+    existingArviContainer.remove();
+  }
   
   const inputStart = document.getElementById("inputStart").value;
   const inputDestination = document.getElementById("inputDestination").value;
@@ -562,9 +608,9 @@ document.getElementById("btnSearchRute").addEventListener("click", function () {
         
         let alertMessageText = "⚠️ El viaje no se puede completar dentro del horario de operación del metro.";
         
-        // Special message for Line L
-        if (data.uses_line_l) {
-          alertMessageText = "⚠️ El viaje no se puede completar dentro del horario de operación de la Línea L (9:00-18:00 L-S, 8:30-18:00 Dom).";
+        // Special message for Arvi station
+        if (data.uses_arvi_station) {
+          alertMessageText = "⚠️ El viaje no se puede completar dentro del horario de operación de la estación Arvi (9:00-18:00 L-S, 8:30-18:00 Dom).";
         }
         
         showAutoClosingAlert(alertBox, alertMessage, alertMessageText);
@@ -580,8 +626,12 @@ document.getElementById("btnSearchRute").addEventListener("click", function () {
       }
       
       // Update service hours display with new data
-      if (data.service_hours) {
-        displayServiceHours(data.service_hours, data.uses_line_l);
+      console.log("Service hours data:", data.service_hours);
+      console.log("Uses Arvi station:", data.uses_arvi_station);
+      if (data.service_hours && data.uses_arvi_station) {
+        console.log("Displaying Arvi service hours");
+        // Only display Arvi-specific service hours if Arvi is part of the route
+        displayArviServiceHours(data.service_hours);
       }
     })
     .catch((error) => {

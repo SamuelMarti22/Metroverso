@@ -24,7 +24,7 @@ def callRute(request):
     destination = request.GET.get('inputDestination')  # Default to 'A20' if not provided
 
     # Call the rute function from utils
-    rute, distance, transfer_info, can_make_trip, service_hours, uses_line_l, rute_coords = functions.calculeRute(start, destination)
+    rute, distance, transfer_info, can_make_trip, service_hours, uses_arvi_station, rute_coords = functions.calculeRute(start, destination)
     
     return JsonResponse({ 
         'rute': rute,
@@ -32,6 +32,6 @@ def callRute(request):
         'transfer_info': transfer_info,
         'can_make_trip': can_make_trip,
         'service_hours': service_hours,
-        'uses_line_l': uses_line_l,
+        'uses_arvi_station': uses_arvi_station,
         'rute_coords': rute_coords
     })
