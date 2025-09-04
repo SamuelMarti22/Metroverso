@@ -56,9 +56,9 @@ const stationNames = {
     "Z02": "13 de Noviembre",
     
     // Línea J
-    "J01": "JuanXXIII",
-    "J02": "Vallejuelos",
-    "J03": "La Aurora",
+    "J02": "JuanXXIII",
+    "J01": "Vallejuelos",
+    "J00": "La Aurora",
     
     // Línea O
     "O01": "Caribe",
@@ -187,9 +187,9 @@ turf.point([-75.54447595,6.24526309], { ID: "Z01", name: "El Pinal"}),
 turf.point([-75.5413945,6.24761518], { ID: "Z02", name: "13 de Noviembre"}),
 
 // Line J Stations
-turf.point([-75.61370257,6.26567653], { ID: "J01", name: "JuanXXIII"}),
-turf.point([-75.61401716,6.275360769], { ID: "J02", name: "Vallejuelos"}),
-turf.point([-75.61420338,6.281093175], { ID: "J03", name: "La Aurora"}),
+turf.point([-75.61370257,6.26567653], { ID: "J02", name: "JuanXXIII"}),
+turf.point([-75.61401716,6.275360769], { ID: "J01", name: "Vallejuelos"}),
+turf.point([-75.61420338,6.281093175], { ID: "J00", name: "La Aurora"}),
 
 // Line O Stations
 turf.point([-75.57036193, 6.27751343], { ID: "O01", name: "Caribe" }),
