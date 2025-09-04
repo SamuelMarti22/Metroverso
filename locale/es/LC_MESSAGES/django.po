@@ -1,0 +1,58 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-08-28 03:33-0500\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Mensaje de alerta aquí"
+msgstr "Mensaje de alerta aquí"
+
+msgid "Planificador de Rutas Metro"
+msgstr "Planificador de Rutas Metro"
+
+msgid "Close"
+msgstr "Cerrar"
+
+msgid "Estación de Inicio"
+msgstr "Estación de Inicio"
+
+msgid "Inicio"
+msgstr "Inicio"
+
+msgid "Estación de Destino"
+msgstr "Estación de Destino"
+
+msgid "Destino"
+msgstr "Destino"
+
+msgid "Buscar Ruta"
+msgstr "Buscar Ruta"
+
+msgid "Seleccionar Idioma"
+msgstr "Seleccionar Idioma"
+
+msgid "Establecer como punto de inicio"
+msgstr "Establecer como punto de inicio"
+
+msgid "Establecer como destino"
+msgstr "Establecer como destino"
+
+msgid "Mi ubicación"
+msgstr "Mi ubicación"
+
+msgid "Estación más cercana 1"
+msgstr "Estación más cercana 1"
+
+msgid "Estación más cercana 2"
+msgstr "Estación más cercana 2"
+
+msgid "Estación más cercana 3"
+msgstr "Estación más cercana 3"
