@@ -122,10 +122,7 @@ function updateUserLocation(position) {
     }`;
     btn3.innerHTML = `<i class="bi bi-geo-alt"></i> ${
       closestStationsToUser[2]?.properties.ID || ""
-    }`;
-    document.getElementById(
-      "btnUserLocation"
-    ).innerHTML = `<i class="bi bi-person"></i> Mi ubicación`;
+    }`
   }
 
   if (!userMarker) {
@@ -141,7 +138,7 @@ function updateUserLocation(position) {
         new mapboxgl.Popup({
           closeButton: false,
           offset: [0, -10],
-        }).setText("Tu ubicación")
+        }).setText(texts.myLocation)
       )
       .addTo(map);
   } else {
@@ -482,22 +479,22 @@ function displayServiceHours(serviceHours, usesLineL = false) {
 
   if (serviceHours) {
     const statusClass = serviceHours.is_operating ? 'text-success' : 'text-danger';
-    const statusText = serviceHours.is_operating ? 'Operando' : 'Cerrado';
+    const statusText = serviceHours.is_operating ? texts.open : texts.closed;
     
     let html = '';
     
     if (usesLineL) {
       html = `
-        <h6 class="mb-2">🕒 Horario de Operación - Línea L</h6>
-        <p class="mb-1"><strong>${serviceHours.day}:</strong> ${serviceHours.open_time} - ${serviceHours.close_time}</p>
-        <p class="mb-1 text-info"><small><strong>Nota:</strong> La Línea L tiene horario especial: Lunes a Sábado 9:00-18:00, Domingos 8:30-18:00</small></p>
-        <p class="mb-0 ${statusClass}"><strong>Estado:</strong> ${statusText}</p>
+        <h6 class="mb-2">🕒 ${texts.operatingHours} - ${texts.lineL}</h6>
+        <p class="mb-1"><strong>${texts.days[serviceHours.day]}:</strong> ${serviceHours.open_time} - ${serviceHours.close_time}</p>
+        <p class="mb-1 text-info"><small><strong>${texts.note}:</strong> ${texts.infoLineL}</small></p>
+        <p class="mb-0 ${statusClass}"><strong>${texts.state}:</strong> ${statusText}</p>
       `;
     } else {
       html = `
-        <h6 class="mb-2">🕒 Horario de Operación</h6>
-        <p class="mb-1"><strong>${serviceHours.day}:</strong> ${serviceHours.open_time} - ${serviceHours.close_time}</p>
-        <p class="mb-0 ${statusClass}"><strong>Estado:</strong> ${statusText}</p>
+        <h6 class="mb-2">🕒 ${texts.operatingHours}</h6>
+        <p class="mb-1"><strong>${texts.days[serviceHours.day]}:</strong> ${serviceHours.open_time} - ${serviceHours.close_time}</p>
+        <p class="mb-0 ${statusClass}"><strong>${texts.state}:</strong> ${statusText}</p>
       `;
     }
     
@@ -2763,7 +2760,6 @@ let selectedStationLocation = null;
 
 document.getElementById("btnClosestStation1").onclick = function () {
   if (closestStationsToUser[0]) {
-    this.innerText = closestStationsToUser[0].properties.ID;
     selectedStationLocation = closestStationsToUser[0].geometry.coordinates;
     pickStartingPoint(selectedStationLocation);
     map.flyTo({ center: selectedStationLocation });
@@ -2771,7 +2767,6 @@ document.getElementById("btnClosestStation1").onclick = function () {
 };
 document.getElementById("btnClosestStation2").onclick = function () {
   if (closestStationsToUser[1]) {
-    this.innerText = closestStationsToUser[1].properties.ID;
     selectedStationLocation = closestStationsToUser[1].geometry.coordinates;
     pickStartingPoint(selectedStationLocation);
     map.flyTo({ center: selectedStationLocation });
@@ -2779,7 +2774,6 @@ document.getElementById("btnClosestStation2").onclick = function () {
 };
 document.getElementById("btnClosestStation3").onclick = function () {
   if (closestStationsToUser[2]) {
-    this.innerText = closestStationsToUser[2].properties.ID;
     selectedStationLocation = closestStationsToUser[2].geometry.coordinates;
     pickStartingPoint(selectedStationLocation);
     map.flyTo({ center: selectedStationLocation });
@@ -2789,8 +2783,6 @@ document.getElementById("btnUserLocation").onclick = function () {
   pickStartingPoint(userLocation);
   map.flyTo({ center: userLocation });
 };
-
-
 
 // Función para mostrar sugerencias en tiempo real
 function setupInputSuggestions() {
@@ -2897,4 +2889,9 @@ function showInputSuggestions(inputElement, containerId) {
             document.removeEventListener('click', closeSuggestions);
         }
     });
+}
+
+function changeLanguage(lang) {
+  document.getElementById("language-input").value = lang;
+  document.getElementById("language-form").submit();
 }

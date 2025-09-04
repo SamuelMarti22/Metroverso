@@ -2440,12 +2440,8 @@ def get_current_service_hours():
     open_str = open_time.strftime("%H:%M")
     close_str = close_time.strftime("%H:%M")
     
-    # Get day name in Spanish
-    days = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
-    day_name = days[now.weekday()]
-    
     return {
-        'day': day_name,
+        'day': now.weekday(),
         'open_time': open_str,
         'close_time': close_str,
         'is_operating': now >= open_time and now <= close_time
