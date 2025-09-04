@@ -20,6 +20,19 @@
       window.APP_CONFIG = {
         geojsonUrl: "{% static 'geojson/Lineas_Sistema_Metro.geojson' %}"
       };
+
+      // Constants for language translation
+      const texts = {
+        myLocation: "{% trans 'Mi ubicación' %}",
+        operatingHours: "{% trans 'Horario de Operación' %}",
+        lineL: "{% trans 'Línea L' %}",
+        infoLineL: "{% trans 'Información Línea L' %}",
+        note: "{% trans 'Nota' %}",
+        state: "{% trans 'Estado' %}",
+        open: "{% trans 'Operando' %}",
+        closed: "{% trans 'Cerrado' %}",
+        days: ["{% trans 'Lunes' %}", "{% trans 'Martes' %}", "{% trans 'Miércoles' %}", "{% trans 'Jueves' %}", "{% trans 'Viernes' %}", "{% trans 'Sábado' %}", "{% trans 'Domingo' %}"]
+      };
     </script>
     <script
       src="{% static 'js/dataTurf.js' %}"
@@ -137,7 +150,7 @@
                 type="text"
                 class="form-control"
                 id="inputStart"
-                placeholder="Inicio"
+                placeholder="{% trans 'Inicio' %}"
                 autocomplete="off"
               />
             </div>
@@ -149,7 +162,7 @@
                 type="text"
                 class="form-control"
                 id="inputDestination"
-                placeholder="Destino"
+                placeholder="{% trans 'Destino' %}"
                 autocomplete="off"
               />
             </div>

@@ -56,3 +56,45 @@ msgstr "Nearest station 2"
 
 msgid "Estación más cercana 3"
 msgstr "Nearest station 3"
+
+msgid "Horario de Operación"
+msgstr "Hours of Operation"
+
+msgid "Línea L"
+msgstr "Line L"
+
+msgid "Información Línea L"
+msgstr "Line L has special hours: Monday to Saturday 9:00-18:00, Sundays 8:30-18:00"
+
+msgid "Nota"
+msgstr "Note"
+
+msgid "Estado"
+msgstr "Status"
+
+msgid "Operando"
+msgstr "Open"
+
+msgid "Cerrado"
+msgstr "Closed"
+
+msgid "Lunes"
+msgstr "Monday"
+
+msgid "Martes"
+msgstr "Tuesday"
+
+msgid "Miércoles"
+msgstr "Wednesday"
+
+msgid "Jueves"
+msgstr "Thursday"
+
+msgid "Viernes"
+msgstr "Friday"
+
+msgid "Sábado"
+msgstr "Saturday"
+
+msgid "Domingo"
+msgstr "Sunday"

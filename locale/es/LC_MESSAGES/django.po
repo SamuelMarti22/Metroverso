@@ -56,3 +56,45 @@ msgstr "Estación más cercana 2"
 
 msgid "Estación más cercana 3"
 msgstr "Estación más cercana 3"
+
+msgid "Horario de Operación"
+msgstr "Horario de Operación"
+
+msgid "Línea L"
+msgstr "Línea L"
+
+msgid "Información Línea L"
+msgstr "La Línea L tiene horario especial: Lunes a Sábado 9:00-18:00, Domingos 8:30-18:00"
+
+msgid "Nota"
+msgstr "Nota"
+
+msgid "Estado"
+msgstr "Estado"
+
+msgid "Operando"
+msgstr "Operando"
+
+msgid "Cerrado"
+msgstr "Cerrado"
+
+msgid "Lunes"
+msgstr "Lunes"
+
+msgid "Martes"
+msgstr "Martes"
+
+msgid "Miércoles"
+msgstr "Miércoles"
+
+msgid "Jueves"
+msgstr "Jueves"
+
+msgid "Viernes"
+msgstr "Viernes"
+
+msgid "Sábado"
+msgstr "Sábado"
+
+msgid "Domingo"
+msgstr "Domingo"
