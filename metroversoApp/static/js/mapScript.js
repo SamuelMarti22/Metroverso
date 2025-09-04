@@ -601,23 +601,35 @@ document.getElementById("btnSearchRute").addEventListener("click", function () {
       console.log("Distancia:", data.distance);
       console.log("Información de transferencias:", data.transfer_info);
 
-      // Check if the trip can be made according to the schedule
-      if (data.can_make_trip === false || String(data.can_make_trip).toLowerCase() === "false") {
-        const alertBox = document.getElementById("alerta-validacion");
-        const alertMessage = document.getElementById("mensaje-alerta");
-        
-        let alertMessageText = "⚠️ El viaje no se puede completar dentro del horario de operación del metro.";
-        
-        // Special message for Arvi station
-        if (data.uses_arvi_station) {
-          alertMessageText = "⚠️ El viaje no se puede completar dentro del horario de operación de la estación Arvi (9:00-18:00 L-S, 8:30-18:00 Dom).";
-        }
-        
-        showAutoClosingAlert(alertBox, alertMessage, alertMessageText);
-        return; // Do not continue showing the route
-      }
+      // Mostrar el botón 'Iniciar Recorrido' solo si la ruta es válida
+      const btnStartJourney = document.getElementById("btnStartJourney");
+      btnStartJourney.style.display = "block";
 
-      // Display the route information
+      // Guardar los datos de la ruta para usarlos en el botón de iniciar recorrido
+      window.lastRouteData = data;
+
+      // Ocultar cualquier alerta previa
+      const alertBox = document.getElementById("alerta-validacion");
+      alertBox.style.display = "none";
+
+      // Mostrar la información de la ruta normalmente
+// Lógica para el botón 'Iniciar Recorrido'
+document.getElementById("btnStartJourney").addEventListener("click", function () {
+  const data = window.lastRouteData;
+  if (!data) return;
+
+  if (data.can_make_trip === false || String(data.can_make_trip).toLowerCase() === "false") {
+    const alertBox = document.getElementById("alerta-validacion");
+    const alertMessage = document.getElementById("mensaje-alerta");
+    let alertMessageText = "⚠️ El viaje no se puede completar dentro del horario de operación del metro.";
+    if (data.uses_arvi_station) {
+      alertMessageText = "⚠️ El viaje no se puede completar dentro del horario de operación de la estación Arvi (9:00-18:00 L-S, 8:30-18:00 Dom).";
+    }
+    showAutoClosingAlert(alertBox, alertMessage, alertMessageText);
+    return;
+  }
+  // Si puede realizar el viaje, no mostrar nada
+});
       displayTransferInfo(data.transfer_info, data.rute);
       
       // Display the route on the map
