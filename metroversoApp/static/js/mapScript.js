@@ -2500,7 +2500,7 @@ function addNodesRouteToMap(rute, rute_coords) {
     // ===== Trasbordo detectado (cambio de letra) =====
     if (fromLineVal !== toLineVal) {
       // Caso especial: si la nueva línea es T, pinta SIEMPRE el GeoJSON fallback de T completo
-      if (toLineVal === "T") {
+      if (toLineVal === "T" || toId === "A11") {
         const featT = lineT.features[0];
         const endIdxT = featT.geometry.coordinates.length - 1;
         paintLineSegment(featT, 0, endIdxT, sourceId, layerId);
@@ -2533,7 +2533,7 @@ function addNodesRouteToMap(rute, rute_coords) {
         }
        }
       
-      if (toLineVal === "M" && toId.charAt(1) === "0") {
+      if (toLineVal === "M" && toId.charAt(1) === "0" || toId === "A14") {
         const featM = lineM0.features[0];
         const endIdxM = featM.geometry.coordinates.length - 1;
         paintLineSegment(featM, 0, endIdxM, sourceId, layerId);

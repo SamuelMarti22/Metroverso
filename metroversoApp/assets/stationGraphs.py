@@ -158,9 +158,9 @@ for i in range(0, 18):  # De M00 a M18
     elif i == 12:
         origen = f"M{str(i).zfill(2)}"
         destino = f"A08"
-    elif i == 13:        
+        add_edge_time(G, linea1, origen, destino, line_key="M")
         origen = f"A08"
-        destino = f"M{str(i+1).zfill(2)}"
+        destino = f"M{str(i+1).zfill(2)}"    
     else: 
         origen = f"M{str(i).zfill(2)}"
         destino = f"M{str(i+1).zfill(2)}"

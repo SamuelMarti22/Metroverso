@@ -38,7 +38,7 @@ const stationNames = {
     "L02": "Arvi",
     
     // Línea T
-    "T01": "San Antonio",
+    "T01": "San José",
     "T02": "Pabellon del Agua",
     "T03": "Bicentenario",
     "T04": "Buenos Aires",
@@ -169,7 +169,7 @@ turf.point([-75.54184763, 6.29272255], { ID: "L01", name: "Santo Domingo" }),
 turf.point([-75.50297173, 6.281545751], { ID: "L02", name: "Arvi" }),
 
 //  Line T Stations
-turf.point([-75.56538621,6.24732917], { ID: "T01", name: "San Antonio"}),
+turf.point([-75.56538621,6.24732917], { ID: "T01", name: "San José"}),
 turf.point([-75.56199329,6.245588625], { ID: "T02", name: "Pabellon del Agua"}),
 turf.point([-75.55876266,6.24395102], { ID: "T03", name: "Bicentenario"}),
 turf.point([-75.5539,6.241399227], { ID: "T04", name: "Buenos Aires"}),
