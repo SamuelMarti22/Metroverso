@@ -19,6 +19,10 @@ def getServiceHours(request):
         'service_hours': service_hours
     })
 
+# def getLineToShow(request):
+#     linea = request.GET.get("linea")
+#     print("Línea seleccionada:", linea)
+
 def callRute(request):
     start = request.GET.get('inputStart')  # Default to 'A01' if not provided
     destination = request.GET.get('inputDestination')  # Default to 'A20' if not provided

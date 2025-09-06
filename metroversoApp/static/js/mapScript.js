@@ -57,6 +57,31 @@ async function loadLinesStations() {
   }
 }
 
+async function loadLinesComplete() {
+  const cfg = window.APP_CONFIG || {};
+  if (!cfg.geojsonComplete) {
+    console.error("Falta geojsonUrl en APP_CONFIG");
+    return null;
+  }
+
+  try {
+    const res = await fetch(cfg.geojsonComplete, {
+      credentials: "same-origin",
+      headers: { "Accept": "application/json" }
+    });
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+
+    linesComplete = await res.json();
+    console.log("GeoJSON cargado en linesComplete:", linesComplete);
+    return linesComplete;
+  } catch (err) {
+    console.error("Error cargando GeoJSON:", err);
+    return null;
+  }
+}
+
 // Function to show/hide the closest stations box
 function setClosestStationsBoxVisible(visible) {
   const box = document.getElementById("closestStationsBox");
@@ -114,15 +139,12 @@ function updateUserLocation(position) {
     const btn1 = document.getElementById("btnClosestStation1");
     const btn2 = document.getElementById("btnClosestStation2");
     const btn3 = document.getElementById("btnClosestStation3");
-    btn1.innerHTML = `<i class="bi bi-geo-alt"></i> ${
-      closestStationsToUser[0]?.properties.ID || ""
-    }`;
-    btn2.innerHTML = `<i class="bi bi-geo-alt"></i> ${
-      closestStationsToUser[1]?.properties.ID || ""
-    }`;
-    btn3.innerHTML = `<i class="bi bi-geo-alt"></i> ${
-      closestStationsToUser[2]?.properties.ID || ""
-    }`
+    btn1.innerHTML = `<i class="bi bi-geo-alt"></i> ${closestStationsToUser[0]?.properties.ID || ""
+      }`;
+    btn2.innerHTML = `<i class="bi bi-geo-alt"></i> ${closestStationsToUser[1]?.properties.ID || ""
+      }`;
+    btn3.innerHTML = `<i class="bi bi-geo-alt"></i> ${closestStationsToUser[2]?.properties.ID || ""
+      }`
   }
 
   if (!userMarker) {
@@ -444,10 +466,11 @@ console.log("Map initialized");
 map.on("load", () => {
   startLocationTracking();
   loadServiceHours(); // Load service hours when page loads
-  
+
   // Cargar el GeoJSON de las líneas del metro
   loadLinesStations();
-   
+  loadLinesComplete();
+
   // Inicializar funcionalidades de autocompletado
   setupInputSuggestions();
 });
@@ -480,9 +503,9 @@ function displayServiceHours(serviceHours, usesArviStation = false) {
   if (serviceHours) {
     const statusClass = serviceHours.is_operating ? 'text-success' : 'text-danger';
     const statusText = serviceHours.is_operating ? texts.open : texts.closed;
-    
+
     let html = '';
-    
+
     if (usesArviStation) {
       // For Arvi station, use the day name directly from serviceHours.day
       html = `
@@ -499,7 +522,7 @@ function displayServiceHours(serviceHours, usesArviStation = false) {
         <p class="mb-0 ${statusClass}"><strong>${texts.state}:</strong> ${statusText}</p>
       `;
     }
-    
+
     infoContainer.innerHTML = html;
   }
 }
@@ -515,7 +538,7 @@ function displayArviServiceHours(serviceHours) {
   if (serviceHours) {
     const statusClass = serviceHours.is_operating ? 'text-success' : 'text-danger';
     const statusText = serviceHours.is_operating ? texts.open : texts.closed;
-    
+
     const arviContainer = document.createElement("div");
     arviContainer.id = "arviServiceHoursInfo";
     arviContainer.style.marginTop = "10px";
@@ -523,22 +546,22 @@ function displayArviServiceHours(serviceHours) {
     arviContainer.style.backgroundColor = "#e8f5e8";
     arviContainer.style.borderRadius = "5px";
     arviContainer.style.border = "1px solid #28a745";
-    
-         const html = `
+
+    const html = `
        <h6 class="mb-2">🕒 ${texts.operatingHours} - Estación Arvi</h6>
        <p class="mb-1"><strong>${serviceHours.day}:</strong> ${serviceHours.open_time} - ${serviceHours.close_time}</p>
        <p class="mb-0 ${statusClass}"><strong>${texts.state}:</strong> ${statusText}</p>
      `;
-    
-         arviContainer.innerHTML = html;
-     
-     // Insert the Arvi service hours container after the normal service hours container
-     const normalServiceHoursContainer = document.getElementById("serviceHoursInfo");
-     if (normalServiceHoursContainer) {
-       normalServiceHoursContainer.parentNode.insertBefore(arviContainer, normalServiceHoursContainer.nextSibling);
-     } else {
-       document.querySelector(".divRute").appendChild(arviContainer);
-     }
+
+    arviContainer.innerHTML = html;
+
+    // Insert the Arvi service hours container after the normal service hours container
+    const normalServiceHoursContainer = document.getElementById("serviceHoursInfo");
+    if (normalServiceHoursContainer) {
+      normalServiceHoursContainer.parentNode.insertBefore(arviContainer, normalServiceHoursContainer.nextSibling);
+    } else {
+      document.querySelector(".divRute").appendChild(arviContainer);
+    }
   }
 }
 
@@ -561,13 +584,13 @@ document.querySelector(".userLocation").addEventListener("click", function () {
 document.getElementById("btnSearchRute").addEventListener("click", function () {
   // Clear any existing route visualization
   clearRouteVisualization();
-  
+
   // Clear any existing Arvi service hours display
   const existingArviContainer = document.getElementById("arviServiceHoursInfo");
   if (existingArviContainer) {
     existingArviContainer.remove();
   }
-  
+
   const inputStart = document.getElementById("inputStart").value;
   const inputDestination = document.getElementById("inputDestination").value;
 
@@ -596,7 +619,7 @@ document.getElementById("btnSearchRute").addEventListener("click", function () {
     `/view/callRute?inputStart=${startId}&inputDestination=${endId}`
   )
     .then((res) => res.json())
-        .then((data) => {
+    .then((data) => {
       console.log("Ruta:", data.rute);
       console.log("Distancia:", data.distance);
       console.log("Información de transferencias:", data.transfer_info);
@@ -613,30 +636,30 @@ document.getElementById("btnSearchRute").addEventListener("click", function () {
       alertBox.style.display = "none";
 
       // Mostrar la información de la ruta normalmente
-// Lógica para el botón 'Iniciar Recorrido'
-document.getElementById("btnStartJourney").addEventListener("click", function () {
-  const data = window.lastRouteData;
-  if (!data) return;
+      // Lógica para el botón 'Iniciar Recorrido'
+      document.getElementById("btnStartJourney").addEventListener("click", function () {
+        const data = window.lastRouteData;
+        if (!data) return;
 
-  if (data.can_make_trip === false || String(data.can_make_trip).toLowerCase() === "false") {
-    const alertBox = document.getElementById("alerta-validacion");
-    const alertMessage = document.getElementById("mensaje-alerta");
-    let alertMessageText = "⚠️ El viaje no se puede completar dentro del horario de operación del metro.";
-    if (data.uses_arvi_station) {
-      alertMessageText = "⚠️ El viaje no se puede completar dentro del horario de operación de la estación Arvi (9:00-18:00 L-S, 8:30-18:00 Dom).";
-    }
-    showAutoClosingAlert(alertBox, alertMessage, alertMessageText);
-    return;
-  }
-  // Si puede realizar el viaje, no mostrar nada
-});
+        if (data.can_make_trip === false || String(data.can_make_trip).toLowerCase() === "false") {
+          const alertBox = document.getElementById("alerta-validacion");
+          const alertMessage = document.getElementById("mensaje-alerta");
+          let alertMessageText = "⚠️ El viaje no se puede completar dentro del horario de operación del metro.";
+          if (data.uses_arvi_station) {
+            alertMessageText = "⚠️ El viaje no se puede completar dentro del horario de operación de la estación Arvi (9:00-18:00 L-S, 8:30-18:00 Dom).";
+          }
+          showAutoClosingAlert(alertBox, alertMessage, alertMessageText);
+          return;
+        }
+        // Si puede realizar el viaje, no mostrar nada
+      });
       displayTransferInfo(data.transfer_info, data.rute);
-      
+
       // Display the route on the map
       if (data.rute && data.rute_coords) {
         addNodesRouteToMap(data.rute, data.rute_coords);
       }
-      
+
       // Update service hours display with new data
       console.log("Service hours data:", data.service_hours);
       console.log("Uses Arvi station:", data.uses_arvi_station);
@@ -725,7 +748,7 @@ function displayTransferInfo(transferInfo, route) {
   infoContainer.innerHTML = html;
 }
 
-const lineX = 
+const lineX =
 {
   "type": "FeatureCollection",
   "features": [
@@ -761,7 +784,7 @@ const lineX =
       "geometry": {
         "type": "LineString",
         "coordinates": [
-          [ -75.5766653187318,6.230890944421365,  32 ],
+          [-75.5766653187318, 6.230890944421365, 32],
           [
             -75.5766653187318,
             6.230890944421365,
@@ -1064,14 +1087,14 @@ const lineT = {
           [-75.56899648037718, 6.246939945485565, 35],
           [-75.56868243787234, 6.246816641725021, 35],
           [-75.56863898947934, 6.246801958141261, 35],
-          [-75.5684612421816,  6.246735418152711, 35],
+          [-75.5684612421816, 6.246735418152711, 35],
           [-75.56842800287549, 6.246724214257357, 35],
           [-75.56839065228664, 6.246716433443648, 35],
-          [-75.56837017849911, 6.24671548107932,  35],
+          [-75.56837017849911, 6.24671548107932, 35],
           [-75.56835366554779, 6.246716566178844, 35],
           [-75.56833734489106, 6.246719288554154, 35],
           [-75.56831358204062, 6.246726402291096, 35],
-          [-75.56828405655207, 6.24674124071165,  35],
+          [-75.56828405655207, 6.24674124071165, 35],
           [-75.56827055373681, 6.246750796919175, 35],
           [-75.56825213882898, 6.246767599008234, 35],
           [-75.56823555544017, 6.246787030293802, 35],
@@ -1080,9 +1103,9 @@ const lineT = {
           [-75.56760308628654, 6.247722127517463, 35],
           [-75.56755248001966, 6.247796650409316, 35],
           [-75.56747938991894, 6.247910291096805, 35],
-          [-75.5673819699176,  6.248073005429736, 35],
+          [-75.5673819699176, 6.248073005429736, 35],
           [-75.56736150490096, 6.248104248662065, 35],
-          [-75.5673436250127,  6.248126656226177, 35],
+          [-75.5673436250127, 6.248126656226177, 35],
           [-75.56733018363724, 6.248140484874192, 35],
           [-75.56731516137629, 6.248153243563244, 35],
           [-75.56729902430665, 6.248164352301732, 35],
@@ -1099,7 +1122,7 @@ const lineT = {
           [-75.56595580344352, 6.247598197106262, 35],
           [-75.56580587917092, 6.247535515597956, 35],
           [-75.56573944012176, 6.247505681040304, 35],
-          [ -75.56538621247405, 6.247329169623094, 35.0],
+          [-75.56538621247405, 6.247329169623094, 35.0],
         ]
       }
     }
@@ -1358,7 +1381,7 @@ const lineM = {
 };
 
 
-const lineM0={
+const lineM0 = {
   "type": "FeatureCollection",
   "features": [
     {
@@ -2455,6 +2478,18 @@ function getLine(lineValue) {
   return { type: "FeatureCollection", features };
 }
 
+// Function to clear existing route visualization
+function getLineComplete(lineValue) {
+  if (!linesComplete || linesComplete.type !== "FeatureCollection") {
+    console.error("linesComplete no está cargado todavía");
+    return { type: "FeatureCollection", features: [] };
+  }
+  const features = linesComplete.features.filter(
+    f => f?.properties?.["linea"] === lineValue
+  );
+  return { type: "FeatureCollection", features };
+}
+
 
 // Función para encontrar el índice de coordenadas en una línea
 function findCoordIndex(lineFC, target, eps = 1e-9) {
@@ -2471,7 +2506,7 @@ function findCoordIndex(lineFC, target, eps = 1e-9) {
 }
 
 // Route visualization functions
-function paintLineSegment(lineInput, startIndex, endIndex, sourceId = "sub-line", layerId = "sub-line-layer",rute, rute_coords) {
+function paintLineSegment(lineInput, startIndex, endIndex, sourceId = "sub-line", layerId = "sub-line-layer", rute, rute_coords) {
   // Acepta Feature o FeatureCollection
   let feature = null;
   if (!lineInput) {
@@ -2539,22 +2574,73 @@ function paintLineSegment(lineInput, startIndex, endIndex, sourceId = "sub-line"
   }
 }
 
+function showLines(selectedLines) {
+  if (map.getSource("lineasCompletas")) {
+    map.getSource("lineasCompletas").setData(selectedLines);
+    return;
+  }
+  map.addSource("lineasCompletas", {
+    type: "geojson",
+    data: selectedLines
+  });
+  map.addLayer({
+    id: 'lineas-layer',
+    type: 'line',
+    source: "lineasCompletas",
+    layout: {
+      'line-join': 'round',
+      'line-cap': 'round'
+    },
+    paint: {
+      "line-color": [
+        "match",
+        ["get", "linea"],
+        "A", "#FF3B30",
+        "B", "#008CFF",
+        "O", "#2ECC71",
+        "Z", "#9B59B6",
+        "2", "#F39C12",
+        "1", "#34495E",
+        "K", "#34495E",
+        "P", "#34495E",
+        "L", "#00A9A5",
+        "J", "#E74C3C",
+        "H", "#9B59B6",
+        "T", "#00A9A5",
+      /* default */ "#000000"
+      ],
+      'line-width': 3
+    }
+  });
+}
+
+document.getElementById("btnShowLines").addEventListener("click", () => {
+  clearRouteVisualization();
+  const line = document.getElementById("lineSelection").value
+  if (line != "ALL") {
+    const selectedLines = getLineComplete(line)
+    showLines(selectedLines)
+  } else {
+    showLines(linesComplete)
+  }
+})
+
 function addNodesRouteToMap(rute, rute_coords) {
   if (!Array.isArray(rute) || !Array.isArray(rute_coords)) return;
   if (rute.length < 2 || rute_coords.length < 2) return;
 
   for (let i = 0; i < rute.length - 1; i++) {
     const fromId = rute[i];
-    const toId   = rute[i + 1];
+    const toId = rute[i + 1];
     const fromCoord = rute_coords[i];
-    const toCoord   = rute_coords[i + 1];
+    const toCoord = rute_coords[i + 1];
     if (!fromCoord || !toCoord) continue;
 
-    const sourceId = `sub-line-${i+1}`;
-    const layerId  = `sub-line-layer-${i+1}`;
+    const sourceId = `sub-line-${i + 1}`;
+    const layerId = `sub-line-layer-${i + 1}`;
 
     const fromLineVal = fromId.charAt(0);
-    const toLineVal   = toId.charAt(0);
+    const toLineVal = toId.charAt(0);
 
     // ===== Trasbordo detectado (cambio de letra) =====
     if (fromLineVal !== toLineVal) {
@@ -2568,10 +2654,10 @@ function addNodesRouteToMap(rute, rute_coords) {
           map.setPaintProperty(layerId, "line-color", colorT);
           map.setPaintProperty(layerId, "line-width", 4);
         }
-       }
+      }
 
-        if (toLineVal === "X") {
-        const featX= lineX.features[0];
+      if (toLineVal === "X") {
+        const featX = lineX.features[0];
         const endIdxX = featX.geometry.coordinates.length - 1;
         paintLineSegment(featX, 0, endIdxX, sourceId, layerId);
         const colorT = COLOR_BY_LINE?.T || "#00A9A5";
@@ -2579,9 +2665,9 @@ function addNodesRouteToMap(rute, rute_coords) {
           map.setPaintProperty(layerId, "line-color", colorT);
           map.setPaintProperty(layerId, "line-width", 4);
         }
-       }
+      }
 
-        if (toLineVal === "M" && toId.charAt(1) === "1") {
+      if (toLineVal === "M" && toId.charAt(1) === "1") {
         const featM = lineM.features[0];
         const endIdxM = featM.geometry.coordinates.length - 1;
         paintLineSegment(featM, 0, endIdxM, sourceId, layerId);
@@ -2590,8 +2676,8 @@ function addNodesRouteToMap(rute, rute_coords) {
           map.setPaintProperty(layerId, "line-color", colorT);
           map.setPaintProperty(layerId, "line-width", 4);
         }
-       }
-      
+      }
+
       if (toLineVal === "M" && toId.charAt(1) === "0" || toId === "A14") {
         const featM = lineM0.features[0];
         const endIdxM = featM.geometry.coordinates.length - 1;
@@ -2601,9 +2687,9 @@ function addNodesRouteToMap(rute, rute_coords) {
           map.setPaintProperty(layerId, "line-color", colorT);
           map.setPaintProperty(layerId, "line-width", 4);
         }
-       }
+      }
 
-        if (toLineVal === "O" && toId.charAt(1) === "0") {
+      if (toLineVal === "O" && toId.charAt(1) === "0") {
         const featO = lineO.features[0];
         const endIdxO = featO.geometry.coordinates.length - 1;
         paintLineSegment(featO, 0, endIdxO, sourceId, layerId);
@@ -2612,9 +2698,9 @@ function addNodesRouteToMap(rute, rute_coords) {
           map.setPaintProperty(layerId, "line-color", colorT);
           map.setPaintProperty(layerId, "line-width", 4);
         }
-       }
+      }
 
-        if (toLineVal === "K") {
+      if (toLineVal === "K") {
         const featK = lineK.features[0];
         const endIdxK = featK.geometry.coordinates.length - 1;
         paintLineSegment(featK, 0, endIdxK, sourceId, layerId);
@@ -2623,10 +2709,10 @@ function addNodesRouteToMap(rute, rute_coords) {
           map.setPaintProperty(layerId, "line-color", colorT);
           map.setPaintProperty(layerId, "line-width", 4);
         }
-       }
+      }
 
 
-        if (toLineVal === "P") {
+      if (toLineVal === "P") {
         const featP = lineP.features[0];
         const endIdxP = featP.geometry.coordinates.length - 1;
         paintLineSegment(featP, 0, endIdxP, sourceId, layerId);
@@ -2635,9 +2721,9 @@ function addNodesRouteToMap(rute, rute_coords) {
           map.setPaintProperty(layerId, "line-color", colorT);
           map.setPaintProperty(layerId, "line-width", 4);
         }
-       }
+      }
 
-        if (toLineVal === "Z") {
+      if (toLineVal === "Z") {
         const featZ = lineZ.features[0];
         const endIdxZ = featZ.geometry.coordinates.length - 1;
         paintLineSegment(featZ, 0, endIdxZ, sourceId, layerId);
@@ -2650,9 +2736,9 @@ function addNodesRouteToMap(rute, rute_coords) {
     }
 
     // ===== Caso normal: misma línea =====
-    const lineFC  = getLine(fromLineVal);
+    const lineFC = getLine(fromLineVal);
     const startIdx = findCoordIndex(lineFC, fromCoord);
-    const endIdx   = findCoordIndex(lineFC, toCoord);
+    const endIdx = findCoordIndex(lineFC, toCoord);
 
     if (startIdx !== -1 && endIdx !== -1) {
       // Pinta tramo dentro de la misma línea
@@ -2675,7 +2761,7 @@ function addNodesRouteToMap(rute, rute_coords) {
 // Color mapping for metro lines
 const COLOR_BY_LINE = {
   "A": "#FF3B30",
-  "B": "#008CFF", 
+  "B": "#008CFF",
   "O": "#2ECC71",
   "Z": "#9B59B6",
   "X": "#F39C12",
@@ -2693,25 +2779,25 @@ function clearRouteVisualization() {
   // Remove all route-related sources and layers
   const sourcesToRemove = [];
   const layersToRemove = [];
-  
+
   map.getStyle().sources && Object.keys(map.getStyle().sources).forEach(sourceId => {
-    if (sourceId.startsWith('route-segment-') || sourceId.startsWith('sub-line')) {
+    if (sourceId.startsWith('route-segment-') || sourceId.startsWith('sub-line') || sourceId.startsWith('lineasCompletas')) {
       sourcesToRemove.push(sourceId);
     }
   });
-  
+
   map.getStyle().layers && map.getStyle().layers.forEach(layer => {
-    if (layer.id.startsWith('route-segment-layer-') || layer.id.startsWith('sub-line-layer')) {
+    if (layer.id.startsWith('route-segment-layer-') || layer.id.startsWith('sub-line-layer') || layer.id.startsWith('lineas-layer')) {
       layersToRemove.push(layer.id);
     }
   });
-  
+
   layersToRemove.forEach(layerId => {
     if (map.getLayer(layerId)) {
       map.removeLayer(layerId);
     }
   });
-  
+
   sourcesToRemove.forEach(sourceId => {
     if (map.getSource(sourceId)) {
       map.removeSource(sourceId);
@@ -2848,50 +2934,50 @@ document.getElementById("btnUserLocation").onclick = function () {
 
 // Función para mostrar sugerencias en tiempo real
 function setupInputSuggestions() {
-    const startInput = document.getElementById('inputStart');
-    const destInput = document.getElementById('inputDestination');
-    
-    if (startInput) {
-        startInput.addEventListener('input', function() {
-            showInputSuggestions(this, 'startSuggestions');
-        });
-        
-        startInput.addEventListener('focus', function() {
-            showInputSuggestions(this, 'startSuggestions');
-        });
-    }
-    
-    if (destInput) {
-        destInput.addEventListener('input', function() {
-            showInputSuggestions(this, 'destSuggestions');
-        });
-        
-        destInput.addEventListener('focus', function() {
-            showInputSuggestions(this, 'destSuggestions');
-        });
-    }
+  const startInput = document.getElementById('inputStart');
+  const destInput = document.getElementById('inputDestination');
+
+  if (startInput) {
+    startInput.addEventListener('input', function () {
+      showInputSuggestions(this, 'startSuggestions');
+    });
+
+    startInput.addEventListener('focus', function () {
+      showInputSuggestions(this, 'startSuggestions');
+    });
+  }
+
+  if (destInput) {
+    destInput.addEventListener('input', function () {
+      showInputSuggestions(this, 'destSuggestions');
+    });
+
+    destInput.addEventListener('focus', function () {
+      showInputSuggestions(this, 'destSuggestions');
+    });
+  }
 }
 
 // Función para mostrar sugerencias de input
 function showInputSuggestions(inputElement, containerId) {
-    const value = inputElement.value.trim();
-    
-    // Remover contenedor de sugerencias existente
-    let existingContainer = document.getElementById(containerId);
-    if (existingContainer) {
-        existingContainer.remove();
-    }
-    
-    if (value.length < 2) return;
-    
-    const suggestions = getStationSuggestions(value);
-    if (suggestions.length === 0) return;
-    
-    // Crear contenedor de sugerencias
-    const container = document.createElement('div');
-    container.id = containerId;
-    container.className = 'suggestions-container';
-    container.style.cssText = `
+  const value = inputElement.value.trim();
+
+  // Remover contenedor de sugerencias existente
+  let existingContainer = document.getElementById(containerId);
+  if (existingContainer) {
+    existingContainer.remove();
+  }
+
+  if (value.length < 2) return;
+
+  const suggestions = getStationSuggestions(value);
+  if (suggestions.length === 0) return;
+
+  // Crear contenedor de sugerencias
+  const container = document.createElement('div');
+  container.id = containerId;
+  container.className = 'suggestions-container';
+  container.style.cssText = `
         position: absolute;
         background: white;
         border: 1px solid #ddd;
@@ -2902,55 +2988,55 @@ function showInputSuggestions(inputElement, containerId) {
         width: ${inputElement.offsetWidth}px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     `;
-    
-    // Añadir sugerencias
-    suggestions.forEach(suggestion => {
-        const item = document.createElement('div');
-        item.className = 'suggestion-item';
-        item.style.cssText = `
+
+  // Añadir sugerencias
+  suggestions.forEach(suggestion => {
+    const item = document.createElement('div');
+    item.className = 'suggestion-item';
+    item.style.cssText = `
             padding: 8px 12px;
             cursor: pointer;
             border-bottom: 1px solid #eee;
             font-size: 14px;
         `;
-        // Extract line from station ID (first character)
-        const line = suggestion.id.charAt(0);
-        item.innerHTML = `
+    // Extract line from station ID (first character)
+    const line = suggestion.id.charAt(0);
+    item.innerHTML = `
             <strong>${suggestion.name}</strong> 
             <span class="station-id">Línea ${line}</span>
         `;
-        
-        item.addEventListener('click', function() {
-            inputElement.value = suggestion.name;
-            container.remove();
-        });
-        
-        item.addEventListener('mouseenter', function() {
-            this.style.backgroundColor = '#f8f9fa';
-        });
-        
-        item.addEventListener('mouseleave', function() {
-            this.style.backgroundColor = 'white';
-        });
-        
-        container.appendChild(item);
+
+    item.addEventListener('click', function () {
+      inputElement.value = suggestion.name;
+      container.remove();
     });
-    
-    // Posicionar contenedor
-    const rect = inputElement.getBoundingClientRect();
-    container.style.top = `${rect.bottom + window.scrollY}px`;
-    container.style.left = `${rect.left + window.scrollX}px`;
-    
-    // Añadir al DOM
-    document.body.appendChild(container);
-    
-    // Cerrar sugerencias al hacer clic fuera
-    document.addEventListener('click', function closeSuggestions(e) {
-        if (!container.contains(e.target) && e.target !== inputElement) {
-            container.remove();
-            document.removeEventListener('click', closeSuggestions);
-        }
+
+    item.addEventListener('mouseenter', function () {
+      this.style.backgroundColor = '#f8f9fa';
     });
+
+    item.addEventListener('mouseleave', function () {
+      this.style.backgroundColor = 'white';
+    });
+
+    container.appendChild(item);
+  });
+
+  // Posicionar contenedor
+  const rect = inputElement.getBoundingClientRect();
+  container.style.top = `${rect.bottom + window.scrollY}px`;
+  container.style.left = `${rect.left + window.scrollX}px`;
+
+  // Añadir al DOM
+  document.body.appendChild(container);
+
+  // Cerrar sugerencias al hacer clic fuera
+  document.addEventListener('click', function closeSuggestions(e) {
+    if (!container.contains(e.target) && e.target !== inputElement) {
+      container.remove();
+      document.removeEventListener('click', closeSuggestions);
+    }
+  });
 }
 
 function changeLanguage(lang) {
