@@ -5,6 +5,7 @@ from django.utils import translation
 
 from .assets import stationGraphs
 from .utils import functions
+from .models import Route, Station, User
 
 def map(request):
     language_code = translation.get_language()
@@ -29,7 +30,31 @@ def callRute(request):
 
     # Call the rute function from utils
     rute, distance, transfer_info, can_make_trip, service_hours, uses_arvi_station, rute_coords = functions.calculeRute(start, destination)
-    
+
+    # Guardar el viaje en la base de datos
+    try:
+        start_station = Station.objects.get(id_station=start)
+        end_station = Station.objects.get(id_station=destination)
+    except Station.DoesNotExist:
+        start_station = None
+        end_station = None
+
+    # Always use the default user (pk=1) for saving routes
+    try:
+        user = User.objects.get(pk=1)
+    except User.DoesNotExist:
+        user = None
+
+    # Guardar solo si existen estaciones y usuario
+    if start_station and end_station and user:
+        Route.objects.create(
+            id_start=start_station,
+            id_end=end_station,
+            price=0.0,  # Puedes calcular el precio si tienes lógica
+            criterion="tiempo",  # O "precio" según tu lógica
+            id_user=user
+        )
+
     return JsonResponse({ 
         'rute': rute,
         'distance': distance,

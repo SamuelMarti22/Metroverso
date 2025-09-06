@@ -1,0 +1,46 @@
+[
+  {
+    "model": "metroversoApp.route",
+    "pk": 1,
+    "fields": {
+      "id_start": "A01",
+      "id_end": "A10",
+      "price": 1200.0,
+      "criterion": "precio",
+      "id_user": 1
+    }
+  },
+  {
+    "model": "metroversoApp.route",
+    "pk": 2,
+    "fields": {
+      "id_start": "B02",
+      "id_end": "B05",
+      "price": 1500.0,
+      "criterion": "tiempo",
+      "id_user": 2
+    }
+  },
+  {
+    "model": "metroversoApp.route",
+    "pk": 3,
+    "fields": {
+      "id_start": "M00",
+      "id_end": "M10",
+      "price": 1100.0,
+      "criterion": "precio",
+      "id_user": 3
+    }
+  },
+  {
+    "model": "metroversoApp.route",
+    "pk": 4,
+    "fields": {
+      "id_start": "O04",
+      "id_end": "O13",
+      "price": 1300.0,
+      "criterion": "tiempo",
+      "id_user": 4
+    }
+  }
+]
