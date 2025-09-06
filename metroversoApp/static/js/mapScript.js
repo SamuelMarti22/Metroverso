@@ -268,6 +268,44 @@ function walkingRouteToOrigin() {
         }
         addRouteToMap(route, "routeToOrigin");
 
+// --- ESTIMATED TIME: mostrar sin mover ---
+(function() {
+  const estimatedTimeBox = document.getElementById('estimatedTimeBox');
+  if (!estimatedTimeBox) {
+    console.log('[map] no encontrado #estimatedTimeBox');
+    return;
+  }
+
+  // asegurar que sea visible y fijo
+  const cs = window.getComputedStyle(estimatedTimeBox);
+  if (cs.position === 'static' || !cs.position) {
+    estimatedTimeBox.style.position = 'fixed';
+  }
+  estimatedTimeBox.style.zIndex = estimatedTimeBox.style.zIndex || '1060';
+
+  // función para actualizar el valor mostrado (acepta segundos)
+  function setEstimatedFromSeconds(sec) {
+    const estimatedTimeValue = document.getElementById('estimatedTimeValue');
+    if (estimatedTimeValue) {
+      if (typeof sec === 'number') {
+        const minutes = Math.round(sec / 60);
+        estimatedTimeValue.textContent = `${minutes} min`;
+      } else {
+        estimatedTimeValue.textContent = '-- min';
+      }
+    }
+    estimatedTimeBox.style.display = 'block';
+  }
+
+  // si estamos dentro de un .then(route) y existe `route`, actualiza con ello;
+  // si no, intenta usar window.lastRouteData si está disponible
+  if (typeof route !== 'undefined' && route && route.duration) {
+    setEstimatedFromSeconds(route.duration);
+  } else if (window.lastRouteData && window.lastRouteData.duration) {
+    setEstimatedFromSeconds(window.lastRouteData.duration);
+  }
+})();
+
         if (map.getLayer("routeToOrigin-label"))
           map.removeLayer("routeToOrigin-label");
         if (map.getSource("routeToOrigin-label"))
@@ -635,24 +673,49 @@ document.getElementById("btnSearchRute").addEventListener("click", function () {
       const alertBox = document.getElementById("alerta-validacion");
       alertBox.style.display = "none";
 
-      // Mostrar la información de la ruta normalmente
-      // Lógica para el botón 'Iniciar Recorrido'
-      document.getElementById("btnStartJourney").addEventListener("click", function () {
-        const data = window.lastRouteData;
-        if (!data) return;
-
-        if (data.can_make_trip === false || String(data.can_make_trip).toLowerCase() === "false") {
-          const alertBox = document.getElementById("alerta-validacion");
-          const alertMessage = document.getElementById("mensaje-alerta");
-          let alertMessageText = "⚠️ El viaje no se puede completar dentro del horario de operación del metro.";
-          if (data.uses_arvi_station) {
-            alertMessageText = "⚠️ El viaje no se puede completar dentro del horario de operación de la estación Arvi (9:00-18:00 L-S, 8:30-18:00 Dom).";
-          }
-          showAutoClosingAlert(alertBox, alertMessage, alertMessageText);
-          return;
+      // Mostrar el tiempo estimado en el contenedor
+      const estimatedTimeBox = document.getElementById("estimatedTimeBox");
+      const estimatedTimeValue = document.getElementById("estimatedTimeValue");
+      if (typeof data.distance === "number" && data.distance > 0) {
+        const totalMinutes = Math.round(data.distance);
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+        if (hours > 0) {
+          estimatedTimeValue.textContent = `${hours} h ${minutes} min`;
+        } else {
+          estimatedTimeValue.textContent = `${minutes} min`;
         }
-        // Si puede realizar el viaje, no mostrar nada
-      });
+      } else {
+        estimatedTimeValue.textContent = `-- min`;
+      }
+      estimatedTimeBox.style.display = "block";
+// Lógica para el botón 'Iniciar Recorrido'
+document.getElementById("btnStartJourney").addEventListener("click", function () {
+  const data = window.lastRouteData;
+  if (!data) return;
+
+  if (data.can_make_trip === false || String(data.can_make_trip).toLowerCase() === "false") {
+    const alertBox = document.getElementById("alerta-validacion");
+    const alertMessage = document.getElementById("mensaje-alerta");
+    let alertMessageText = "⚠️ El viaje no se puede completar dentro del horario de operación del metro.";
+    if (data.uses_arvi_station) {
+      alertMessageText = "⚠️ El viaje no se puede completar dentro del horario de operación de la estación Arvi (9:00-18:00 L-S, 8:30-18:00 Dom).";
+    }
+    showAutoClosingAlert(alertBox, alertMessage, alertMessageText);
+    return;
+  }
+  // Si puede realizar el viaje, no mostrar nada
+
+  // Mostrar el tiempo estimado en el contenedor
+  const estimatedTimeBox = document.getElementById("estimatedTimeBox");
+  const estimatedTimeValue = document.getElementById("estimatedTimeValue");
+  if (data.duration) {
+    // Redondear minutos
+    const minutes = Math.round(data.duration / 60);
+    estimatedTimeValue.textContent = `${minutes} min`;
+    estimatedTimeBox.style.display = "block";
+  }
+});
       displayTransferInfo(data.transfer_info, data.rute);
 
       // Display the route on the map

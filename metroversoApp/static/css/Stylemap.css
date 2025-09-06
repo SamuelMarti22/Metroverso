@@ -426,3 +426,20 @@ body {
     border-color: #20c997 !important;
     box-shadow: 0 0 0 0.2rem rgba(32, 201, 151, 0.25) !important;
 }
+
+#estimatedTimeBox { 
+  position: fixed;
+  top: 16px;
+  left: 1150px;  
+  z-index: 10000;             
+  background: #008c6e;
+  color: #fff;
+  border-radius: 16px;
+  padding: 12px 48px 12px 32px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  display: none;              
+  min-width: 220px;
+  max-width: 400px;
+  font-family: inherit;
+  pointer-events: none;
+}
