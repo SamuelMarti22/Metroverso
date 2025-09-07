@@ -74,11 +74,11 @@ def dashboard(request):
     for item in end_counts:
         station_usage[item['id_end']] = station_usage.get(item['id_end'], 0) + item['count']
     top_stations = sorted(station_usage.items(), key=lambda x: x[1], reverse=True)[:4]
-    result = []
+    result_stations = []
     for station_id, usage in top_stations:
         try:
             station = Station.objects.get(pk=station_id)
-            result.append({
+            result_stations.append({
                 'id': station_id,
                 'name': station.name,
                 'line': station.line,
@@ -87,4 +87,33 @@ def dashboard(request):
             })
         except Station.DoesNotExist:
             continue
-    return JsonResponse({'top_stations': result})
+    # DBR04: Group similar routes (by start, end, criterion)
+    from .utils.functions import calculeRute
+    route_groups = (
+        Route.objects.values('id_start', 'id_end', 'criterion')
+        .annotate(count=Count('id_route'))
+        .order_by('-count')[:4]
+    )
+    result_routes = []
+    for group in route_groups:
+        try:
+            start = Station.objects.get(pk=group['id_start'])
+            end = Station.objects.get(pk=group['id_end'])
+            rute, _, _, _, _, _, _ = calculeRute(start.id_station, end.id_station)
+            rute_names = []
+            for station_id in rute:
+                try:
+                    station_obj = Station.objects.get(pk=station_id)
+                    rute_names.append(station_obj.name)
+                except Station.DoesNotExist:
+                    rute_names.append(station_id)
+            result_routes.append({
+                'start': start.name,
+                'end': end.name,
+                'criterion': group['criterion'],
+                'count': group['count'],
+                'rute': rute_names
+            })
+        except Station.DoesNotExist:
+            continue
+    return JsonResponse({'top_stations': result_stations, 'top_routes': result_routes})
