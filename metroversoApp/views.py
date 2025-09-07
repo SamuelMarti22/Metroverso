@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.http import JsonResponse
 from django.utils import translation
+from django.db.models import Count
 
 from .assets import stationGraphs
 from .utils import functions
@@ -31,7 +32,6 @@ def callRute(request):
     # Call the rute function from utils
     rute, distance, transfer_info, can_make_trip, service_hours, uses_arvi_station, rute_coords = functions.calculeRute(start, destination)
 
-    # Guardar el viaje en la base de datos
     try:
         start_station = Station.objects.get(id_station=start)
         end_station = Station.objects.get(id_station=destination)
@@ -45,13 +45,12 @@ def callRute(request):
     except User.DoesNotExist:
         user = None
 
-    # Guardar solo si existen estaciones y usuario
     if start_station and end_station and user:
         Route.objects.create(
             id_start=start_station,
             id_end=end_station,
-            price=0.0,  # Puedes calcular el precio si tienes lógica
-            criterion="tiempo",  # O "precio" según tu lógica
+            price=0.0,
+            criterion="tiempo",
             id_user=user
         )
 
@@ -64,3 +63,28 @@ def callRute(request):
         'uses_arvi_station': uses_arvi_station,
         'rute_coords': rute_coords
     })
+
+def dashboard(request):
+    # Most used stations (top 4)
+    start_counts = Route.objects.values('id_start').annotate(count=Count('id_start'))
+    end_counts = Route.objects.values('id_end').annotate(count=Count('id_end'))
+    station_usage = {}
+    for item in start_counts:
+        station_usage[item['id_start']] = station_usage.get(item['id_start'], 0) + item['count']
+    for item in end_counts:
+        station_usage[item['id_end']] = station_usage.get(item['id_end'], 0) + item['count']
+    top_stations = sorted(station_usage.items(), key=lambda x: x[1], reverse=True)[:4]
+    result = []
+    for station_id, usage in top_stations:
+        try:
+            station = Station.objects.get(pk=station_id)
+            result.append({
+                'id': station_id,
+                'name': station.name,
+                'line': station.line,
+                'type': station.type,
+                'usage': usage
+            })
+        except Station.DoesNotExist:
+            continue
+    return JsonResponse({'top_stations': result})
