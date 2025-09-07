@@ -12,89 +12,170 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-msgid "Mensaje de alerta aquí"
-msgstr "Alert message here"
-
-msgid "Planificador de Rutas Metro"
+msgid "Metro Route Planner"
 msgstr "Metro Route Planner"
 
-msgid "Close"
-msgstr "Close"
-
-msgid "Estación de Inicio"
+msgid "Start Station"
 msgstr "Start Station"
 
-msgid "Inicio"
+msgid "Start"
 msgstr "Start"
 
-msgid "Estación de Destino"
+msgid "Destination Station"
 msgstr "Destination Station"
 
-msgid "Destino"
+msgid "Destination"
 msgstr "Destination"
 
-msgid "Buscar Ruta"
+msgid "Search Route"
 msgstr "Search Route"
 
-msgid "Seleccionar Idioma"
+msgid "Select Language"
 msgstr "Select Language"
 
-msgid "Establecer como punto de inicio"
+msgid "Set as starting point"
 msgstr "Set as starting point"
 
-msgid "Establecer como destino"
+msgid "Set as destination"
 msgstr "Set as destination"
 
-msgid "Mi ubicación"
+msgid "My location"
 msgstr "My location"
 
-msgid "Estación más cercana 1"
+msgid "Nearest station 1"
 msgstr "Nearest station 1"
 
-msgid "Estación más cercana 2"
+msgid "Nearest station 2"
 msgstr "Nearest station 2"
 
-msgid "Estación más cercana 3"
+msgid "Nearest station 3"
 msgstr "Nearest station 3"
 
-msgid "Horario de Operación"
-msgstr "Hours of Operation"
+msgid "Service Hours"
+msgstr "Service Hours"
 
-msgid "Línea L"
+msgid "Arvi Station"
 msgstr "Arvi Station"
 
-msgid "Información Línea L"
-msgstr "Arvi station has special hours: Monday to Saturday 9:00-18:00, Sundays 8:30-18:00"
+msgid "Special schedule for Arvi station"
+msgstr "Special schedule for Arvi station"
 
-msgid "Nota"
+msgid "Note"
 msgstr "Note"
 
-msgid "Estado"
+msgid "Status"
 msgstr "Status"
 
-msgid "Operando"
+msgid "Open"
 msgstr "Open"
 
-msgid "Cerrado"
+msgid "Closed"
 msgstr "Closed"
 
-msgid "Lunes"
+msgid "Monday"
 msgstr "Monday"
 
-msgid "Martes"
+msgid "Tuesday"
 msgstr "Tuesday"
 
-msgid "Miércoles"
+msgid "Wednesday"
 msgstr "Wednesday"
 
-msgid "Jueves"
+msgid "Thursday"
 msgstr "Thursday"
 
-msgid "Viernes"
+msgid "Friday"
 msgstr "Friday"
 
-msgid "Sábado"
+msgid "Saturday"
 msgstr "Saturday"
 
-msgid "Domingo"
+msgid "Sunday"
 msgstr "Sunday"
+
+msgid "Route Information"
+msgstr "Route Information"
+
+msgid "1 transfer is required"
+msgstr "1 transfer is required"
+
+msgid "{n} transfers are required"
+msgstr "{n} transfers are required"
+
+msgid "Full route"
+msgstr "Full route"
+
+msgid "Show lines"
+msgstr "Show lines"
+
+msgid "Line"
+msgstr "Line"
+
+msgid "Select line"
+msgstr "Select line"
+
+msgid "Select a line"
+msgstr "Select a line"
+
+msgid "All lines"
+msgstr "All lines"
+
+msgid "Search Line"
+msgstr "Search Line"
+
+msgid "Start Journey"
+msgstr "Start Journey"
+
+msgid "Estimated Time"
+msgstr "Estimated Time"
+
+msgid "min"
+msgstr "min"
+
+msgid "Search for a specific line and see its route displayed on the map"
+msgstr "Search for a specific line and see its route displayed on the map"
+
+msgid "Location information is not available."
+msgstr "Location information is not available."
+
+msgid "Location request timed out."
+msgstr "Location request timed out."
+
+msgid "Error getting location."
+msgstr "Error getting location."
+
+msgid "Could not find location."
+msgstr "Could not find location."
+
+msgid "The distance from the origin to the first station is greater than 2 km"
+msgstr "The distance from the origin to the first station is greater than 2 km"
+
+msgid "The nearest station to the destination is more than 2 km away"
+msgstr "The nearest station to the destination is more than 2 km away"
+
+msgid "Error fetching route. Please try again."
+msgstr "Error fetching route. Please try again."
+
+msgid "⚠️ The trip cannot be completed within the metro operating hours."
+msgstr "⚠️ The trip cannot be completed within the metro operating hours."
+
+msgid "⚠️ The trip cannot be completed within the operating hours of Arvi station (9:00-18:00 Mon-Sat, 8:30-18:00 Sun)."
+msgstr "⚠️ The trip cannot be completed within the operating hours of Arvi station (9:00-18:00 Mon-Sat, 8:30-18:00 Sun)."
+
+msgid "Transfer stations"
+msgstr "Transfer stations"
+
+msgid "Transfer at: {station}"
+msgstr "Transfer at: {station}"
+
+msgid "Transfer instructions"
+msgstr "Transfer instructions"
+
+msgid "At {station}, change to line {line} and go to {nextStation}."
+msgstr "At {station}, change to line {line} and go to {nextStation}."
+
+msgid "No transfers are required"
+msgstr "No transfers are required"
+
+msgid "Direct trip on line {line}"
+msgstr "Direct trip on line {line}"

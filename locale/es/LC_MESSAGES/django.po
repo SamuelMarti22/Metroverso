@@ -12,89 +12,171 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-msgid "Mensaje de alerta aquí"
-msgstr "Mensaje de alerta aquí"
-
-msgid "Planificador de Rutas Metro"
+msgid "Metro Route Planner"
 msgstr "Planificador de Rutas Metro"
 
-msgid "Close"
-msgstr "Cerrar"
-
-msgid "Estación de Inicio"
+msgid "Start Station"
 msgstr "Estación de Inicio"
 
-msgid "Inicio"
+msgid "Start"
 msgstr "Inicio"
 
-msgid "Estación de Destino"
+msgid "Destination Station"
 msgstr "Estación de Destino"
 
-msgid "Destino"
+msgid "Destination"
 msgstr "Destino"
 
-msgid "Buscar Ruta"
+msgid "Search Route"
 msgstr "Buscar Ruta"
 
-msgid "Seleccionar Idioma"
+msgid "Select Language"
 msgstr "Seleccionar Idioma"
 
-msgid "Establecer como punto de inicio"
+msgid "Set as starting point"
 msgstr "Establecer como punto de inicio"
 
-msgid "Establecer como destino"
+msgid "Set as destination"
 msgstr "Establecer como destino"
 
-msgid "Mi ubicación"
+msgid "My location"
 msgstr "Mi ubicación"
 
-msgid "Estación más cercana 1"
+msgid "Nearest station 1"
 msgstr "Estación más cercana 1"
 
-msgid "Estación más cercana 2"
+msgid "Nearest station 2"
 msgstr "Estación más cercana 2"
 
-msgid "Estación más cercana 3"
+msgid "Nearest station 3"
 msgstr "Estación más cercana 3"
 
-msgid "Horario de Operación"
+msgid "Service Hours"
 msgstr "Horario de Operación"
 
-msgid "Línea L"
+msgid "Arvi Station"
 msgstr "Estación Arvi"
 
-msgid "Información Línea L"
-msgstr "La estación Arvi tiene horario especial: Lunes a Sábado 9:00-18:00, Domingos 8:30-18:00"
+msgid "Special schedule for Arvi station"
+msgstr "Horario especial para la estación Arvi"
 
-msgid "Nota"
+msgid "Note"
 msgstr "Nota"
 
-msgid "Estado"
+msgid "Status"
 msgstr "Estado"
 
-msgid "Operando"
+msgid "Open"
 msgstr "Operando"
 
-msgid "Cerrado"
+msgid "Closed"
 msgstr "Cerrado"
 
-msgid "Lunes"
+msgid "Monday"
 msgstr "Lunes"
 
-msgid "Martes"
+msgid "Tuesday"
 msgstr "Martes"
 
-msgid "Miércoles"
+msgid "Wednesday"
 msgstr "Miércoles"
 
-msgid "Jueves"
+msgid "Thursday"
 msgstr "Jueves"
 
-msgid "Viernes"
+msgid "Friday"
 msgstr "Viernes"
 
-msgid "Sábado"
+msgid "Saturday"
 msgstr "Sábado"
 
-msgid "Domingo"
+msgid "Sunday"
 msgstr "Domingo"
+
+msgid "Route Information"
+msgstr "Información de Ruta"
+
+msgid "1 transfer is required"
+msgstr "Se requiere 1 transferencia"
+
+msgid "{n} transfers are required"
+msgstr "Se requieren {n} transferencias"
+
+msgid "Full route"
+msgstr "Ruta completa"
+
+msgid "Show lines"
+msgstr "Mostrar líneas"
+
+msgid "Line"
+msgstr "Línea"
+
+msgid "Select line"
+msgstr "Seleccionar línea"
+
+msgid "Select a line"
+msgstr "Selecciona una línea"
+
+msgid "All lines"
+msgstr "Todas las líneas"
+
+msgid "Search Line"
+msgstr "Buscar Línea"
+
+msgid "Start Journey"
+msgstr "Iniciar Recorrido"
+
+msgid "Estimated Time"
+msgstr "Tiempo Estimado"
+
+msgid "min"
+msgstr "min"
+
+msgid "Search for a specific line and see its route displayed on the map"
+msgstr "Busca una línea en específico y conoce su ruta mostrada en el mapa"
+
+msgid "Location information is not available."
+msgstr "La información de ubicación no está disponible."
+
+msgid "Location request timed out."
+msgstr "La solicitud de ubicación ha expirado."
+
+msgid "Error getting location."
+msgstr "Error al obtener la ubicación."
+
+msgid "Could not find location."
+msgstr "No se pudo encontrar la ubicación."
+
+msgid "The distance from the origin to the first station is greater than 2 km"
+msgstr "La distancia del origen a la primera estación es mayor a 2 km"
+
+msgid "The nearest station to the destination is more than 2 km away"
+msgstr "La estación más cercana al destino está a más de 2 km"
+
+msgid "Error fetching route. Please try again."
+msgstr "Error al obtener la ruta. Inténtalo de nuevo."
+
+msgid "⚠️ The trip cannot be completed within the metro operating hours."
+msgstr "⚠️ El viaje no se puede completar dentro del horario de operación del metro."
+
+msgid "⚠️ The trip cannot be completed within the operating hours of Arvi station (9:00-18:00 Mon-Sat, 8:30-18:00 Sun)."
+msgstr "⚠️ El viaje no se puede completar dentro del horario de operación de la estación Arvi (9:00-18:00 L-S, 8:30-18:00 Dom)."
+
+msgid "Transfer stations"
+msgstr "Estaciones de transferencia"
+
+msgid "Transfer at: {station}"
+msgstr "Transferencia en: {station}"
+
+msgid "Transfer instructions"
+msgstr "Seguimiento de transbordos"
+
+msgid "At {station}, change to line {line} and go to {nextStation}."
+msgstr "En {station}, cambia a la línea {line} y dirígete a {nextStation}."
+
+msgid "No transfers are required"
+msgstr "No se requieren transferencias"
+
+msgid "Direct trip on line {line}"
+msgstr "Viaje directo en la línea {line}"
+
