@@ -22,6 +22,7 @@ class Station(models.Model):
         ("cable", "Cable"),
         ("bus", "Bus"),
         ("tranvia", "Tranvia"),
+        ("metroplus", "Metroplus"),
     ]
     id_station = models.CharField(max_length=3, primary_key=True)
     name = models.CharField(max_length=30)
