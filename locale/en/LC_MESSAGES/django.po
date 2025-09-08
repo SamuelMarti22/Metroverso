@@ -1,0 +1,181 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-08-28 03:33-0500\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Metro Route Planner"
+msgstr "Metro Route Planner"
+
+msgid "Start Station"
+msgstr "Start Station"
+
+msgid "Start"
+msgstr "Start"
+
+msgid "Destination Station"
+msgstr "Destination Station"
+
+msgid "Destination"
+msgstr "Destination"
+
+msgid "Search Route"
+msgstr "Search Route"
+
+msgid "Select Language"
+msgstr "Select Language"
+
+msgid "Set as starting point"
+msgstr "Set as starting point"
+
+msgid "Set as destination"
+msgstr "Set as destination"
+
+msgid "My location"
+msgstr "My location"
+
+msgid "Nearest station 1"
+msgstr "Nearest station 1"
+
+msgid "Nearest station 2"
+msgstr "Nearest station 2"
+
+msgid "Nearest station 3"
+msgstr "Nearest station 3"
+
+msgid "Service Hours"
+msgstr "Service Hours"
+
+msgid "Arvi Station"
+msgstr "Arvi Station"
+
+msgid "Special schedule for Arvi station"
+msgstr "Special schedule for Arvi station"
+
+msgid "Note"
+msgstr "Note"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "Open"
+msgstr "Open"
+
+msgid "Closed"
+msgstr "Closed"
+
+msgid "Monday"
+msgstr "Monday"
+
+msgid "Tuesday"
+msgstr "Tuesday"
+
+msgid "Wednesday"
+msgstr "Wednesday"
+
+msgid "Thursday"
+msgstr "Thursday"
+
+msgid "Friday"
+msgstr "Friday"
+
+msgid "Saturday"
+msgstr "Saturday"
+
+msgid "Sunday"
+msgstr "Sunday"
+
+msgid "Route Information"
+msgstr "Route Information"
+
+msgid "1 transfer is required"
+msgstr "1 transfer is required"
+
+msgid "{n} transfers are required"
+msgstr "{n} transfers are required"
+
+msgid "Full route"
+msgstr "Full route"
+
+msgid "Show lines"
+msgstr "Show lines"
+
+msgid "Line"
+msgstr "Line"
+
+msgid "Select line"
+msgstr "Select line"
+
+msgid "Select a line"
+msgstr "Select a line"
+
+msgid "All lines"
+msgstr "All lines"
+
+msgid "Search Line"
+msgstr "Search Line"
+
+msgid "Start Journey"
+msgstr "Start Journey"
+
+msgid "Estimated Time"
+msgstr "Estimated Time"
+
+msgid "min"
+msgstr "min"
+
+msgid "Search for a specific line and see its route displayed on the map"
+msgstr "Search for a specific line and see its route displayed on the map"
+
+msgid "Location information is not available."
+msgstr "Location information is not available."
+
+msgid "Location request timed out."
+msgstr "Location request timed out."
+
+msgid "Error getting location."
+msgstr "Error getting location."
+
+msgid "Could not find location."
+msgstr "Could not find location."
+
+msgid "The distance from the origin to the first station is greater than 2 km"
+msgstr "The distance from the origin to the first station is greater than 2 km"
+
+msgid "The nearest station to the destination is more than 2 km away"
+msgstr "The nearest station to the destination is more than 2 km away"
+
+msgid "Error fetching route. Please try again."
+msgstr "Error fetching route. Please try again."
+
+msgid "⚠️ The trip cannot be completed within the metro operating hours."
+msgstr "⚠️ The trip cannot be completed within the metro operating hours."
+
+msgid "⚠️ The trip cannot be completed within the operating hours of Arvi station (9:00-18:00 Mon-Sat, 8:30-18:00 Sun)."
+msgstr "⚠️ The trip cannot be completed within the operating hours of Arvi station (9:00-18:00 Mon-Sat, 8:30-18:00 Sun)."
+
+msgid "Transfer stations"
+msgstr "Transfer stations"
+
+msgid "Transfer at: {station}"
+msgstr "Transfer at: {station}"
+
+msgid "Transfer instructions"
+msgstr "Transfer instructions"
+
+msgid "At {station}, change to line {line} and go to {nextStation}."
+msgstr "At {station}, change to line {line} and go to {nextStation}."
+
+msgid "No transfers are required"
+msgstr "No transfers are required"
+
+msgid "Direct trip on line {line}"
+msgstr "Direct trip on line {line}"

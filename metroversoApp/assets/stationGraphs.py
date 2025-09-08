@@ -2,6 +2,7 @@ import networkx as nx
 from math import sqrt
 import math
 import json
+import datetime
 
 # 📍 Función para calcular distancia euclidiana (plana)
 def euclidiana(coord1, coord2):
@@ -36,6 +37,18 @@ SPEEDS = {
     "Z": 18,   # Cable 
 }
 
+def add_station(G, station_id, coords, line_key="A"):
+    """
+    Agrega un nodo al grafo con coordenadas y línea.
+    - G: grafo NetworkX
+    - station_id: string, ej. "A01"
+    - coords: [lon, lat]
+    - line_key: identificador de línea
+    """
+    lon, lat = coords
+    if station_id not in G:
+        G.add_node(station_id, pos=(lon, lat), line=line_key)
+
 def add_edge_time(G, coords_dict, u, v, line_key, transfer_min=0.3):
     """Añade arista u<->v con peso en minutos.
     line_key: clave para SPEEDS según la línea (ej. 'A','B','K'...).
@@ -46,7 +59,7 @@ def add_edge_time(G, coords_dict, u, v, line_key, transfer_min=0.3):
 
     G.add_edge(
         u, v,
-        weight=round(time_min,2),              # 👈 ahora el peso es TIEMPO (min)
+        weight=round(time_min,2),              # ahora el peso es TIEMPO (min)
         time_min=time_min,
         distance_km=d_km,
         speed_kmh=speed,
@@ -82,6 +95,9 @@ lineaA = {
     "A21": [-75.62644764544693, 6.152742930466616],  # La Estrella
 }
 
+#Nodos Linea A:
+for station_id, coords in lineaA.items():
+    add_station(G, station_id, coords, line_key="A")
 
 #Conexiones Linea A:
 
@@ -96,6 +112,10 @@ lineaL = {
 }
 
 #Conexiones Linea L:
+
+#Nodos Linea L:
+for station_id, coords in lineaL.items():
+    add_station(G, station_id, coords, line_key="L")
 
 add_edge_time(G, lineaL, "L01", "L02", line_key="L")
 
@@ -122,6 +142,10 @@ linea1 = {
     "M18": [-75.55665899, 6.285200132],  # Parque Aranjuez
 }
 
+#Nodos Linea 1:
+for station_id, coords in linea1.items():
+    add_station(G, station_id, coords, line_key="1")
+
 #Conexiones Linea 1:
 
 for i in range(0, 18):  # De M00 a M18
@@ -134,9 +158,9 @@ for i in range(0, 18):  # De M00 a M18
     elif i == 12:
         origen = f"M{str(i).zfill(2)}"
         destino = f"A08"
-    elif i == 13:        
+        add_edge_time(G, linea1, origen, destino, line_key="M")
         origen = f"A08"
-        destino = f"M{str(i+1).zfill(2)}"
+        destino = f"M{str(i+1).zfill(2)}"    
     else: 
         origen = f"M{str(i).zfill(2)}"
         destino = f"M{str(i+1).zfill(2)}"
@@ -167,6 +191,10 @@ linea2 = {
     "X20": [-75.55665899, 6.285200132],  # Parque Aranjuez
 }
 
+#Nodos Linea 2:
+for station_id, coords in linea2.items():
+    add_station(G, station_id, coords, line_key="2")
+
 #Conexiones Linea 2:
 
 for i in range(0, 20):  # De X00 a X20
@@ -191,6 +219,10 @@ lineaB = {
     "B05": [-75.60374625, 6.25808821],  # Santa Lucía
     "B06": [-75.6136642, 6.256780931],  # San Javier
 }
+#Nodos Linea B:
+for station_id, coords in lineaB.items():
+    add_station(G, station_id, coords, line_key="B")
+
 
 #Conexiones Linea B:
 
@@ -206,7 +238,7 @@ for i in range(0, 6):  # De B00 a B06
 
 lineaT = {
     "A11": [-75.56967864286219, 6.247175927579917], #San Antonio
-    "X11": [-75.56609179, 6.247080223],  # San José
+    "T01": [-75.565386212474, 6.2473291696231],  # San José
     "T02": [-75.56199329, 6.245588625], # Pabellon del Agua
     "T03": [-75.55876266, 6.24395102],  # Bicentenario
     "T04": [-75.5539, 6.241399227],     # Buenos Aires
@@ -216,14 +248,18 @@ lineaT = {
     "T08": [-75.54013974, 6.233150212], # Oriente
 }
 
+#Nodos Linea T:
+for station_id, coords in lineaT.items():
+    add_station(G, station_id, coords, line_key="T")
+
 #Conexiones Linea T:
 
 for i in range(0, 8):  # De T00 a T08
     if i == 0:
         origen = f"A11"
-        destino = f"X11"
+        destino = f"T01"
     elif i == 1:
-        origen = f"X11"
+        origen = f"T01"
         destino = f"T{str(i+1).zfill(2)}"
     else:
         origen = f"T{str(i).zfill(2)}"
@@ -237,6 +273,11 @@ lineaZ = {
     "Z01": [-75.54447595, 6.24526309],  # El Pinal
     "Z02": [-75.5413945, 6.24761518],   # 13 de Noviembre
 }
+
+#Nodos Linea Z:
+for station_id, coords in lineaZ.items():
+    add_station(G, station_id, coords, line_key="Z")
+
 
 #Conexiones Linea Z:
 
@@ -256,6 +297,10 @@ lineaJ = {
     "B06": [-75.6136642, 6.256780931],  # San Javier
 }
 
+#Nodos Linea J:
+for station_id, coords in lineaJ.items():
+    add_station(G, station_id, coords, line_key="J")
+
 #Conexiones Linea J:
 
 for i in range(0, 3):  # De J00 a J03
@@ -273,6 +318,10 @@ lineaH = {
     "H01": [-75.53637212, 6.236645415], # Las Torres
     "H02": [-75.52867948, 6.234874544], # Villa Sierra
 }
+
+#Nodos Linea H:
+for station_id, coords in lineaH.items():
+    add_station(G, station_id, coords, line_key="H")
 
 #Conexiones Linea H:
 
@@ -303,6 +352,10 @@ lineaO = {
     "M02": [-75.60102788, 6.231177752],  # La Palma
 }
 
+#Nodos Linea O:
+for station_id, coords in lineaO.items():
+    add_station(G, station_id, coords, line_key="O")
+
 #Conexiones Linea O:
 
 for i in range(1, 13):  # De O01 a O13
@@ -331,6 +384,11 @@ lineaP = {
     "P03": [-75.58233359, 6.30599902], # El progreso
 }
 
+#Nodos Linea P:
+for station_id, coords in lineaP.items():
+    add_station(G, station_id, coords, line_key="P")
+
+
 #Conexiones Linea P:
 
 for i in range(0, 3):  # De P00 a P03
@@ -348,6 +406,11 @@ lineaK = {
     "K02": [-75.54814136, 6.295122597], # Popular
     "L01": [-75.54184763, 6.29272255],  # Santo Domingo
 }
+
+#Nodos Linea K:
+for station_id, coords in lineaK.items():
+    add_station(G, station_id, coords, line_key="K")
+
 
 #Conexiones Linea K:
 
@@ -2316,15 +2379,188 @@ for i in range(0, 3):  # De K00 a K03
 #     destino = f"C3-003RLC-{str(i + 1).zfill(4)}"
 #     G.add_edge(origen, destino, weight=euclidiana(C3_003RLC[origen], C3_003RLC[destino]))
 
+
+# Add transfer penalty between different lines
 for u, v, data in G.edges(data=True):
     if u[0] != v[0]:
-        data["weight"] += 5  # Penalización de trasbordo
+        data["weight"] += 5  # Transfer penalty
 
 rute = nx.dijkstra_path(G, source="O02", target="O13", weight="weight")
 distancia = nx.dijkstra_path_length(G, source="A06", target="M02", weight="weight")
 
 print("Rute:", rute)
 print("Distance:", round(distancia, 2), "minutes")
+
+
+# --- UTILITIES FOR SCHEDULE AND DATES ---
+
+def _service_window(start_time: datetime.datetime):
+    """Returns (open_time, close_time) according to the day of start_time."""
+    if start_time.weekday() == 6:  # Sunday
+        open_time  = start_time.replace(hour=5,  minute=0, second=0, microsecond=0)
+        close_time = start_time.replace(hour=22, minute=0, second=0, microsecond=0)
+    else:  # Monday to Saturday
+        open_time  = start_time.replace(hour=4,  minute=30, second=0, microsecond=0)
+        close_time = start_time.replace(hour=23, minute=0, second=0, microsecond=0)
+    return open_time, close_time
+
+def _arvi_service_window(start_time: datetime.datetime):
+    """Returns (open_time, close_time) for Arvi station according to the day of start_time."""
+    if start_time.weekday() == 6:  # Sunday
+        open_time  = start_time.replace(hour=8,  minute=30, second=0, microsecond=0)
+        close_time = start_time.replace(hour=18, minute=0, second=0, microsecond=0)
+    else:  # Monday to Saturday
+        open_time  = start_time.replace(hour=9,  minute=0, second=0, microsecond=0)
+        close_time = start_time.replace(hour=18, minute=0, second=0, microsecond=0)
+    return open_time, close_time
+
+def _now():
+    """
+    Current time - using datetime.now() for consistency across environments.
+    """
+    return datetime.datetime.now()
+
+
+
+def _route_includes_arvi(route):
+    """
+    Returns True if the route includes the Arvi station (L02).
+    """
+    if not route:
+        return False
+    return 'L02' in route
+
+
+def get_current_service_hours():
+    """
+    Returns the current service hours as a formatted string.
+    """
+    now = _now()
+    open_time, close_time = _service_window(now)
+    
+    # Format the times as HH:MM
+    open_str = open_time.strftime("%H:%M")
+    close_str = close_time.strftime("%H:%M")
+    
+    return {
+        'day': now.weekday(),
+        'open_time': open_str,
+        'close_time': close_str,
+        'is_operating': now >= open_time and now <= close_time
+    }
+
+def get_arvi_service_hours():
+    """
+    Returns the current service hours for Arvi station as a formatted string.
+    """
+    now = _now()
+    open_time, close_time = _arvi_service_window(now)
+    
+    # Format the times as HH:MM
+    open_str = open_time.strftime("%H:%M")
+    close_str = close_time.strftime("%H:%M")
+    
+    # Get day name in Spanish
+    days = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+    day_name = days[now.weekday()]
+    
+    return {
+        'day': day_name,
+        'open_time': open_str,
+        'close_time': close_str,
+        'is_operating': now >= open_time and now <= close_time,
+        'is_arvi_station': True
+    }
+
+
+# --- BOOLEANS FOR FRONTEND (VIA BACKEND) ---
+
+def can_make_trip(start_time: datetime.datetime, trip_duration_min: int, route=None) -> bool:
+    """
+    Returns True if a trip of 'trip_duration_min' starting at 'start_time'
+    both starts and ends within the metro operating hours.
+    
+    If route includes Arvi station (L02), applies Arvi specific schedule.
+    """
+    # Check if route includes Arvi station
+    if route and _route_includes_arvi(route):
+        open_time, close_time = _arvi_service_window(start_time)
+    else:
+        open_time, close_time = _service_window(start_time)
+    
+    end_time = start_time + datetime.timedelta(minutes=trip_duration_min)
+    result = (start_time >= open_time) and (end_time <= close_time)
+    return result
+
+def can_make_trip_now_duration(trip_duration_min: int) -> bool:
+    """
+    Shortcut: takes the current backend time and evaluates with the already calculated duration.
+    """
+    start_time = _now()
+    return can_make_trip(start_time, trip_duration_min)
+
+def can_make_trip_now_graph(G: nx.Graph, source: str, target: str) -> bool:
+    """
+    Calculates duration with Dijkstra (using already penalized weights in G)
+    and evaluates against the current backend time. Returns bool.
+    """
+    try:
+        trip_duration_min = nx.dijkstra_path_length(G, source=source, target=target, weight="weight")
+        route = nx.dijkstra_path(G, source=source, target=target, weight="weight")
+    except nx.NetworkXNoPath:
+        print(f"No path found between {source} and {target}")
+        return False
+    
+    now = _now()
+    result = can_make_trip(now, int(trip_duration_min), route)
+    return result
+
+def get_time(date_str: str, time_str: str) -> datetime.datetime:
+    """Builds a datetime from 'YYYY-MM-DD' and 'HH:MM'."""
+    return datetime.datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M")
+
+# Test function to verify the logic
+def test_can_make_trip_logic():
+    """
+    Test function to verify that the can_make_trip logic works correctly.
+    This will help us understand why the alert is not showing when it should.
+    """
+    print("=== TESTING CAN_MAKE_TRIP LOGIC ===")
+    
+    # Test current time
+    now = _now()
+    print(f"Current time: {now}")
+    
+    # Test service window
+    open_time, close_time = _service_window(now)
+    print(f"Service window: {open_time} to {close_time}")
+    
+    # Test different trip durations
+    test_durations = [30, 60, 120, 180, 240]  # minutes
+    
+    for duration in test_durations:
+        end_time = now + datetime.timedelta(minutes=duration)
+        can_make = (now >= open_time) and (end_time <= close_time)
+        print(f"Trip duration {duration}min: Start {now.time()} -> End {end_time.time()} -> Can make: {can_make}")
+    
+    # Test specific scenario: what if we're outside service hours?
+    # Let's simulate a time outside service hours
+    if now.weekday() == 6:  # Sunday
+        test_time = now.replace(hour=3, minute=0, second=0, microsecond=0)  # 3 AM Sunday
+    else:
+        test_time = now.replace(hour=2, minute=0, second=0, microsecond=0)  # 2 AM weekday
+    
+    test_open, test_close = _service_window(test_time)
+    print(f"\nTest time outside service: {test_time}")
+    print(f"Service window for test time: {test_open} to {test_close}")
+    
+    for duration in test_durations:
+        end_time = test_time + datetime.timedelta(minutes=duration)
+        can_make = (test_time >= test_open) and (end_time <= test_close)
+        print(f"Trip duration {duration}min: Start {test_time.time()} -> End {end_time.time()} -> Can make: {can_make}")
+
+# Uncomment the line below to run the test
+# test_can_make_trip_logic()
 
 # # Dibujar el grafo
 # plt.figure(figsize=(10, 7))

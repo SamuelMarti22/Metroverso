@@ -78,15 +78,54 @@ def analyze_route_transfers(route):
 
 def calculeRute(star, destination):
     try: 
+        print(f"Calculating route from {star} to {destination}")
+        
+        # Check if nodes exist in the graph
+        if star not in G.nodes():
+            print(f"Error: Start station {star} not found in graph")
+            return [], 0, {'requires_transfer': False, 'transfer_count': 0, 'transfer_stations': [], 'line_segments': []}, True, None, False, []
+        
+        if destination not in G.nodes():
+            print(f"Error: Destination station {destination} not found in graph")
+            return [], 0, {'requires_transfer': False, 'transfer_count': 0, 'transfer_stations': [], 'line_segments': []}, True, None, False, []
+        
         rute = nx.dijkstra_path(G, source=star, target=destination, weight="weight")
         distance = nx.dijkstra_path_length(G, source=star, target=destination, weight="weight")
+        
+        # Get route coordinates from the coordinates dictionary
+        from metroversoApp.assets.stationGraphs import lineaA, linea1, linea2, lineaL, lineaB, lineaT, lineaZ, lineaJ, lineaH, lineaO, lineaP, lineaK
+        
+        # Combine all coordinate dictionaries
+        all_coords = {**lineaA, **linea1, **linea2, **lineaL, **lineaB, **lineaT, **lineaZ, **lineaJ, **lineaH, **lineaO, **lineaP, **lineaK}
+        
+        rute_coords = []
+        for n in rute:
+            if n in all_coords:
+                rute_coords.append(all_coords[n])
+            else:
+                print(f"Warning: Station {n} not found in coordinates")
+                rute_coords.append([0, 0])  # Fallback coordinates
 
         # Analyze transfers
         transfer_info = analyze_route_transfers(rute)
 
         print("Rute:", rute)
-        print("Distance:", round(distance, 2)*100, "kilometers")
+        print("Distance:", round(distance, 2), "minutes")
         print("Transfer info:", transfer_info)
+        print("Rute_coords:", rute_coords)
+        
+        # Check if the trip can be made according to the schedule
+        from metroversoApp.assets.stationGraphs import can_make_trip_now_graph, get_current_service_hours, get_arvi_service_hours
+        
+        # Check if route includes Arvi station (L02)
+        uses_arvi_station = 'L02' in rute
+        can_make_trip = can_make_trip_now_graph(G, star, destination)
+        
+        # Get service hours information
+        if uses_arvi_station:
+            service_hours = get_arvi_service_hours()
+        else:
+            service_hours = get_current_service_hours()
         
     except nx.NetworkXNoPath:
         print("No path found between the specified nodes.")
@@ -98,5 +137,23 @@ def calculeRute(star, destination):
             'transfer_stations': [],
             'line_segments': []
         }
+        rute_coords = []
+        can_make_trip = False
+        service_hours = None
+        uses_arvi_station = False
+    except Exception as e:
+        print(f"Error in calculeRute: {e}")
+        rute = []
+        distance = 0
+        transfer_info = {
+            'requires_transfer': False,
+            'transfer_count': 0,
+            'transfer_stations': [],
+            'line_segments': []
+        }
+        rute_coords = []
+        can_make_trip = False
+        service_hours = None
+        uses_arvi_station = False
 
-    return list(rute), distance, transfer_info
+    return list(rute), distance, transfer_info, can_make_trip, service_hours, uses_arvi_station, rute_coords
