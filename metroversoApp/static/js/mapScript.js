@@ -565,85 +565,79 @@ function displayServiceHours(serviceHours, usesArviStation = false) {
   }
 
   if (serviceHours) {
-    const statusClass = serviceHours.is_operating
-      ? "text-success"
-      : "text-danger";
-    const statusText = serviceHours.is_operating
-      ? texts.words.open
-      : texts.words.closed;
+    const isOpen = !!serviceHours.is_operating;
+    const statusClass = isOpen ? "text-success" : "text-danger";
+    const statusText  = isOpen ? texts.words.open : texts.words.closed;
 
     let html = "";
 
     if (usesArviStation) {
-      // For Arvi station, use the day name directly from serviceHours.day
+      const showSchedule = serviceHours.day && serviceHours.open_time && serviceHours.close_time;
       html = `
-        <h6 class="mb-2">🕒 ${texts.serviceHours.title} - ${texts.serviceHours.arviStation}</h6>
-        <p class="mb-1"><strong>${serviceHours.day}:</strong> ${serviceHours.open_time} - ${serviceHours.close_time}</p>
-        <p class="mb-1 text-info"><small><strong>${texts.words.note}:</strong>${texts.serviceHours.arviStationInfo}</small></p>
+        <h6 class="mb-2">🕒 ${texts.serviceHours.arviStation}</h6>
+        ${showSchedule ? `<p class="mb-1"><strong>${serviceHours.day}:</strong> ${serviceHours.open_time} - ${serviceHours.close_time}</p>` : ""}
         <p class="mb-0 ${statusClass}"><strong>${texts.words.state}:</strong> ${statusText}</p>
       `;
     } else {
-      // For normal metro, use the days array index
+      const dayIdx = serviceHours.day;
+      const dayLabel =
+        (texts.serviceHours.days && texts.serviceHours.days[dayIdx] !== undefined)
+          ? texts.serviceHours.days[dayIdx]
+          : (serviceHours.day ?? "");
+      const schedule =
+        (serviceHours.open_time && serviceHours.close_time)
+          ? `${serviceHours.open_time} - ${serviceHours.close_time}`
+          : "";
       html = `
         <h6 class="mb-2">🕒 ${texts.serviceHours.title}</h6>
-        <p class="mb-1"><strong>${
-          texts.serviceHours.days[serviceHours.day]
-        }:</strong> ${serviceHours.open_time} - ${serviceHours.close_time}</p>
-        <p class="mb-0 ${statusClass}"><strong>${
-        texts.words.state
-      }:</strong> ${statusText}</p>
+        ${dayLabel && schedule ? `<p class="mb-1"><strong>${dayLabel}:</strong> ${schedule}</p>` : ""}
+        <p class="mb-0 ${statusClass}"><strong>${texts.words.state}:</strong> ${statusText}</p>
       `;
     }
 
     infoContainer.innerHTML = html;
+  } else {
+    infoContainer.innerHTML = "";
   }
 }
 
-// Function to display Arvi-specific service hours (additional to general metro hours)
 function displayArviServiceHours(serviceHours) {
-  // Remove any existing Arvi service hours display
   const existingArviContainer = document.getElementById("arviServiceHoursInfo");
-  if (existingArviContainer) {
-    existingArviContainer.remove();
-  }
+  if (existingArviContainer) existingArviContainer.remove();
+  if (!serviceHours) return;
 
-  if (serviceHours) {
-    const statusClass = serviceHours.is_operating
-      ? "text-success"
-      : "text-danger";
-    const statusText = serviceHours.is_operating ? texts.open : texts.closed;
+  const isOpen = !!serviceHours.is_operating;
+  const statusClass = isOpen ? "text-success" : "text-danger";
+  const statusText  = isOpen ? texts.words.open : texts.words.closed;
 
-    const arviContainer = document.createElement("div");
-    arviContainer.id = "arviServiceHoursInfo";
-    arviContainer.style.marginTop = "10px";
-    arviContainer.style.padding = "10px";
-    arviContainer.style.backgroundColor = "#e8f5e8";
-    arviContainer.style.borderRadius = "5px";
-    arviContainer.style.border = "1px solid #28a745";
+  const arviContainer = document.createElement("div");
+  arviContainer.id = "arviServiceHoursInfo";
+  arviContainer.style.marginTop = "10px";
+  arviContainer.style.padding = "10px";
+  arviContainer.style.backgroundColor = "#e8f5e8";
+  arviContainer.style.borderRadius = "5px";
+  arviContainer.style.border = "1px solid #28a745";
 
-    const html = `
-       <h6 class="mb-2">🕒 ${texts.operatingHours} - Estación Arvi</h6>
-       <p class="mb-1"><strong>${serviceHours.day}:</strong> ${serviceHours.open_time} - ${serviceHours.close_time}</p>
-       <p class="mb-0 ${statusClass}"><strong>${texts.state}:</strong> ${statusText}</p>
-     `;
+  const showSchedule = serviceHours.day && serviceHours.open_time && serviceHours.close_time;
 
-    arviContainer.innerHTML = html;
+  const html = `
+    <h6 class="mb-2">🕒 ${texts.serviceHours.arviStation}</h6>
+    ${showSchedule ? `<p class="mb-1"><strong>${serviceHours.day}:</strong> ${serviceHours.open_time} - ${serviceHours.close_time}</p>` : ""}
+    <p class="mb-0 ${statusClass}"><strong>${texts.words.state}:</strong> ${statusText}</p>
+  `;
 
-    // Insert the Arvi service hours container after the normal service hours container
-    const normalServiceHoursContainer =
-      document.getElementById("serviceHoursInfo");
-    if (normalServiceHoursContainer) {
-      normalServiceHoursContainer.parentNode.insertBefore(
-        arviContainer,
-        normalServiceHoursContainer.nextSibling
-      );
-    } else {
-      document.querySelector(".divRute").appendChild(arviContainer);
-    }
+  arviContainer.innerHTML = html;
+
+  const normalServiceHoursContainer = document.getElementById("serviceHoursInfo");
+  if (normalServiceHoursContainer) {
+    normalServiceHoursContainer.parentNode.insertBefore(
+      arviContainer,
+      normalServiceHoursContainer.nextSibling
+    );
+  } else {
+    document.querySelector(".divRute").appendChild(arviContainer);
   }
 }
-
-// Removed popup functionality to keep only custom dropdown suggestions
 
 // Function to go to user location
 document.querySelector(".userLocation").addEventListener("click", function () {
