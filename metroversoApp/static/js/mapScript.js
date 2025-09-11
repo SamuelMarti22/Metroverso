@@ -140,15 +140,12 @@ function updateUserLocation(position) {
     const btn1 = document.getElementById("btnClosestStation1");
     const btn2 = document.getElementById("btnClosestStation2");
     const btn3 = document.getElementById("btnClosestStation3");
-    btn1.innerHTML = `<i class="bi bi-geo-alt"></i> ${
-      closestStationsToUser[0]?.properties.ID || ""
-    }`;
-    btn2.innerHTML = `<i class="bi bi-geo-alt"></i> ${
-      closestStationsToUser[1]?.properties.ID || ""
-    }`;
-    btn3.innerHTML = `<i class="bi bi-geo-alt"></i> ${
-      closestStationsToUser[2]?.properties.ID || ""
-    }`;
+    btn1.innerHTML = `<i class="bi bi-geo-alt"></i> ${closestStationsToUser[0]?.properties.ID || ""
+      }`;
+    btn2.innerHTML = `<i class="bi bi-geo-alt"></i> ${closestStationsToUser[1]?.properties.ID || ""
+      }`;
+    btn3.innerHTML = `<i class="bi bi-geo-alt"></i> ${closestStationsToUser[2]?.properties.ID || ""
+      }`;
   }
 
   if (!userMarker) {
@@ -567,7 +564,7 @@ function displayServiceHours(serviceHours, usesArviStation = false) {
   if (serviceHours) {
     const isOpen = !!serviceHours.is_operating;
     const statusClass = isOpen ? "text-success" : "text-danger";
-    const statusText  = isOpen ? texts.words.open : texts.words.closed;
+    const statusText = isOpen ? texts.words.open : texts.words.closed;
 
     let html = "";
 
@@ -608,7 +605,7 @@ function displayArviServiceHours(serviceHours) {
 
   const isOpen = !!serviceHours.is_operating;
   const statusClass = isOpen ? "text-success" : "text-danger";
-  const statusText  = isOpen ? texts.words.open : texts.words.closed;
+  const statusText = isOpen ? texts.words.open : texts.words.closed;
 
   const arviContainer = document.createElement("div");
   arviContainer.id = "arviServiceHoursInfo";
@@ -1090,6 +1087,29 @@ const lineM = {
     },
   ],
 };
+
+const lineLK =
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "sistema": "C",
+        "itinerario": "Tramo solicitado",
+        "linea": "K"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-75.54809237278867, 6.295138827611592],
+          [-75.54188845267637, 6.293217585710102]
+        ]
+      }
+    }
+  ]
+}
+
 
 const lineM0 = {
   type: "FeatureCollection",
@@ -1675,8 +1695,34 @@ function addNodesRouteToMap(rute, rute_coords) {
         }
       }
 
-      if (toLineVal === "K" || (toId === "A04" && fromId === "K01")|| (toId === "K02")) {
-        console.log("Si entro con K02")
+      if (fromId === "L01" && toId === "K02") {
+        console.log("Si entro con L02 nooo");
+        const featLK = lineLK.features[0];
+        const endIdxLK = featLK.geometry.coordinates.length - 1;
+        paintLineSegment(featLK, 0, endIdxLK, "lk-source", "lk-layer");
+        const colorLK = COLOR_BY_LINE?.K || "#FF0000"; // o cualquier color que quieras
+        if (map.getLayer("lk-layer")) {
+          map.setPaintProperty("lk-layer", "line-color", colorLK);
+          map.setPaintProperty("lk-layer", "line-width", 4);
+        }
+      } else {
+        if (toLineVal === "K") {
+          console.log("Si entro con K02 nooo");
+          console.log("fromId", fromId, "toId", toId);
+          const featK = lineK.features[0];
+          const endIdxK = featK.geometry.coordinates.length - 1;
+          paintLineSegment(featK, 0, endIdxK, sourceId, layerId);
+          const colorT = COLOR_BY_LINE?.K || "#00A9A5";
+          if (map.getLayer(layerId)) {
+            map.setPaintProperty(layerId, "line-color", colorT);
+            map.setPaintProperty(layerId, "line-width", 4);
+          }
+        }
+      }
+
+      if (toLineVal === "K" ||  (toId === "A04" && fromId === "K01")) {
+        console.log("Si entro con K02 nooo");
+        console.log("fromId", fromId, "toId", toId);
         const featK = lineK.features[0];
         const endIdxK = featK.geometry.coordinates.length - 1;
         paintLineSegment(featK, 0, endIdxK, sourceId, layerId);
@@ -1686,6 +1732,7 @@ function addNodesRouteToMap(rute, rute_coords) {
           map.setPaintProperty(layerId, "line-width", 4);
         }
       }
+
 
       if (toLineVal === "P" || (toId === "A04" && fromId === "P01")) {
         const featP = lineP.features[0];
