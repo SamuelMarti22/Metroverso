@@ -1631,11 +1631,11 @@ function addNodesRouteToMap(rute, rute_coords) {
         }
       }
 
-      if (toLineVal === "X") {
+      if (toLineVal === "X" || (toId === "A14")) {
         const featX = lineX.features[0];
         const endIdxX = featX.geometry.coordinates.length - 1;
         paintLineSegment(featX, 0, endIdxX, sourceId, layerId);
-        const colorT = COLOR_BY_LINE?.T || "#00A9A5";
+        const colorT = COLOR_BY_LINE?.X || "#00A9A5";
         if (map.getLayer(layerId)) {
           map.setPaintProperty(layerId, "line-color", colorT);
           map.setPaintProperty(layerId, "line-width", 4);
@@ -1653,7 +1653,7 @@ function addNodesRouteToMap(rute, rute_coords) {
         }
       }
 
-      if ((toLineVal === "M" && toId.charAt(1) === "0") || toId === "A14") {
+      if ((toLineVal === "M" && toId.charAt(1) === "0") || (toId === "A14" && fromId === "M06")) {
         const featM = lineM0.features[0];
         const endIdxM = featM.geometry.coordinates.length - 1;
         paintLineSegment(featM, 0, endIdxM, sourceId, layerId);
@@ -1664,7 +1664,7 @@ function addNodesRouteToMap(rute, rute_coords) {
         }
       }
 
-      if (toLineVal === "O" && toId.charAt(1) === "0") {
+      if (toLineVal === "O" && toId.charAt(1) === "0" || (toId === "A06" && fromId === "O02")) {
         const featO = lineO.features[0];
         const endIdxO = featO.geometry.coordinates.length - 1;
         paintLineSegment(featO, 0, endIdxO, sourceId, layerId);
@@ -1675,7 +1675,8 @@ function addNodesRouteToMap(rute, rute_coords) {
         }
       }
 
-      if (toLineVal === "K") {
+      if (toLineVal === "K" || (toId === "A04" && fromId === "K01")|| (toId === "K02")) {
+        console.log("Si entro con K02")
         const featK = lineK.features[0];
         const endIdxK = featK.geometry.coordinates.length - 1;
         paintLineSegment(featK, 0, endIdxK, sourceId, layerId);
@@ -1686,7 +1687,7 @@ function addNodesRouteToMap(rute, rute_coords) {
         }
       }
 
-      if (toLineVal === "P") {
+      if (toLineVal === "P" || (toId === "A04" && fromId === "P01")) {
         const featP = lineP.features[0];
         const endIdxP = featP.geometry.coordinates.length - 1;
         paintLineSegment(featP, 0, endIdxP, sourceId, layerId);
