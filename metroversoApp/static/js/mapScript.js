@@ -1343,6 +1343,68 @@ const lineO = {
   ],
 };
 
+const lineOB =
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "sistema": "MPLUS",
+        "itinerario": "La Palma - Caribe (tramo recortado)",
+        "linea": "O",
+        "nota": "Recortado hasta el punto más cercano a [-75.59774369989438, 6.258709042690895]"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-75.59640856355156, 6.264465823587944, 30],
+          [-75.59645764130438, 6.264255785183519, 30],
+          [-75.59647134668957, 6.264205439151656, 30],
+          [-75.59648039624975, 6.264161638150354, 30],
+          [-75.59648986244153, 6.264087715014946, 30],
+          [-75.59649193892837, 6.264050497639663, 30],
+          [-75.59649208457621, 6.264005770655563, 30],
+          [-75.59649024801232, 6.263968541916222, 30],
+          [-75.5964836453222, 6.263896365450901, 30],
+          [-75.59647633341595, 6.263854340594306, 30],
+          [-75.59646735278903, 6.263818896604522, 30],
+          [-75.59645377133164, 6.263778461407821, 30],
+          [-75.5964395357379, 6.263744783772665, 30],
+          [-75.59642297721476, 6.26371218805849, 30],
+          [-75.59640083325957, 6.263675737004689, 30],
+          [-75.59639703499661, 6.263666963705584, 30],
+          [-75.59638724438979, 6.263640012960196, 30],
+          [-75.59637992190011, 6.26361228967029, 30],
+          [-75.59637409465994, 6.263574512021318, 30],
+          [-75.59637274493906, 6.263541088819724, 30],
+          [-75.5963749135985, 6.263507707868491, 30],
+          [-75.59638057537076, 6.263474740866934, 30],
+          [-75.59639124113939, 6.263438036971708, 30],
+          [-75.5964084003835, 6.263398618547474, 30],
+          [-75.59642799465176, 6.263365805878401, 30],
+          [-75.59645138372079, 6.263335585383683, 30],
+          [-75.5964712140378, 6.263314882498881, 30],
+          [-75.59649659006351, 6.263293107955326, 30],
+          [-75.59652820260129, 6.263271650604113, 30],
+          [-75.59656216023512, 6.263254143286326, 30],
+          [-75.59658775278972, 6.26323212537782, 30],
+          [-75.59663526124196, 6.263184176856345, 30],
+          [-75.59667743274329, 6.263131464982534, 30],
+          [-75.59669997172101, 6.263097795139738, 30],
+          [-75.59672349991784, 6.263056797415326, 30],
+          [-75.596753374767, 6.262952146906842, 30],
+          [-75.59704910682056, 6.261612630019301, 30],
+          [-75.59740457411513, 6.259950194415397, 30],
+          [-75.59756998537326, 6.259210679499795, 30],
+          [-75.59776004929797, 6.258404365608569, 30]
+        ]
+      }
+    }
+  ]
+}
+
+
 const lineK = {
   type: "FeatureCollection",
   features: [
@@ -1416,6 +1478,31 @@ const lineZ = {
     },
   ],
 };
+
+const lineH =
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "sistema": "C",
+        "itinerario": "Oriente - Villa Sierra (tramo recortado)",
+        "linea": "H"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-75.5363721162451, 6.236645414632919, 50],
+          [-75.53659553399434, 6.236439647125385, 50],
+          [-75.53978047817704, 6.233506296735513, 50],
+          [-75.53993713701449, 6.23336201290237, 50]
+        ]
+      }
+    }
+  ]
+}
+
 
 // Function to clear existing route visualization
 function getLine(lineValue) {
@@ -1577,29 +1664,29 @@ function showLines(selectedLines) {
         "match",
         ["get", "linea"],
         "A",
-        "#FF3B30",
+        "#005d9a",
         "B",
-        "#008CFF",
+        "#e88530",
         "O",
-        "#2ECC71",
+        "#e3807b",
         "Z",
-        "#9B59B6",
+        "#e0007a",
         "2",
-        "#F39C12",
+        "#66a7ab",
         "1",
-        "#34495E",
+        "#017077",
         "K",
-        "#34495E",
+        "#bacc44",
         "P",
-        "#34495E",
+        "#e10521",
         "L",
-        "#00A9A5",
+        "#8b622a",
         "J",
-        "#E74C3C",
+        "#f5c439",
         "H",
-        "#9B59B6",
+        "#6a206b",
         "T",
-        "#00A9A5",
+        "#008f37",
         /* default */
         "#000000",
       ],
@@ -1684,7 +1771,20 @@ function addNodesRouteToMap(rute, rute_coords) {
         }
       }
 
+      if (fromId === "B04" && toId === "O08") {
+        console.log("Si entro con B04 wuii");
+        const featOB = lineOB.features[0];
+        const endIdxOB = featOB.geometry.coordinates.length - 1;
+        paintLineSegment(featOB, 0, endIdxOB, sourceId, layerId);
+        const colorT = COLOR_BY_LINE?.O || "#00A9A5";
+        if (map.getLayer(layerId)) {
+          map.setPaintProperty(layerId, "line-color", colorT);
+          map.setPaintProperty(layerId, "line-width", 4);
+        }
+      }
+      else{
       if (toLineVal === "O" && toId.charAt(1) === "0" || (toId === "A06" && fromId === "O02")) {
+        console.log("Si entro con O02 nooo");
         const featO = lineO.features[0];
         const endIdxO = featO.geometry.coordinates.length - 1;
         paintLineSegment(featO, 0, endIdxO, sourceId, layerId);
@@ -1694,16 +1794,19 @@ function addNodesRouteToMap(rute, rute_coords) {
           map.setPaintProperty(layerId, "line-width", 4);
         }
       }
+    }
+
+
 
       if (fromId === "L01" && toId === "K02") {
         console.log("Si entro con L02 nooo");
         const featLK = lineLK.features[0];
         const endIdxLK = featLK.geometry.coordinates.length - 1;
         paintLineSegment(featLK, 0, endIdxLK, "lk-source", "lk-layer");
-        const colorLK = COLOR_BY_LINE?.K || "#FF0000"; // o cualquier color que quieras
+        const colorLK = COLOR_BY_LINE?.K || "#bacc44"; // o cualquier color que quieras
         if (map.getLayer("lk-layer")) {
-          map.setPaintProperty("lk-layer", "line-color", colorLK);
-          map.setPaintProperty("lk-layer", "line-width", 4);
+          map.setPaintProperty(layerId, "line-color", colorLK);
+          map.setPaintProperty(layerId, "line-width", 4);
         }
       } else {
         if (toLineVal === "K") {
@@ -1712,7 +1815,7 @@ function addNodesRouteToMap(rute, rute_coords) {
           const featK = lineK.features[0];
           const endIdxK = featK.geometry.coordinates.length - 1;
           paintLineSegment(featK, 0, endIdxK, sourceId, layerId);
-          const colorT = COLOR_BY_LINE?.K || "#00A9A5";
+          const colorT = COLOR_BY_LINE?.K || "#bacc44";
           if (map.getLayer(layerId)) {
             map.setPaintProperty(layerId, "line-color", colorT);
             map.setPaintProperty(layerId, "line-width", 4);
@@ -1720,7 +1823,7 @@ function addNodesRouteToMap(rute, rute_coords) {
         }
       }
 
-      if (toLineVal === "K" ||  (toId === "A04" && fromId === "K01")) {
+      if (toLineVal === "K" || (toId === "A04" && fromId === "K01")) {
         console.log("Si entro con K02 nooo");
         console.log("fromId", fromId, "toId", toId);
         const featK = lineK.features[0];
@@ -1755,6 +1858,18 @@ function addNodesRouteToMap(rute, rute_coords) {
           map.setPaintProperty(layerId, "line-width", 4);
         }
       }
+
+      if (fromId === "H01" && toId === "T08") {
+        console.log("Pintar villa hermosa");
+        const featH = lineH.features[0];
+        const endIdxH = featH.geometry.coordinates.length - 1;
+        paintLineSegment(featH, 0, endIdxH, sourceId, layerId);
+        const colorT = COLOR_BY_LINE?.H || "#1b3b3bff";
+        if (map.getLayer(layerId)) {
+          map.setPaintProperty(layerId, "line-color", colorT);
+          map.setPaintProperty(layerId, "line-width", 4);
+        }
+      }
     }
 
     // ===== Caso normal: misma línea =====
@@ -1782,18 +1897,18 @@ function addNodesRouteToMap(rute, rute_coords) {
 
 // Color mapping for metro lines
 const COLOR_BY_LINE = {
-  A: "#FF3B30",
-  B: "#008CFF",
-  O: "#2ECC71",
-  Z: "#9B59B6",
-  X: "#F39C12",
-  M: "#34495E",
-  K: "#34495E",
-  P: "#34495E",
-  L: "#00A9A5",
-  J: "#E74C3C",
-  H: "#9B59B6",
-  T: "#00A9A5",
+  A: "#005d9a",
+  B: "#e88530",
+  O: "#e3807b",
+  Z: "#e0007a",
+  X: "#66a7ab",
+  M: "#017077",
+  K: "#bacc44",
+  P: "#e10521",
+  L: "#8b622a",
+  J: "#f5c439",
+  H: "#6a206b",
+  T: "#008f37",
 };
 
 function clearRouteVisualization() {
