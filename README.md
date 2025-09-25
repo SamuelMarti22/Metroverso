@@ -41,6 +41,7 @@ In order to improve mobility and the user experience, this project proposes the 
 1. Run the following commands to populate the database with sample data:
 
    ```powershell
+   python manage.py loaddata metroversoApp/fixtures/superuser.json
    python manage.py loaddata metroversoApp/fixtures/users.json
    python manage.py loaddata metroversoApp/fixtures/stations.json
    python manage.py loaddata metroversoApp/fixtures/packages.json
