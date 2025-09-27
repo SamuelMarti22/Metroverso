@@ -3,6 +3,9 @@ from math import sqrt
 import math
 import json
 import datetime
+# import matplotlib.pyplot as plt
+# import matplotlib
+# matplotlib.use("TkAgg")
 
 # 📍 Función para calcular distancia euclidiana (plana)
 def euclidiana(coord1, coord2):
@@ -49,50 +52,52 @@ def add_station(G, station_id, coords, line_key="A"):
     if station_id not in G:
         G.add_node(station_id, pos=(lon, lat), line=line_key)
 
-def add_edge_time(G, coords_dict, u, v, line_key, transfer_min=0.3):
+def add_edge_time(G, coords_dict, u, v, line_key, stopTime=0.3):
     """Añade arista u<->v con peso en minutos.
     line_key: clave para SPEEDS según la línea (ej. 'A','B','K'...).
     """
     d_km = haversine(coords_dict[u], coords_dict[v])
     speed = SPEEDS[line_key]
-    time_min = (d_km / speed) * 60.0 + transfer_min
+    time_min = (d_km / speed) * 60.0 + stopTime
 
     G.add_edge(
         u, v,
-        weight=round(time_min,2),              # ahora el peso es TIEMPO (min)
-        time_min=time_min,
+        weight=round(time_min,2),
+        time = time_min,
         distance_km=d_km,
         speed_kmh=speed,
         line=line_key
     )
-    print("distancia:",d_km)
-    print("tiempo:",time_min)
+
+
+def add_transfer(G, u, v, walkTime=7):
+    G.add_edge(u, v, weight=walkTime, time=walkTime, distance_km=0, speed_km=0, line='')  # solo caminata
 
 G = nx.Graph()
 
 # Formato del id: A01 -- A(La línea a la que pertenece) + 01 (número de la estación según la API)
 lineaA = {
-    "A01": [-75.54426910322798, 6.337853626702383],  # Niquía
-    "A02": [-75.55373230475944, 6.329958711908574],  # Bello
-    "A03": [-75.55534580389958, 6.316001342229484],  # Madera
-    "A04": [-75.55851194186361, 6.299961957796953],  # Acevedo
-    "A05": [-75.56470061709405, 6.290310300270889],  # Tricentenario
-    "A06": [-75.56938422818597, 6.278324369727542],  # Caribe
-    "A07": [-75.5657915298572, 6.269405972933399],  # Universidad
-    "A08": [-75.56327830924161, 6.2640097938723756],  # Hospital
-    "A09": [-75.56613343894547, 6.256898815797797],  # Prado
-    "A10": [-75.5681765179859, 6.2505897004873106],  # Parque Berrío
-    "A11": [-75.56967864286219, 6.247175927579917],  # San Antonio
-    "A12": [-75.57142080003668, 6.242929792653825],  # Alpujarra
-    "A13": [-75.57316494840505, 6.238417946555231],  # Exposiciones
-    "A14": [-75.57563364841289, 6.230039107985888],  # Industriales
-    "A15": [-75.57811744976053, 6.211997461468826],  # Poblado
-    "A16": [-75.58181103813159, 6.193916517461162],  # Aguacatala
-    "A17": [-75.5860746825908, 6.186147651589707],  # Ayurá
-    "A18": [-75.59705548923098, 6.174707717040306],  # Envigado
-    "A19": [-75.60677051560722, 6.162934718982683],  # Itagüi
-    "A20": [-75.61600511782902, 6.157818058477744],  # Sabaneta
-    "A21": [-75.62644764544693, 6.152742930466616],  # La Estrella
+    "A00": [-75.54426910322798, 6.337853626702383],  # Niquía
+    "A01": [-75.55373230475944, 6.329958711908574],  # Bello
+    "A02": [-75.55534580389958, 6.316001342229484],  # Madera
+    "A03": [-75.55851194186361, 6.299961957796953],  # Acevedo
+    "A04": [-75.56470061709405, 6.290310300270889],  # Tricentenario
+    "A05": [-75.56938422818597, 6.278324369727542],  # Caribe
+    "A06": [-75.5657915298572, 6.269405972933399],  # Universidad
+    "A07": [-75.56327830924161, 6.2640097938723756],  # Hospital
+    "A08": [-75.56613343894547, 6.256898815797797],  # Prado
+    "A09": [-75.5681765179859, 6.2505897004873106],  # Parque Berrío
+    "A10": [-75.56967864286219, 6.247175927579917],  # San Antonio
+    "A11": [-75.57142080003668, 6.242929792653825],  # Alpujarra
+    "A12": [-75.57316494840505, 6.238417946555231],  # Exposiciones
+    "A13": [-75.57563364841289, 6.230039107985888],  # Industriales
+    "A14": [-75.57811744976053, 6.211997461468826],  # Poblado
+    "A15": [-75.58181103813159, 6.193916517461162],  # Aguacatala
+    "A16": [-75.5860746825908, 6.186147651589707],  # Ayurá
+    "A17": [-75.59705548923098, 6.174707717040306],  # Envigado
+    "A18": [-75.60677051560722, 6.162934718982683],  # Itagüi
+    "A19": [-75.61600511782902, 6.157818058477744],  # Sabaneta
+    "A20": [-75.62644764544693, 6.152742930466616],  # La Estrella
 }
 
 #Nodos Linea A:
@@ -101,14 +106,14 @@ for station_id, coords in lineaA.items():
 
 #Conexiones Linea A:
 
-for i in range(1, 21):  # De A01 a A20
+for i in range(0, 20):  # De A01 a A30
     origen = f"A{str(i).zfill(2)}"
     destino = f"A{str(i+1).zfill(2)}"
     add_edge_time(G, lineaA, origen, destino, line_key="A")
 
 lineaL = {
-    "L02": [-75.50297173, 6.281545751],  # Arvi
-    "L01": [-75.54184763, 6.29272255],  # Santo Domingo
+    "L01": [-75.50297173, 6.281545751],  # Arvi
+    "L00": [-75.54184763, 6.29272255],  # Santo Domingo
 }
 
 #Conexiones Linea L:
@@ -117,7 +122,7 @@ lineaL = {
 for station_id, coords in lineaL.items():
     add_station(G, station_id, coords, line_key="L")
 
-add_edge_time(G, lineaL, "L01", "L02", line_key="L")
+add_edge_time(G, lineaL, "L00", "L01", line_key="L")
 
 linea1 = {
     "M00": [-75.6092249, 6.230666882],  # UDM
@@ -127,19 +132,19 @@ linea1 = {
     "M04": [-75.59097001, 6.231596189],  # Rosales
     "M05": [-75.58656411, 6.231742717],  # Fátima
     "M06": [-75.58205816, 6.231865203],  # Nutibara
-    "A14": [-75.57563364841289, 6.230039107985888],  # Industriales
+    "M07": [-75.57563364841289, 6.230039107985888],  # Industriales
     "M08": [-75.57540073, 6.243661857],  # Plaza Mayor
     "M09": [-75.57503562, 6.250853156],  # Cisneros
     "M10": [-75.57314523, 6.256091368],  # Minorista
     "M11": [-75.56914261, 6.260710636],  # Chagualo
     "M12": [-75.56758006, 6.263931067],  # Ruta N
-    "A08": [-75.56327830924161, 6.2640097938723756],  # Hospital
-    "M13": [-75.55592313, 6.262113085],  # Palos Verdes
-    "M14": [-75.55504413, 6.267667781],  # Gardel
-    "M15": [-75.55407869, 6.273257435],  # Manrique
-    "M16": [-75.55316802, 6.27839345],  # Las Esmeraldas
-    "M17": [-75.55293799, 6.282932],  # Berlín
-    "M18": [-75.55665899, 6.285200132],  # Parque Aranjuez
+    "M13": [-75.56327830924161, 6.2640097938723756],  # Hospital
+    "M14": [-75.55592313, 6.262113085],  # Palos Verdes
+    "M15": [-75.55504413, 6.267667781],  # Gardel
+    "M16": [-75.55407869, 6.273257435],  # Manrique
+    "M17": [-75.55316802, 6.27839345],  # Las Esmeraldas
+    "M18": [-75.55293799, 6.282932],  # Berlín
+    "M19": [-75.55665899, 6.285200132],  # Parque Aranjuez
 }
 
 #Nodos Linea 1:
@@ -148,23 +153,13 @@ for station_id, coords in linea1.items():
 
 #Conexiones Linea 1:
 
-for i in range(0, 18):  # De M00 a M18
-    if i == 6:
-        origen = f"M{str(i).zfill(2)}"
-        destino = f"A14"
-    elif i == 7:
-        origen = f"A14"
-        destino = f"M{str(i+1).zfill(2)}"
-    elif i == 12:
-        origen = f"M{str(i).zfill(2)}"
-        destino = f"A08"
-        add_edge_time(G, linea1, origen, destino, line_key="M")
-        origen = f"A08"
-        destino = f"M{str(i+1).zfill(2)}"    
-    else: 
-        origen = f"M{str(i).zfill(2)}"
-        destino = f"M{str(i+1).zfill(2)}"
+for i in range(0, 19):  # De M00 a M19
+    origen = f"M{str(i).zfill(2)}"
+    destino = f"M{str(i+1).zfill(2)}"
     add_edge_time(G, linea1, origen, destino, line_key="M")
+
+add_transfer(G,"M07", "A13")
+add_transfer(G,"M13", "A07")
 
 
 linea2 = {
@@ -175,7 +170,7 @@ linea2 = {
     "X04": [-75.59097001, 6.231596189],  # Rosales
     "X05": [-75.58656411, 6.231742717],  # Fátima
     "X06": [-75.58205816, 6.231865203],  # Nutibara
-    "A14": [-75.57563364841289, 6.230039107985888],  # Industriales
+    "X07": [-75.57563364841289, 6.230039107985888],  # Industriales
     "X08": [-75.57098596, 6.22862439],  # Barro Colombia
     "X09": [-75.57004225, 6.234088772],  # Perpetuo Socorro
     "X10": [-75.56978175, 6.240609554],  # Barrio Colon
@@ -198,20 +193,14 @@ for station_id, coords in linea2.items():
 #Conexiones Linea 2:
 
 for i in range(0, 20):  # De X00 a X20
-    if i == 6:
-        origen = f"X{str(i).zfill(2)}"
-        destino = f"A14"
-    elif i == 7:
-        origen = f"A14"
-        destino = f"X{str(i+1).zfill(2)}"
-    else:
-        origen = f"X{str(i).zfill(2)}"
-        destino = f"X{str(i+1).zfill(2)}"
+    origen = f"X{str(i).zfill(2)}"
+    destino = f"X{str(i+1).zfill(2)}"
     add_edge_time(G, linea2, origen, destino, line_key="X")
 
+add_transfer(G,"X07","A13")
 
 lineaB = {
-    "A11": [-75.56967864286219, 6.247175927579917], #San Antonio
+    "B00": [-75.56967864286219, 6.247175927579917], #San Antonio
     "B01": [-75.57515198, 6.249053572], # Cisneros
     "B02": [-75.58294171, 6.252984046], # Suramericana
     "B03": [-75.58825637, 6.253335629], # Estadio
@@ -223,21 +212,18 @@ lineaB = {
 for station_id, coords in lineaB.items():
     add_station(G, station_id, coords, line_key="B")
 
-
 #Conexiones Linea B:
 
 for i in range(0, 6):  # De B00 a B06
-    if i == 0:
-        origen = f"A11"
-        destino = f"B{str(i+1).zfill(2)}"
-    else:
-        origen = f"B{str(i).zfill(2)}"
-        destino = f"B{str(i+1).zfill(2)}"
+    origen = f"B{str(i).zfill(2)}"
+    destino = f"B{str(i+1).zfill(2)}"
     add_edge_time(G, lineaB, origen, destino, line_key="B")
+
+add_transfer(G,"B00","A10")
 
 
 lineaT = {
-    "A11": [-75.56967864286219, 6.247175927579917], #San Antonio
+    "T00": [-75.56967864286219, 6.247175927579917], #San Antonio
     "T01": [-75.565386212474, 6.2473291696231],  # San José
     "T02": [-75.56199329, 6.245588625], # Pabellon del Agua
     "T03": [-75.55876266, 6.24395102],  # Bicentenario
@@ -255,21 +241,14 @@ for station_id, coords in lineaT.items():
 #Conexiones Linea T:
 
 for i in range(0, 8):  # De T00 a T08
-    if i == 0:
-        origen = f"A11"
-        destino = f"T01"
-    elif i == 1:
-        origen = f"T01"
-        destino = f"T{str(i+1).zfill(2)}"
-    else:
-        origen = f"T{str(i).zfill(2)}"
-        destino = f"T{str(i+1).zfill(2)}"
+    origen = f"T{str(i).zfill(2)}"
+    destino = f"T{str(i+1).zfill(2)}"
     add_edge_time(G, lineaT, origen, destino, line_key="T")
 
-
+add_transfer(G,"T00", "A10")
 
 lineaZ = {
-    "T05": [-75.54900339, 6.241387875], # Miraflores
+    "Z00": [-75.54900339, 6.241387875], # Miraflores
     "Z01": [-75.54447595, 6.24526309],  # El Pinal
     "Z02": [-75.5413945, 6.24761518],   # 13 de Noviembre
 }
@@ -282,19 +261,17 @@ for station_id, coords in lineaZ.items():
 #Conexiones Linea Z:
 
 for i in range(0, 2):  # De Z00 a Z02
-    if i == 0:
-        origen = f"T05"
-        destino = f"Z{str(i+1).zfill(2)}"
-    else:
-        origen = f"Z{str(i).zfill(2)}"
-        destino = f"Z{str(i+1).zfill(2)}"
+    origen = f"Z{str(i).zfill(2)}"
+    destino = f"Z{str(i+1).zfill(2)}"
     add_edge_time(G, lineaZ, origen, destino, line_key="Z")
+
+add_transfer(G,"Z00", "T05")
 
 lineaJ = {
     "J00": [-75.61420338, 6.281093175], # La Aurora
     "J01": [-75.61401716, 6.275360769], # Vallejuelos
     "J02": [-75.61370257, 6.26567653],  # JuanXXIII
-    "B06": [-75.6136642, 6.256780931],  # San Javier
+    "J03": [-75.6136642, 6.256780931],  # San Javier
 }
 
 #Nodos Linea J:
@@ -303,18 +280,15 @@ for station_id, coords in lineaJ.items():
 
 #Conexiones Linea J:
 
-for i in range(0, 3):  # De J00 a J03
-    if i == 2:
-        origen = f"J{str(i).zfill(2)}"
-        destino = f"B06"
-    else:    
-        origen = f"J{str(i).zfill(2)}"
-        destino = f"J{str(i+1).zfill(2)}"
+for i in range(0, 3):  # De J00 a J03   
+    origen = f"J{str(i).zfill(2)}"
+    destino = f"J{str(i+1).zfill(2)}"
     add_edge_time(G, lineaJ, origen, destino, line_key="J")
 
+add_transfer(G,"J03","B06")
 
 lineaH = {
-    "T08": [-75.54013974, 6.233150212], # Oriente
+    "H00": [-75.54013974, 6.233150212], # Oriente
     "H01": [-75.53637212, 6.236645415], # Las Torres
     "H02": [-75.52867948, 6.234874544], # Villa Sierra
 }
@@ -326,30 +300,27 @@ for station_id, coords in lineaH.items():
 #Conexiones Linea H:
 
 for i in range(0, 2):  # De H00 a H02
-    if i == 0:
-        origen = f"T08"
-        destino = f"H{str(i+1).zfill(2)}"
-    else:
-        origen = f"H{str(i).zfill(2)}"
-        destino = f"H{str(i+1).zfill(2)}"
+    origen = f"H{str(i).zfill(2)}"
+    destino = f"H{str(i+1).zfill(2)}"
     add_edge_time(G, lineaH, origen, destino, line_key="H")
 
+add_transfer(G,"H00","T08")
 
 lineaO = {
-    "A06": [-75.56938422818597, 6.278324369727542], #Caribe
-    "O02": [-75.57316774, 6.276849813], # Cementerio Universal
-    "O03": [-75.57825047, 6.27411148],  # Barrio Cordoba
-    "O04": [-75.58276145, 6.273552208], # Barrio Pilarica
-    "O05": [-75.58858182, 6.273024664], # Ciudadela Universitaria
-    "O06": [-75.59215013, 6.273785084], # Facultad de Minas
-    "O07": [-75.59518655, 6.269905466], # Barrio Los Colores
-    "O08": [-75.59640856, 6.264465824], # Barrio Calazans
-    "B04": [-75.5977437, 6.258709043],  # Floresta
-    "O10": [-75.59853235, 6.255031809], # Barrio Los Pinos
-    "O11": [-75.60251712, 6.246309776], # Barrio Laureles
-    "O12": [-75.6028934, 6.239729528],  # Barrio Santa Gema
-    "O13": [-75.6021801, 6.235370376],  # Nueva Villa de Aburra
-    "M02": [-75.60102788, 6.231177752],  # La Palma
+    "O00": [-75.56938422818597, 6.278324369727542], #Caribe
+    "O01": [-75.57316774, 6.276849813], # Cementerio Universal
+    "O02": [-75.57825047, 6.27411148],  # Barrio Cordoba
+    "O03": [-75.58276145, 6.273552208], # Barrio Pilarica
+    "O04": [-75.58858182, 6.273024664], # Ciudadela Universitaria
+    "O05": [-75.59215013, 6.273785084], # Facultad de Minas
+    "O06": [-75.59518655, 6.269905466], # Barrio Los Colores
+    "O07": [-75.59640856, 6.264465824], # Barrio Calazans
+    "O08": [-75.5977437, 6.258709043],  # Floresta
+    "O09": [-75.59853235, 6.255031809], # Barrio Los Pinos
+    "O10": [-75.60251712, 6.246309776], # Barrio Laureles
+    "O11": [-75.6028934, 6.239729528],  # Barrio Santa Gema
+    "O12": [-75.6021801, 6.235370376],  # Nueva Villa de Aburra
+    "O13": [-75.60102788, 6.231177752],  # La Palma
 }
 
 #Nodos Linea O:
@@ -359,26 +330,17 @@ for station_id, coords in lineaO.items():
 #Conexiones Linea O:
 
 for i in range(1, 13):  # De O01 a O13
-    if i == 1:
-        origen = f"A06"
-        destino = f"O{str(i+1).zfill(2)}"
-    elif i == 8:
-        origen = f"O{str(i).zfill(2)}"
-        destino = f"B04"
-    elif i == 9:
-        origen = f"B04"
-        destino = f"O{str(i+1).zfill(2)}"
-    elif i == 13:
-        origen = f"O{str(i).zfill(2)}"
-        destino = f"M02"
-    else:
-        origen = f"O{str(i).zfill(2)}"
-        destino = f"O{str(i+1).zfill(2)}"
+    origen = f"O{str(i).zfill(2)}"
+    destino = f"O{str(i+1).zfill(2)}"
     add_edge_time(G, lineaO, origen, destino, line_key="O")
 
+add_transfer(G,"O00","A05")
+add_transfer(G,"O08","B04")
+add_transfer(G,"O13","M02")
+add_transfer(G,"O13","X02")
 
 lineaP = {
-    "A04": [-75.55851194186361, 6.299961957796953],  # Acevedo
+    "P00": [-75.55851194186361, 6.299961957796953],  # Acevedo
     "P01": [-75.5673189, 6.301882672], # Sena Pedregal
     "P02": [-75.57594721, 6.30424823], # Doce de Octubre
     "P03": [-75.58233359, 6.30599902], # El progreso
@@ -391,20 +353,18 @@ for station_id, coords in lineaP.items():
 
 #Conexiones Linea P:
 
-for i in range(0, 3):  # De P00 a P03
-    if i == 0:
-        origen = f"A04"
-        destino = f"P{str(i+1).zfill(2)}"
-    else:    
-        origen = f"P{str(i).zfill(2)}"
-        destino = f"P{str(i+1).zfill(2)}"
+for i in range(0, 3):  # De P00 a P03   
+    origen = f"P{str(i).zfill(2)}"
+    destino = f"P{str(i+1).zfill(2)}"
     add_edge_time(G, lineaP, origen, destino, line_key="P")
 
+add_transfer(G,"P00","A03")
+
 lineaK = {
-    "A04": [-75.55851194186361, 6.299961957796953],  # Acevedo
+    "K00": [-75.55851194186361, 6.299961957796953],  # Acevedo
     "K01": [-75.55189694, 6.296272054], # Andalucía
     "K02": [-75.54814136, 6.295122597], # Popular
-    "L01": [-75.54184763, 6.29272255],  # Santo Domingo
+    "K03": [-75.54184763, 6.29272255],  # Santo Domingo
 }
 
 #Nodos Linea K:
@@ -415,16 +375,12 @@ for station_id, coords in lineaK.items():
 #Conexiones Linea K:
 
 for i in range(0, 3):  # De K00 a K03
-    if i == 0:
-        origen = f"A04"
-        destino = f"K{str(i+1).zfill(2)}"
-    elif i == 2:
-        origen = f"K{str(i).zfill(2)}"
-        destino = f"L01"
-    else:
-        origen = f"K{str(i).zfill(2)}"
-        destino = f"K{str(i+1).zfill(2)}"
+    origen = f"K{str(i).zfill(2)}"
+    destino = f"K{str(i+1).zfill(2)}"
     add_edge_time(G, lineaK, origen, destino, line_key="K")
+
+add_transfer(G,"K00", "A03")
+add_transfer(G,"K03", "L00")
 
 # # Alimentadores:
 
@@ -2379,14 +2335,8 @@ for i in range(0, 3):  # De K00 a K03
 #     destino = f"C3-003RLC-{str(i + 1).zfill(4)}"
 #     G.add_edge(origen, destino, weight=euclidiana(C3_003RLC[origen], C3_003RLC[destino]))
 
-
-# Add transfer penalty between different lines
-for u, v, data in G.edges(data=True):
-    if u[0] != v[0]:
-        data["weight"] += 5  # Transfer penalty
-
-rute = nx.dijkstra_path(G, source="O02", target="O13", weight="weight")
-distancia = nx.dijkstra_path_length(G, source="A06", target="M02", weight="weight")
+rute = nx.dijkstra_path(G, source="M19", target="M00", weight="weight")
+distancia = nx.dijkstra_path_length(G, source="M19", target="M00", weight="weight")
 
 print("Rute:", rute)
 print("Distance:", round(distancia, 2), "minutes")
@@ -2563,8 +2513,9 @@ def test_can_make_trip_logic():
 # test_can_make_trip_logic()
 
 # # Dibujar el grafo
-# plt.figure(figsize=(10, 7))
-# nx.draw(G, pos, with_labels=True, node_size=600, node_color=node_colors,
-#         edge_color=edge_colors, width=2, font_size=10)
-# plt.title("Grafo con conexiones de A14 en rojo")
-# plt.show()
+
+# pos = nx.spring_layout(G, seed=42, k=0.25, iterations=50)
+# edge_colors = ["red" if G[u][v].get("transfer") else "gray" for u,v in G.edges()]
+# nx.draw(G, node_size=30, width=1.5, edge_color=edge_colors)
+# nx.draw_networkx_labels(G, pos, font_size=6)  # opcional
+# plt.axis("equal"); plt.show()
