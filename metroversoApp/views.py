@@ -28,9 +28,10 @@ def getServiceHours(request):
 def callRute(request):
     start = request.GET.get('inputStart')  # Default to 'A01' if not provided
     destination = request.GET.get('inputDestination')  # Default to 'A20' if not provided
-
+    criteria = request.GET.get('inputCriteria')
+    print(criteria)
     # Call the rute function from utils
-    rute, distance, transfer_info, can_make_trip, service_hours, uses_arvi_station, rute_coords = functions.calculeRute(start, destination)
+    rute, distance, transfer_info, can_make_trip, service_hours, uses_arvi_station, rute_coords = functions.calculeRute(start, destination, criteria)
 
     try:
         start_station = Station.objects.get(id_station=start)

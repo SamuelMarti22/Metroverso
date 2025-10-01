@@ -66,12 +66,13 @@ def add_edge_time(G, coords_dict, u, v, line_key, stopTime=0.3):
         time = time_min,
         distance_km=d_km,
         speed_kmh=speed,
-        line=line_key
+        line=line_key,
+        transfer=0
     )
 
 
-def add_transfer(G, u, v, walkTime=7):
-    G.add_edge(u, v, weight=walkTime, time=walkTime, distance_km=0, speed_km=0, line='')  # solo caminata
+def add_transfer(G, u, v, walkTime=5):
+    G.add_edge(u, v, weight=walkTime, time=walkTime, distance_km=0, speed_km=0, line='',transfer=1)  # solo caminata
 
 G = nx.Graph()
 
@@ -220,6 +221,7 @@ for i in range(0, 6):  # De B00 a B06
     add_edge_time(G, lineaB, origen, destino, line_key="B")
 
 add_transfer(G,"B00","A10")
+add_transfer(G,"M09","B01")
 
 
 lineaT = {
@@ -2335,8 +2337,8 @@ add_transfer(G,"K03", "L00")
 #     destino = f"C3-003RLC-{str(i + 1).zfill(4)}"
 #     G.add_edge(origen, destino, weight=euclidiana(C3_003RLC[origen], C3_003RLC[destino]))
 
-rute = nx.dijkstra_path(G, source="M19", target="M00", weight="weight")
-distancia = nx.dijkstra_path_length(G, source="M19", target="M00", weight="weight")
+rute = nx.dijkstra_path(G, source="M00", target="J00", weight="transfer")
+distancia = nx.dijkstra_path_length(G, source="M00", target="J00", weight="transfer")
 
 print("Rute:", rute)
 print("Distance:", round(distancia, 2), "minutes")
