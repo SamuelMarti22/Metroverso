@@ -662,6 +662,7 @@ const routeFindingFunction = (centerOnRoute = true) => {
 
   const inputStart = document.getElementById("inputStart").value;
   const inputDestination = document.getElementById("inputDestination").value;
+  const inputCriteria = document.getElementById("inputCriteria").value;
 
   const alertBox = document.getElementById("alerta-validacion");
   const alertMessage = document.getElementById("mensaje-alerta");
@@ -689,7 +690,7 @@ const routeFindingFunction = (centerOnRoute = true) => {
 
   setInRoute(true); // Set route mode
 
-  fetch(`/view/callRute?inputStart=${startId}&inputDestination=${endId}`)
+  fetch(`/view/callRute?inputStart=${startId}&inputDestination=${endId}`+ `&inputCriteria=${encodeURIComponent(inputCriteria)}`)
     .then((res) => res.json())
     .then((data) => {
       console.log("Ruta:", data.rute);
