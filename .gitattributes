@@ -1,0 +1,38 @@
+# Ensure line endings are consistent across platforms
+* text=auto
+
+# JSON files should always be treated as text with LF line endings
+*.json text eol=lf
+
+# Python files
+*.py text eol=lf
+
+# HTML templates
+*.html text eol=lf
+
+# CSS files
+*.css text eol=lf
+
+# JavaScript files
+*.js text eol=lf
+
+# Markdown files
+*.md text eol=lf
+
+# Configuration files
+*.yaml text eol=lf
+*.yml text eol=lf
+*.cfg text eol=lf
+*.ini text eol=lf
+
+# Binary files (should not be modified)
+*.sqlite3 binary
+*.db binary
+*.pyc binary
+*.pyo binary
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.gif binary
+*.ico binary
+*.pdf binary
