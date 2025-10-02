@@ -2,26 +2,26 @@
 {
   "model": "metroversoApp.user",
   "pk": 1,
-  "fields": {"name": "Ana", "perfil": "Estudiantil", "lenguaje": "Español"}
+  "fields": {"django_user": null, "name": "Usuario Ejemplo Estudiantil", "perfil": "Estudiantil", "lenguaje": "Español"}
 },
 {
   "model": "metroversoApp.user",
   "pk": 2,
-  "fields": {"name": "Luis", "perfil": "Frecuente", "lenguaje": "Ingles"}
+  "fields": {"django_user": null, "name": "Usuario Ejemplo Frecuente", "perfil": "Frecuente", "lenguaje": "Ingles"}
 },
 {
   "model": "metroversoApp.user",
   "pk": 3,
-  "fields": {"name": "Maria", "perfil": "PcD", "lenguaje": "Español"}
+  "fields": {"django_user": null, "name": "Usuario Ejemplo PcD", "perfil": "PcD", "lenguaje": "Español"}
 },
 {
   "model": "metroversoApp.user",
   "pk": 4,
-  "fields": {"name": "Carlos", "perfil": "AdultoMayor", "lenguaje": "Español"}
+  "fields": {"django_user": null, "name": "Usuario Ejemplo Adulto Mayor", "perfil": "AdultoMayor", "lenguaje": "Español"}
 },
 {
   "model": "metroversoApp.user",
   "pk": 5,
-  "fields": {"name": "Sofia", "perfil": "Frecuente", "lenguaje": "Ingles"}
+  "fields": {"django_user": null, "name": "Usuario Ejemplo Bilingüe", "perfil": "Frecuente", "lenguaje": "Ingles"}
 }
 ]

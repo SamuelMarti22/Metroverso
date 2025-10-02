@@ -46,6 +46,9 @@ In order to improve mobility and the user experience, this project proposes the 
    python manage.py loaddata metroversoApp/fixtures/stations.json
    python manage.py loaddata metroversoApp/fixtures/packages.json
    python manage.py loaddata metroversoApp/fixtures/routes.json
+   python manage.py loaddata metroversoApp/fixtures/blogposts.json
+   python manage.py loaddata metroversoApp/fixtures/pointsofinterest.json
+   python manage.py loaddata metroversoApp/fixtures/stationservices.json
    ```
 
 ### 6. Run the development server
