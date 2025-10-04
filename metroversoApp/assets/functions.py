@@ -77,6 +77,7 @@ def analyze_route_transfers(route):
     }
 
 def calculeRute(star, destination, criteria):
+
     try: 
         print(f"Calculating route from {star} to {destination}")
         print(criteria)

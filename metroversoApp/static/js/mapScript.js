@@ -1467,3 +1467,8 @@ function changeLanguage(lang) {
   document.getElementById("language-input").value = lang;
   document.getElementById("language-form").submit();
 }
+
+
+function closestPoint(){
+  
+}

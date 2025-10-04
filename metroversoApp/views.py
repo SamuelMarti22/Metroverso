@@ -9,7 +9,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 
 from .assets import stationGraphs
-from .utils import functions
+from .assets import functions
 from .models import Route, Station, User
 
 def map(request):
@@ -93,7 +93,7 @@ def dashboard(request):
         except Station.DoesNotExist:
             continue
     # DBR04: Group similar routes (by start, end, criterion)
-    from .utils.functions import calculeRute
+    from .assets.functions import calculeRute
     route_groups = (
         Route.objects.values('id_start', 'id_end', 'criterion')
         .annotate(count=Count('id_route'))
