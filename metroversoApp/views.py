@@ -30,6 +30,8 @@ def getServiceHours(request):
 #     print("Línea seleccionada:", linea)
 
 def callRute(request):
+    
+    #
     start = request.GET.get('inputStart')  # Default to 'A01' if not provided
     destination = request.GET.get('inputDestination')  # Default to 'A20' if not provided
     criteria = request.GET.get('inputCriteria')
