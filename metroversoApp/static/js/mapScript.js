@@ -1468,3 +1468,89 @@ function changeLanguage(lang) {
   document.getElementById("language-form").submit();
 }
 
+document.addEventListener('DOMContentLoaded', () => {
+  // --- Config ---
+  const TOMTOM_KEY = "ZSQTyReLpzsNCFXnCzRGkepsbsZr5hWq";
+  // Centro aproximado para sesgar resultados (Medellín)
+  const CENTER = { lat: 6.2491, lng: -75.5752 };
+
+  // --- Elementos ---
+  const qEl = document.getElementById('inputStart');
+  const sugsEl = document.getElementById('sugs');
+
+  // --- Debounce de input ---
+  let debounce;
+  qEl.addEventListener('input', () => {
+    clearTimeout(debounce);
+    const v = qEl.value.trim();
+    hideSugs();
+    if (v.length < 3) return; // mínimo 3 caracteres
+    debounce = setTimeout(() => runTypeahead(v), 220);
+  });
+
+  // --- Llamada a TomTom ---
+  async function runTypeahead(query) {
+    const url = new URL(`https://api.tomtom.com/search/2/search/${encodeURIComponent(query)}.json`);
+    url.search = new URLSearchParams({
+      key: TOMTOM_KEY,
+      typeahead: 'true',
+      lat: String(CENTER.lat),
+      lon: String(CENTER.lng),
+      countrySet: 'CO',
+      limit: '8'
+    });
+
+    try {
+      const r = await fetch(url);
+      const data = await r.json();
+      const items = (data.results || []).filter(x => x.position);
+      drawSuggestions(items);
+    } catch (err) {
+      console.warn('Typeahead error:', err);
+    }
+  }
+
+  // --- Pintar sugerencias ---
+  function drawSuggestions(items) {
+    sugsEl.innerHTML = '';
+    if (!items.length) return hideSugs();
+
+    for (const it of items) {
+      const label = it.poi?.name || it.address?.freeformAddress || it.matchingName || '(sin nombre)';
+      const li = document.createElement('li');
+      li.textContent = label;
+      li.title = label;
+      li.style.cursor = 'pointer';
+      li.style.padding = '8px 10px';
+      li.style.borderBottom = '1px solid #eee';
+
+      li.addEventListener('click', () => {
+        // Escribe el nombre en el input y oculta la lista
+        qEl.value = label;
+        hideSugs();
+      });
+
+      sugsEl.appendChild(li);
+    }
+    sugsEl.style.display = 'block';
+  }
+
+  // --- Utilidades UI ---
+  function hideSugs() {
+    sugsEl.style.display = 'none';
+    sugsEl.innerHTML = '';
+  }
+
+  // Cerrar sugerencias al hacer click fuera
+  document.addEventListener('click', (e) => {
+    if (!qEl.contains(e.target) && !sugsEl.contains(e.target)) hideSugs();
+  });
+
+  // ENTER: si hay 1 sugerencia visible, selección rápida
+  qEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && sugsEl.children.length === 1) {
+      e.preventDefault();
+      sugsEl.children[0].click();
+    }
+  });
+});
