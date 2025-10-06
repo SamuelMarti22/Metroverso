@@ -327,21 +327,22 @@
                 <input id="inputStart" placeholder="{% trans 'Start' %}" autocomplete="off" class="form-control"/>
 
                 <!-- Lista de sugerencias para Start -->
-                <ul id="sugs" class="list-group shadow-sm" style="display:none; position:absolute; z-index:1000; width:100%; max-height:280px; overflow:auto;"></ul>
+                <ul id="sugsStart" class="list-group shadow-sm" style="display:none; position:absolute; z-index:1000; width:100%; max-height:280px; overflow:auto; background-color: wheat;"></ul>
             </div>
 
-            <div class="mb-3">
-              <label for="inputDestination" class="form-label text-muted small"
-                >{% trans "Destination Station" %}</label
-              >
-              <input
-                type="text"
-                class="form-control"
-                id="inputDestination"
-                placeholder="{% trans 'Destination' %}"
-                autocomplete="off"
-              />
+            <div class="mb-3 position-relative">
+                <label for="inputDestination" class="form-label text-muted small">
+                {% trans "Destination Station" %}
+                </label>
+                <input id="inputDestination" placeholder="{% trans 'Destination' %}" autocomplete="off" class="form-control"/>
+
+                <!-- Lista de sugerencias para Start -->
+                <ul id="sugsDestination" class="list-group shadow-sm" style="display:none; position:absolute; z-index:1000; width:100%; max-height:280px; overflow:auto; background-color: wheat;"></ul>
             </div>
+
+            <select id="selectStart" class="form-select visually-hidden"></select>
+            <select id="selectDestination" class="form-select visually-hidden"></select>
+
             <label for="inputDestination" class="form-label text-muted small">Filtrar por:</label>
             <div style="display: flex; flex-direction: row; gap: 5px;">
               <select class="form-select" aria-label="Default select example" id="inputCriteria">
@@ -714,6 +715,7 @@
     </div>
 
     <script src="{% static 'js/mapScript.js' %}"></script>
+    <script src="{% static 'js/dictionary.js' %}"></script>
     <script>
       async function fetchMostUsedStations() {
         try {

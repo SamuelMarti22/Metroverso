@@ -30,12 +30,12 @@ def getServiceHours(request):
 #     print("Línea seleccionada:", linea)
 
 def callRute(request):
-    
-    #
     start = request.GET.get('inputStart')  # Default to 'A01' if not provided
     destination = request.GET.get('inputDestination')  # Default to 'A20' if not provided
     criteria = request.GET.get('inputCriteria')
-    print(criteria)
+    nameStart = request.GET.get('nameStart')
+    nameDestination = request.GET.get('nameDestination')
+    print(nameStart, nameDestination)
     # Call the rute function from utils
     rute, distance, transfer_info, can_make_trip, service_hours, uses_arvi_station, rute_coords = functions.calculeRute(start, destination, criteria)
 

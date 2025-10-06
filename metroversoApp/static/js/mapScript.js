@@ -530,7 +530,7 @@ map.on("load", () => {
   loadLinesComplete();
 
   // Inicializar funcionalidades de autocompletado
-  setupInputSuggestions();
+  //setupInputSuggestions();
 
   // Restore page state if available
   restorePageState();
@@ -660,9 +660,14 @@ const routeFindingFunction = (centerOnRoute = true) => {
     existingArviContainer.remove();
   }
 
-  const inputStart = document.getElementById("inputStart").value;
-  const inputDestination = document.getElementById("inputDestination").value;
+  selectStart = getSelectedFrom('selectStart'); 
+  selectDestination = getSelectedFrom('selectDestination'); 
+
+  const inputStart = selectStart.id;
+  const inputDestination = selectDestination.id;
   const inputCriteria = document.getElementById("inputCriteria").value;
+  const nameStart = selectStart.label;
+  const nameDestination = selectDestination.label;
 
   const alertBox = document.getElementById("alerta-validacion");
   const alertMessage = document.getElementById("mensaje-alerta");
@@ -690,7 +695,8 @@ const routeFindingFunction = (centerOnRoute = true) => {
 
   setInRoute(true); // Set route mode
 
-  fetch(`/view/callRute?inputStart=${startId}&inputDestination=${endId}`+ `&inputCriteria=${encodeURIComponent(inputCriteria)}`)
+  fetch(`/view/callRute?inputStart=${startId}&inputDestination=${endId}` 
+  + `&inputCriteria=${encodeURIComponent(inputCriteria)}`+ `&nameStart=${encodeURIComponent(nameStart)}`+ `&nameDestination=${encodeURIComponent(nameDestination)}`)
     .then((res) => res.json())
     .then((data) => {
       console.log("Ruta:", data.rute);
@@ -1307,111 +1313,111 @@ document.getElementById("btnUserLocation").onclick = function () {
 };
 
 // Función para mostrar sugerencias en tiempo real
-function setupInputSuggestions() {
-  const startInput = document.getElementById("inputStart");
-  const destInput = document.getElementById("inputDestination");
+// function setupInputSuggestions() {
+//   const startInput = document.getElementById("inputStart");
+//   const destInput = document.getElementById("inputDestination");
 
-  if (startInput) {
-    startInput.addEventListener("input", function () {
-      showInputSuggestions(this, "startSuggestions");
-    });
+//   if (startInput) {
+//     startInput.addEventListener("input", function () {
+//       showInputSuggestions(this, "startSuggestions");
+//     });
 
-    startInput.addEventListener("focus", function () {
-      showInputSuggestions(this, "startSuggestions");
-    });
-  }
+//     startInput.addEventListener("focus", function () {
+//       showInputSuggestions(this, "startSuggestions");
+//     });
+//   }
 
-  if (destInput) {
-    destInput.addEventListener("input", function () {
-      showInputSuggestions(this, "destSuggestions");
-    });
+//   if (destInput) {
+//     destInput.addEventListener("input", function () {
+//       showInputSuggestions(this, "destSuggestions");
+//     });
 
-    destInput.addEventListener("focus", function () {
-      showInputSuggestions(this, "destSuggestions");
-    });
-  }
-}
+//     destInput.addEventListener("focus", function () {
+//       showInputSuggestions(this, "destSuggestions");
+//     });
+//   }
+// }
 
 // Función para mostrar sugerencias de input
-function showInputSuggestions(inputElement, containerId) {
-  const value = inputElement.value.trim();
+// function showInputSuggestions(inputElement, containerId) {
+//   const value = inputElement.value.trim();
 
-  // Remover contenedor de sugerencias existente
-  let existingContainer = document.getElementById(containerId);
-  if (existingContainer) {
-    existingContainer.remove();
-  }
+//   // Remover contenedor de sugerencias existente
+//   let existingContainer = document.getElementById(containerId);
+//   if (existingContainer) {
+//     existingContainer.remove();
+//   }
 
-  if (value.length < 2) return;
+//   if (value.length < 2) return;
 
-  const suggestions = getStationSuggestions(value);
-  if (suggestions.length === 0) return;
+//   const suggestions = getStationSuggestions(value);
+//   if (suggestions.length === 0) return;
 
-  // Crear contenedor de sugerencias
-  const container = document.createElement("div");
-  container.id = containerId;
-  container.className = "suggestions-container";
-  container.style.cssText = `
-        position: absolute;
-        background: white;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        max-height: 200px;
-        overflow-y: auto;
-        z-index: 1000;
-        width: ${inputElement.offsetWidth}px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    `;
+//   // Crear contenedor de sugerencias
+//   const container = document.createElement("div");
+//   container.id = containerId;
+//   container.className = "suggestions-container";
+//   container.style.cssText = `
+//         position: absolute;
+//         background: white;
+//         border: 1px solid #ddd;
+//         border-radius: 4px;
+//         max-height: 200px;
+//         overflow-y: auto;
+//         z-index: 1000;
+//         width: ${inputElement.offsetWidth}px;
+//         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+//     `;
 
-  // Añadir sugerencias
-  suggestions.forEach((suggestion) => {
-    const item = document.createElement("div");
-    item.className = "suggestion-item";
-    item.style.cssText = `
-            padding: 8px 12px;
-            cursor: pointer;
-            border-bottom: 1px solid #eee;
-            font-size: 14px;
-        `;
-    // Extract line from station ID (first character)
-    const line = suggestion.id.charAt(0);
-    item.innerHTML = `
-            <strong>${suggestion.name}</strong> 
-            <span class="station-id">Línea ${line}</span>
-        `;
+//   // Añadir sugerencias
+//   suggestions.forEach((suggestion) => {
+//     const item = document.createElement("div");
+//     item.className = "suggestion-item";
+//     item.style.cssText = `
+//             padding: 8px 12px;
+//             cursor: pointer;
+//             border-bottom: 1px solid #eee;
+//             font-size: 14px;
+//         `;
+//     // Extract line from station ID (first character)
+//     const line = suggestion.id.charAt(0);
+//     item.innerHTML = `
+//             <strong>${suggestion.name}</strong> 
+//             <span class="station-id">Línea ${line}</span>
+//         `;
 
-    item.addEventListener("click", function () {
-      inputElement.value = suggestion.name;
-      container.remove();
-    });
+//     item.addEventListener("click", function () {
+//       inputElement.value = suggestion.name;
+//       container.remove();
+//     });
 
-    item.addEventListener("mouseenter", function () {
-      this.style.backgroundColor = "#f8f9fa";
-    });
+//     item.addEventListener("mouseenter", function () {
+//       this.style.backgroundColor = "#f8f9fa";
+//     });
 
-    item.addEventListener("mouseleave", function () {
-      this.style.backgroundColor = "white";
-    });
+//     item.addEventListener("mouseleave", function () {
+//       this.style.backgroundColor = "white";
+//     });
 
-    container.appendChild(item);
-  });
+//     container.appendChild(item);
+//   });
 
-  // Posicionar contenedor
-  const rect = inputElement.getBoundingClientRect();
-  container.style.top = `${rect.bottom + window.scrollY}px`;
-  container.style.left = `${rect.left + window.scrollX}px`;
+//   // Posicionar contenedor
+//   const rect = inputElement.getBoundingClientRect();
+//   container.style.top = `${rect.bottom + window.scrollY}px`;
+//   container.style.left = `${rect.left + window.scrollX}px`;
 
-  // Añadir al DOM
-  document.body.appendChild(container);
+//   // Añadir al DOM
+//   document.body.appendChild(container);
 
-  // Cerrar sugerencias al hacer clic fuera
-  document.addEventListener("click", function closeSuggestions(e) {
-    if (!container.contains(e.target) && e.target !== inputElement) {
-      container.remove();
-      document.removeEventListener("click", closeSuggestions);
-    }
-  });
-}
+//   // Cerrar sugerencias al hacer clic fuera
+//   document.addEventListener("click", function closeSuggestions(e) {
+//     if (!container.contains(e.target) && e.target !== inputElement) {
+//       container.remove();
+//       document.removeEventListener("click", closeSuggestions);
+//     }
+//   });
+// }
 
 function savePageState() {
   const state = {
@@ -1471,24 +1477,56 @@ function changeLanguage(lang) {
 document.addEventListener('DOMContentLoaded', () => {
   // --- Config ---
   const TOMTOM_KEY = "ZSQTyReLpzsNCFXnCzRGkepsbsZr5hWq";
-  // Centro aproximado para sesgar resultados (Medellín)
-  const CENTER = { lat: 6.2491, lng: -75.5752 };
+  const CENTER = { lat: 6.2491, lng: -75.5752 }; // Medellín
 
-  // --- Elementos ---
-  const qEl = document.getElementById('inputStart');
-  const sugsEl = document.getElementById('sugs');
+  // =========================
+  //  Helpers de negocio
+  // =========================
+  function searchRightCoords(lon, lat) {
+    // si tienes diccionario.js con: const coordenadas = { "[lon,lat]": [lonCorr, latCorr], ... }
+    const key = JSON.stringify([lon, lat]);
+    const coord = (typeof coordenadas === 'object') ? coordenadas[key] : null;
+    return coord ? [coord[0], coord[1]] : [lon, lat];
+  }
 
-  // --- Debounce de input ---
-  let debounce;
-  qEl.addEventListener('input', () => {
-    clearTimeout(debounce);
-    const v = qEl.value.trim();
-    hideSugs();
-    if (v.length < 3) return; // mínimo 3 caracteres
-    debounce = setTimeout(() => runTypeahead(v), 220);
-  });
+  function getNearestStationId(lon, lat, featureCollection) {
+    // featureCollection debe estar definido en dataTurf.js
+    const target = turf.point([lon, lat]);
+    const nearest = turf.nearestPoint(target, featureCollection);
+    return nearest?.properties?.ID ?? null;
+  }
 
-  // --- Llamada a TomTom ---
+  // Guarda el resultado en el select indicado (value=ID, text=label, data-lon/lat)
+  function saveToSelect(selectId, { id, label, lon, lat }) {
+    const sel = document.getElementById(selectId);
+    if (!sel) return;
+    // Limpia opción previa y coloca una nueva seleccionada
+    sel.innerHTML = '';
+    const opt = document.createElement('option');
+    opt.value = id ?? '';              // ID de estación (puede ser '')
+    opt.textContent = label || '(sin nombre)';
+    opt.dataset.lon = String(lon);
+    opt.dataset.lat = String(lat);
+    sel.appendChild(opt);
+    sel.selectedIndex = 0;
+  }
+
+  // Para leer luego lo guardado en un select
+  window.getSelectedFrom = function(selectId) {
+    const sel = document.getElementById(selectId);
+    if (!sel || !sel.options.length) return null;
+    const opt = sel.options[sel.selectedIndex];
+    return {
+      id: opt.value,
+      label: opt.textContent,
+      lon: Number(opt.dataset.lon),
+      lat: Number(opt.dataset.lat),
+    };
+  };
+
+  // =========================
+  //  Typeahead genérico
+  // =========================
   async function runTypeahead(query) {
     const url = new URL(`https://api.tomtom.com/search/2/search/${encodeURIComponent(query)}.json`);
     url.search = new URLSearchParams({
@@ -1499,35 +1537,37 @@ document.addEventListener('DOMContentLoaded', () => {
       countrySet: 'CO',
       limit: '8'
     });
-
-    try {
-      const r = await fetch(url);
-      const data = await r.json();
-      const items = (data.results || []).filter(x => x.position);
-      drawSuggestions(items);
-    } catch (err) {
-      console.warn('Typeahead error:', err);
-    }
+    const r = await fetch(url);
+    const data = await r.json();
+    return (data.results || []).filter(x => x.position);
   }
 
-  // --- Pintar sugerencias ---
-  function drawSuggestions(items) {
+  function drawSuggestions(items, sugsEl, onPick, qEl) {
     sugsEl.innerHTML = '';
-    if (!items.length) return hideSugs();
+    if (!items.length) { sugsEl.style.display = 'none'; return; }
 
     for (const it of items) {
       const label = it.poi?.name || it.address?.freeformAddress || it.matchingName || '(sin nombre)';
+      const { lat, lon } = it.position; // TomTom entrega {lat, lon}
+
       const li = document.createElement('li');
+      li.className = 'list-group-item list-group-item-action';
       li.textContent = label;
       li.title = label;
       li.style.cursor = 'pointer';
-      li.style.padding = '8px 10px';
-      li.style.borderBottom = '1px solid #eee';
-
       li.addEventListener('click', () => {
-        // Escribe el nombre en el input y oculta la lista
+        // Ajuste de coordenadas + estación cercana
+        const [lonR, latR] = searchRightCoords(lon, lat);
+        const id = getNearestStationId(lonR, latR, featureCollection);
+
+        // Guarda en el select correspondiente y escribe en input
+        console.log('Selected:', { id, label, lon: lonR, lat: latR });
+        onPick({ id, label, lon: lonR, lat: latR });
         qEl.value = label;
-        hideSugs();
+
+        // Oculta sugerencias
+        sugsEl.style.display = 'none';
+        sugsEl.innerHTML = '';
       });
 
       sugsEl.appendChild(li);
@@ -1535,22 +1575,54 @@ document.addEventListener('DOMContentLoaded', () => {
     sugsEl.style.display = 'block';
   }
 
-  // --- Utilidades UI ---
-  function hideSugs() {
-    sugsEl.style.display = 'none';
-    sugsEl.innerHTML = '';
+  function setupTypeahead({ inputId, sugsId, selectId }) {
+    const qEl = document.getElementById(inputId);
+    const sugsEl = document.getElementById(sugsId);
+    if (!qEl || !sugsEl) return;
+
+    let debounce;
+    qEl.addEventListener('input', () => {
+      clearTimeout(debounce);
+      const v = qEl.value.trim();
+      sugsEl.style.display = 'none';
+      sugsEl.innerHTML = '';
+      if (v.length < 3) return;
+      debounce = setTimeout(async () => {
+        try {
+          const items = await runTypeahead(v);
+          drawSuggestions(
+            items,
+            sugsEl,
+            // onPick: guarda en el select asociado
+            ({ id, label, lon, lat }) => saveToSelect(selectId, { id, label, lon, lat }),
+            qEl
+          );
+        } catch (e) {
+          console.warn('Typeahead error:', e);
+        }
+      }, 220);
+    });
+
+    // ENTER: si hay 1 sugerencia visible → selección rápida
+    qEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && sugsEl.children.length === 1) {
+        e.preventDefault();
+        sugsEl.children[0].click();
+      }
+    });
+
+    // Cerrar sugerencias al click fuera
+    document.addEventListener('click', (e) => {
+      if (!qEl.contains(e.target) && !sugsEl.contains(e.target)) {
+        sugsEl.style.display = 'none';
+        sugsEl.innerHTML = '';
+      }
+    });
   }
 
-  // Cerrar sugerencias al hacer click fuera
-  document.addEventListener('click', (e) => {
-    if (!qEl.contains(e.target) && !sugsEl.contains(e.target)) hideSugs();
-  });
-
-  // ENTER: si hay 1 sugerencia visible, selección rápida
-  qEl.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && sugsEl.children.length === 1) {
-      e.preventDefault();
-      sugsEl.children[0].click();
-    }
-  });
+  // =========================
+  //  Inicializa para ambos campos con la MISMA función
+  // =========================
+  setupTypeahead({ inputId: 'inputStart', sugsId: 'sugsStart', selectId: 'selectStart' });
+  setupTypeahead({ inputId: 'inputDestination',   sugsId: 'sugsDestination',   selectId: 'selectDestination'   });
 });
