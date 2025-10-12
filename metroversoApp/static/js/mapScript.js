@@ -1257,7 +1257,7 @@ const pickStartingPoint = (originPoint, heading = 0) => {
       .setLngLat(originPoint)
       .setRotation?.(heading);
   } else {
-    // Reemplaza el Marker azul “default” por el triángulo con halo azul
+    
     markerOrigin = NavMarker({
       fill: "#3b82f6",                 // azul del triángulo
       stroke: "#ffffff",               // borde blanco
@@ -1672,6 +1672,7 @@ document.addEventListener('DOMContentLoaded', () => {
 let followingUserLocations = [];
 let markerFollow;
 let isFollowing = false;
+let ROUTE_COMPLETED = false; // ← flag cuando ya no queda nada pintado
 
 /***** CONFIG *****/
 const CUT_MAX_METERS = 5;
@@ -1835,10 +1836,16 @@ function registerPaintedSubsegment({ linea, lineFC, fromCoord, toCoord, startIdx
   });
 }
 
+function markRouteCompletedIfDone() {
+  if (ROUTE_DESC.length === 0 && !ROUTE_COMPLETED) {
+    ROUTE_COMPLETED = true;
+    console.log("ruta terminada");
+  }
+}
+
 /***** RECORTE DESDE EL INICIO ABSOLUTO (ELIMINANDO LO YA DESPINTADO) *****/
 function trimRouteFromAbsoluteStart(coordCut) {
-
-  // Primera vez: cambiamos de markerOrigin → markerFollow
+  // Primera vez: cambia markerOrigin → markerFollow
   if (!isFollowing) {
     if (typeof markerOrigin?.remove === "function") {
       markerOrigin.remove();
@@ -1850,17 +1857,20 @@ function trimRouteFromAbsoluteStart(coordCut) {
     isFollowing = true;
   }
 
-  // Si no hay nada, termina
-  if (ROUTE_DESC.length === 0) return false;
+  // Si no hay nada, marca fin y sal
+  if (ROUTE_DESC.length === 0) {
+    markRouteCompletedIfDone();
+    return false;
+  }
 
-  // Asegura cursor dentro de rango
+  // Asegura cursor en rango
   TRIM_CURSOR = Math.min(TRIM_CURSOR, ROUTE_DESC.length - 1);
 
   while (TRIM_CURSOR < ROUTE_DESC.length) {
     const idx = TRIM_CURSOR;
     const d   = ROUTE_DESC[idx];
 
-    // --- Filtro bbox: si no cae, elimina tramo completo y mueve marcador al último punto de ese tramo ---
+    // --- 1) Filtro bbox: si NO cae, elimina tramo completo y mueve marcador al último punto de ese tramo ---
     if (!pointInBBoxWithMargin(coordCut, d.bbox, BBOX_MARGIN_METERS)) {
       const cacheForRemoval = warmActiveCache(idx);
       if (cacheForRemoval?.coords?.length >= 2) {
@@ -1868,10 +1878,12 @@ function trimRouteFromAbsoluteStart(coordCut) {
         setFollowMarker(lastCoord);
       }
       removeSegmentByIndex(idx);
+      markRouteCompletedIfDone();
+      if (ROUTE_COMPLETED) return true;
       continue;
     }
 
-    // --- Cache del tramo activo ---
+    // --- 2) Prepara cache del tramo activo ---
     const cache = warmActiveCache(idx);
     if (!cache || !cache.coords || cache.coords.length < 2) {
       const cacheForRemoval = warmActiveCache(idx);
@@ -1880,10 +1892,12 @@ function trimRouteFromAbsoluteStart(coordCut) {
         setFollowMarker(lastCoord);
       }
       removeSegmentByIndex(idx);
+      markRouteCompletedIfDone();
+      if (ROUTE_COMPLETED) return true;
       continue;
     }
 
-    // --- Chequeo preciso de distancia al tramo activo ---
+    // --- 3) Chequeo preciso de distancia al tramo activo ---
     const distM = pointToLineDistanceMeters(coordCut, cache.coords);
     if (distM > CUT_MAX_METERS) {
       // No cae aquí: elimina tramo completo y mueve marcador al último punto de ese tramo
@@ -1893,44 +1907,49 @@ function trimRouteFromAbsoluteStart(coordCut) {
         setFollowMarker(lastCoord);
       }
       removeSegmentByIndex(idx);
+      markRouteCompletedIfDone();
+      if (ROUTE_COMPLETED) return true;
       continue;
     }
 
-    // --- Aquí SÍ cae el corte: encontrar el vértice de corte ---
+    // --- 4) Aquí SÍ cae el corte: localizar vértice de corte y mover marcador ---
     const { idx: localCutIdx } = nearestVertexIndex(cache.coords, coordCut);
     if (localCutIdx === -1) {
-      // No se localizó vértice de corte: elimina tramo y coloca marcador al último punto
+      // No se pudo localizar vértice de corte: elimina tramo y coloca marcador al último punto
       const cacheForRemoval = warmActiveCache(idx);
       if (cacheForRemoval?.coords?.length >= 2) {
         const lastCoord = cacheForRemoval.coords[cacheForRemoval.coords.length - 1];
         setFollowMarker(lastCoord);
       }
       removeSegmentByIndex(idx);
+      markRouteCompletedIfDone();
+      if (ROUTE_COMPLETED) return true;
       continue;
     }
 
-    // Mueve el marcador EXACTAMENTE al punto de corte dentro del tramo activo
+    // Mueve el marcador EXACTAMENTE al punto de corte
     const cutCoord = cache.coords[localCutIdx];
     setFollowMarker(cutCoord);
 
-    // Traduce índice local al índice absoluto de la feature original
+    // Traducir índice local a índice absoluto de la feature original
     const d0 = ROUTE_DESC[idx];
     const newStartAbs = d0.reversed
       ? (d0.endIdx - localCutIdx)
       : (d0.startIdx + localCutIdx);
 
-    // ¿Consumimos todo el tramo?
+    // --- 5) ¿Consumimos todo el tramo activo? Elimínalo ---
     if (newStartAbs >= d0.endIdx) {
       removeSegmentByIndex(idx);
-      // Deja el cursor en el mismo índice (ahora apunta al siguiente tramo) para la próxima llamada
-      return true;
+      markRouteCompletedIfDone();
+      return true; // deja cursor apuntando al siguiente tramo para la próxima llamada
     }
 
-    // Reconstruye el nuevo slice normalizado (sin reversed)
+    // --- 6) Reconstruir nuevo slice (normalizado) y actualizar ---
     const feature = getFeatureForLinea(d0.linea, d0.featureIdx);
     const newSlice = sliceCoordsFromFeature(feature, newStartAbs, d0.endIdx, false);
     if (newSlice.length < 2) {
       removeSegmentByIndex(idx);
+      markRouteCompletedIfDone();
       return true;
     }
 
@@ -1940,14 +1959,15 @@ function trimRouteFromAbsoluteStart(coordCut) {
     d0.reversed = false;
     d0.bbox     = bboxOfCoords(newSlice);
 
-    // Actualiza cache activo
+    // Refresca cache activo
     ACTIVE_CACHE = { idx, coords: newSlice, bbox: d0.bbox };
 
-    // Hecho: recortamos el tramo activo; dejamos cursor en el mismo idx
+    // Hecho: recortamos el tramo actual; cursor permanece en el mismo idx
     return true;
   }
 
-  // Si salimos del bucle, no quedó nada
+  // Por si salimos del while sin acciones adicionales
+  markRouteCompletedIfDone();
   return true;
 }
 
