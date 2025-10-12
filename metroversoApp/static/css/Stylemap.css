@@ -456,3 +456,19 @@ body {
   white-space: nowrap; /* evita que crezca */
   border: 0;
 }
+
+ .nav-marker {
+    position: relative;
+    width: 40px; height: 40px;        /* tamaño total */
+  }
+  .nav-marker__halo {
+    position:absolute; inset:0;
+    border-radius: 999px;
+    background: rgba(0,128,255,.18);  /* halo */
+  }
+  .nav-marker__icon {
+    position:absolute; left:50%; top:50%;
+    width: 20px; height: 20px;
+    transform: translate(-50%,-54%);  /* súbelo un pelín */
+    pointer-events: none;
+  }
