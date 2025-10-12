@@ -119,8 +119,8 @@ def calculeRute(star, destination, criteria):
         # Check if the trip can be made according to the schedule
         from metroversoApp.assets.stationGraphs import can_make_trip_now_graph, get_current_service_hours, get_arvi_service_hours
         
-        # Check if route includes Arvi station (L02)
-        uses_arvi_station = 'L02' in rute
+        # Check if route includes Arvi station (L01)
+        uses_arvi_station = 'L01' in rute
         can_make_trip = can_make_trip_now_graph(G, star, destination)
         
         # Get service hours information

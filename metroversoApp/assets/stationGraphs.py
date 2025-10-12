@@ -2376,11 +2376,11 @@ def _now():
 
 def _route_includes_arvi(route):
     """
-    Returns True if the route includes the Arvi station (L02).
+    Returns True if the route includes the Arvi station (L01).
     """
     if not route:
         return False
-    return 'L02' in route
+    return 'L01' in route
 
 
 def get_current_service_hours():
