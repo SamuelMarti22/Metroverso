@@ -1,92 +1,31 @@
 [
-{
-  "model": "metroversoApp.package",
-  "pk": 1,
-  "fields": {
-    "id_package": 1,
-    "perfil": "Frecuente",
-    "price": 3430.0
-  }
-},
-{
-  "model": "metroversoApp.package",
-  "pk": 2,
-  "fields": {
-    "id_package": 1,
-    "perfil": "AdultoMayor",
-    "price": 3060.0
-  }
-},
-{
-  "model": "metroversoApp.package",
-  "pk": 3,
-  "fields": {
-    "id_package": 1,
-    "perfil": "Estudiantil",
-    "price": 1420.0
-  }
-},
-{
-  "model": "metroversoApp.package",
-  "pk": 4,
-  "fields": {
-    "id_package": 1,
-    "perfil": "PcD",
-    "price": 2480.0
-  }
-},
-{
-  "model": "metroversoApp.package",
-  "pk": 5,
-  "fields": {
-    "id_package": 1,
-    "perfil": "Eventual",
-    "price": 3900.0
-  }
-},
-{
-  "model": "metroversoApp.package",
-  "pk": 6,
-  "fields": {
-    "id_package": 2,
-    "perfil": "Frecuente",
-    "price": 3430.0
-  }
-},
-{
-  "model": "metroversoApp.package",
-  "pk": 7,
-  "fields": {
-    "id_package": 2,
-    "perfil": "AdultoMayor",
-    "price": 3060.0
-  }
-},
-{
-  "model": "metroversoApp.package",
-  "pk": 8,
-  "fields": {
-    "id_package": 2,
-    "perfil": "Estudiantil",
-    "price": 1420.0
-  }
-},
-{
-  "model": "metroversoApp.package",
-  "pk": 9,
-  "fields": {
-    "id_package": 2,
-    "perfil": "PcD",
-    "price": 2480.0
-  }
-},
-{
-  "model": "metroversoApp.package",
-  "pk": 10,
-  "fields": {
-    "id_package": 2,
-    "perfil": "Eventual",
-    "price": 3900.0
-  }
-}
+  { "model": "metroversoApp.package", "pk": 1, "fields": { "id_package": 1, "profile": "Frecuente", "price": 3430.0 } },
+  { "model": "metroversoApp.package", "pk": 2, "fields": { "id_package": 1, "profile": "AdultoMayor", "price": 3060.0 } },
+  { "model": "metroversoApp.package", "pk": 3, "fields": { "id_package": 1, "profile": "Estudiantil", "price": 1420.0 } },
+  { "model": "metroversoApp.package", "pk": 4, "fields": { "id_package": 1, "profile": "PcD", "price": 2480.0 } },
+  { "model": "metroversoApp.package", "pk": 5, "fields": { "id_package": 1, "profile": "Eventual", "price": 3900.0 } },
+
+  { "model": "metroversoApp.package", "pk": 6, "fields": { "id_package": 2, "profile": "Frecuente", "price": 4110.0 } },
+  { "model": "metroversoApp.package", "pk": 7, "fields": { "id_package": 2, "profile": "AdultoMayor", "price": 3740.0 } },
+  { "model": "metroversoApp.package", "pk": 8, "fields": { "id_package": 2, "profile": "Estudiantil", "price": 2100.0 } },
+  { "model": "metroversoApp.package", "pk": 9, "fields": { "id_package": 2, "profile": "PcD", "price": 3160.0 } },
+  { "model": "metroversoApp.package", "pk": 10, "fields": { "id_package": 2, "profile": "Eventual", "price": 4580.0 } },
+
+  { "model": "metroversoApp.package", "pk": 11, "fields": { "id_package": 3, "profile": "Frecuente", "price": 4790.0 } },
+  { "model": "metroversoApp.package", "pk": 12, "fields": { "id_package": 3, "profile": "AdultoMayor", "price": 4420.0 } },
+  { "model": "metroversoApp.package", "pk": 13, "fields": { "id_package": 3, "profile": "Estudiantil", "price": 2780.0 } },
+  { "model": "metroversoApp.package", "pk": 14, "fields": { "id_package": 3, "profile": "PcD", "price": 3840.0 } },
+  { "model": "metroversoApp.package", "pk": 15, "fields": { "id_package": 3, "profile": "Eventual", "price": 5260.0 } },
+
+  { "model": "metroversoApp.package", "pk": 16, "fields": { "id_package": 4, "profile": "Frecuente", "price": 5470.0 } },
+  { "model": "metroversoApp.package", "pk": 17, "fields": { "id_package": 4, "profile": "AdultoMayor", "price": 5100.0 } },
+  { "model": "metroversoApp.package", "pk": 18, "fields": { "id_package": 4, "profile": "Estudiantil", "price": 3460.0 } },
+  { "model": "metroversoApp.package", "pk": 19, "fields": { "id_package": 4, "profile": "PcD", "price": 4520.0 } },
+  { "model": "metroversoApp.package", "pk": 20, "fields": { "id_package": 4, "profile": "Eventual", "price": 5940.0 } },
+
+  { "model": "metroversoApp.package", "pk": 21, "fields": { "id_package": 0, "profile": "Frecuente", "price": 3500.0 } },
+  { "model": "metroversoApp.package", "pk": 22, "fields": { "id_package": 0, "profile": "AdultoMayor", "price": 3500.0 } },
+  { "model": "metroversoApp.package", "pk": 23, "fields": { "id_package": 0, "profile": "Estudiantil", "price": 3500.0 } },
+  { "model": "metroversoApp.package", "pk": 24, "fields": { "id_package": 0, "profile": "PcD", "price": 3500.0 } },
+  { "model": "metroversoApp.package", "pk": 25, "fields": { "id_package": 0, "profile": "Eventual", "price": 3500.0 } }
 ]

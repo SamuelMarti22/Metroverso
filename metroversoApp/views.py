@@ -33,9 +33,11 @@ def callRute(request):
     start = request.GET.get('inputStart')  # Default to 'A01' if not provided
     destination = request.GET.get('inputDestination')  # Default to 'A20' if not provided
     criteria = request.GET.get('inputCriteria')
+    # Read passenger profile from request
+    profile = request.GET.get('profileSelection', 'Frecuente')
     print(criteria)
     # Call the rute function from utils
-    rute, distance, transfer_info, can_make_trip, service_hours, uses_arvi_station, rute_coords = functions.calculeRute(start, destination, criteria)
+    rute, distance, transfer_info, can_make_trip, service_hours, uses_arvi_station, rute_coords, price_packages, rute_price = functions.calculeRute(start, destination, criteria, profile)
 
     try:
         start_station = Station.objects.get(id_station=start)
@@ -54,7 +56,7 @@ def callRute(request):
         Route.objects.create(
             id_start=start_station,
             id_end=end_station,
-            price=0.0,
+            price=rute_price,
             criterion="tiempo",
             id_user=user
         )
@@ -62,6 +64,8 @@ def callRute(request):
     return JsonResponse({ 
         'rute': rute,
         'distance': distance,
+        'price': rute_price,
+        'price_packages': price_packages,
         'transfer_info': transfer_info,
         'can_make_trip': can_make_trip,
         'service_hours': service_hours,
@@ -104,7 +108,7 @@ def dashboard(request):
         try:
             start = Station.objects.get(pk=group['id_start'])
             end = Station.objects.get(pk=group['id_end'])
-            rute, _, _, _, _, _, _ = calculeRute(start.id_station, end.id_station)
+            rute, _, _, _, _, _, _, _, _ = calculeRute(start.id_station, end.id_station)
             rute_names = []
             for station_id in rute:
                 try:

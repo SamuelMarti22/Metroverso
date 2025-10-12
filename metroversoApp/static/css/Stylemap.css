@@ -443,3 +443,20 @@ body {
   font-family: inherit;
   pointer-events: none;
 }
+
+#estimatedPriceBox {
+  position: fixed;
+  top: 16px;
+  left: 1390px;
+  z-index: 10000;
+  background: #008c6e;
+  color: #fff;
+  border-radius: 16px;
+  padding: 12px 48px 12px 32px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  display: none;
+  min-width: 160px;
+  max-width: 220px;
+  font-family: inherit;
+  pointer-events: none;
+}
