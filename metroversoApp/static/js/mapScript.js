@@ -1479,18 +1479,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const TOMTOM_KEY = "ZSQTyReLpzsNCFXnCzRGkepsbsZr5hWq";
   const CENTER = { lat: 6.2491, lng: -75.5752 }; // Medellín
 
-  // =========================
-  //  Helpers de negocio
-  // =========================
   function searchRightCoords(lon, lat) {
-    // si tienes diccionario.js con: const coordenadas = { "[lon,lat]": [lonCorr, latCorr], ... }
     const key = JSON.stringify([lon, lat]);
     const coord = (typeof coordenadas === 'object') ? coordenadas[key] : null;
     return coord ? [coord[0], coord[1]] : [lon, lat];
   }
 
   function getNearestStationId(lon, lat, featureCollection) {
-    // featureCollection debe estar definido en dataTurf.js
     const target = turf.point([lon, lat]);
     const nearest = turf.nearestPoint(target, featureCollection);
     return nearest?.properties?.ID ?? null;
@@ -1500,10 +1495,9 @@ document.addEventListener('DOMContentLoaded', () => {
   function saveToSelect(selectId, { id, label, lon, lat }) {
     const sel = document.getElementById(selectId);
     if (!sel) return;
-    // Limpia opción previa y coloca una nueva seleccionada
     sel.innerHTML = '';
     const opt = document.createElement('option');
-    opt.value = id ?? '';              // ID de estación (puede ser '')
+    opt.value = id ?? '';
     opt.textContent = label || '(sin nombre)';
     opt.dataset.lon = String(lon);
     opt.dataset.lat = String(lat);
@@ -1524,9 +1518,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   };
 
-  // =========================
-  //  Typeahead genérico
-  // =========================
   async function runTypeahead(query) {
     const url = new URL(`https://api.tomtom.com/search/2/search/${encodeURIComponent(query)}.json`);
     url.search = new URLSearchParams({
@@ -1556,16 +1547,12 @@ document.addEventListener('DOMContentLoaded', () => {
       li.title = label;
       li.style.cursor = 'pointer';
       li.addEventListener('click', () => {
-        // Ajuste de coordenadas + estación cercana
         const [lonR, latR] = searchRightCoords(lon, lat);
         const id = getNearestStationId(lonR, latR, featureCollection);
 
-        // Guarda en el select correspondiente y escribe en input
-        console.log('Selected:', { id, label, lon: lonR, lat: latR });
         onPick({ id, label, lon: lonR, lat: latR });
         qEl.value = label;
 
-        // Oculta sugerencias
         sugsEl.style.display = 'none';
         sugsEl.innerHTML = '';
       });
@@ -1575,7 +1562,8 @@ document.addEventListener('DOMContentLoaded', () => {
     sugsEl.style.display = 'block';
   }
 
-  function setupTypeahead({ inputId, sugsId, selectId }) {
+  // Ahora acepta un hook onChoose para ejecutar lógica extra tras elegir
+  function setupTypeahead({ inputId, sugsId, selectId, onChoose }) {
     const qEl = document.getElementById(inputId);
     const sugsEl = document.getElementById(sugsId);
     if (!qEl || !sugsEl) return;
@@ -1593,8 +1581,15 @@ document.addEventListener('DOMContentLoaded', () => {
           drawSuggestions(
             items,
             sugsEl,
-            // onPick: guarda en el select asociado
-            ({ id, label, lon, lat }) => saveToSelect(selectId, { id, label, lon, lat }),
+            ({ id, label, lon, lat }) => {
+              // 1) Guardar en el select
+              saveToSelect(selectId, { id, label, lon, lat });
+              // 2) Ejecutar callback para tu mapa/ruta
+              if (typeof onChoose === 'function') {
+                try { onChoose({ lon, lat, id, label }); }
+                catch (e) { console.warn('onChoose error:', e); }
+              }
+            },
             qEl
           );
         } catch (e) {
@@ -1621,8 +1616,33 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // =========================
-  //  Inicializa para ambos campos con la MISMA función
+  // Inicializa ambos campos con su respectivo callback
   // =========================
-  setupTypeahead({ inputId: 'inputStart', sugsId: 'sugsStart', selectId: 'selectStart' });
-  setupTypeahead({ inputId: 'inputDestination',   sugsId: 'sugsDestination',   selectId: 'selectDestination'   });
+  setupTypeahead({
+    inputId: 'inputStart',
+    sugsId: 'sugsStart',
+    selectId: 'selectStart',
+    onChoose: ({ lon, lat }) => {
+      // Llama tu función de inicio con [lon, lat]
+      if (typeof pickStartingPoint === 'function') {
+        pickStartingPoint([lon, lat]);
+      } else {
+        console.warn('pickStartingPoint no está definida');
+      }
+    }
+  });
+
+  setupTypeahead({
+    inputId: 'inputDestination',
+    sugsId: 'sugsDestination',
+    selectId: 'selectDestination',
+    onChoose: ({ lon, lat }) => {
+      // Llama tu función de destino con [lon, lat]
+      if (typeof pickDestinationPoint === 'function') {
+        pickDestinationPoint([lon, lat]); // lng === lon
+      } else {
+        console.warn('pickDestinationPoint no está definida');
+      }
+    }
+  });
 });
