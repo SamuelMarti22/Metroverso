@@ -1,11 +1,15 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.http import JsonResponse
 from django.utils import translation
 from django.db.models import Count
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User as DjangoUser
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 
 from .assets import stationGraphs
-from .utils import functions
+from .assets import functions
 from .models import Route, Station, User
 
 def map(request):
@@ -28,9 +32,12 @@ def getServiceHours(request):
 def callRute(request):
     start = request.GET.get('inputStart')  # Default to 'A01' if not provided
     destination = request.GET.get('inputDestination')  # Default to 'A20' if not provided
-
+    criteria = request.GET.get('inputCriteria')
+    nameStart = request.GET.get('nameStart')
+    nameDestination = request.GET.get('nameDestination')
+    print(nameStart, nameDestination)
     # Call the rute function from utils
-    rute, distance, transfer_info, can_make_trip, service_hours, uses_arvi_station, rute_coords = functions.calculeRute(start, destination)
+    rute, distance, transfer_info, can_make_trip, service_hours, uses_arvi_station, rute_coords = functions.calculeRute(start, destination, criteria)
 
     try:
         start_station = Station.objects.get(id_station=start)
@@ -88,7 +95,7 @@ def dashboard(request):
         except Station.DoesNotExist:
             continue
     # DBR04: Group similar routes (by start, end, criterion)
-    from .utils.functions import calculeRute
+    from .assets.functions import calculeRute
     route_groups = (
         Route.objects.values('id_start', 'id_end', 'criterion')
         .annotate(count=Count('id_route'))
@@ -117,3 +124,123 @@ def dashboard(request):
         except Station.DoesNotExist:
             continue
     return JsonResponse({'top_stations': result_stations, 'top_routes': result_routes})
+
+
+# ==================== SISTEMA DE AUTENTICACIÓN ====================
+
+def register_view(request):
+    """Vista para registro de nuevos usuarios"""
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        confirm_password = request.POST.get('confirm_password')
+        
+        # Validaciones
+        if not all([username, email, password, confirm_password]):
+            messages.error(request, 'Todos los campos son obligatorios')
+            return render(request, 'auth/register.html')
+        
+        if password != confirm_password:
+            messages.error(request, 'Las contraseñas no coinciden')
+            return render(request, 'auth/register.html')
+        
+        if DjangoUser.objects.filter(username=username).exists():
+            messages.error(request, 'El nombre de usuario ya existe')
+            return render(request, 'auth/register.html')
+        
+        if DjangoUser.objects.filter(email=email).exists():
+            messages.error(request, 'El email ya está registrado')
+            return render(request, 'auth/register.html')
+        
+        try:
+            # Crear usuario Django (SIN privilegios de admin)
+            django_user = DjangoUser.objects.create_user(
+                username=username,
+                email=email,
+                password=password,
+                is_staff=False,      # NO pueden acceder al admin
+                is_superuser=False   # NO son superusers
+            )
+            
+            # Crear perfil Metro asociado con los campos correctos
+            metro_profile = User.objects.create(
+                django_user=django_user,  # Usar 'django_user', no 'user'
+                name=username,            # Usar 'name', no username
+                perfil='Frecuente',       # Perfil por defecto
+                lenguaje='Español'        # Idioma por defecto
+            )
+            
+            messages.success(request, '¡Registro exitoso! Ya puedes iniciar sesión')
+            return redirect('login')
+            
+        except Exception as e:
+            messages.error(request, f'Error al crear la cuenta: {str(e)}')
+            return render(request, 'auth/register.html')
+    
+    return render(request, 'auth/register.html')
+
+
+def login_view(request):
+    """Vista para inicio de sesión"""
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        
+        if not username or not password:
+            messages.error(request, 'Usuario y contraseña son obligatorios')
+            return render(request, 'auth/login.html')
+        
+        user = authenticate(request, username=username, password=password)
+        
+        if user is not None:
+            login(request, user)
+            messages.success(request, f'¡Bienvenido, {user.username}!')
+            
+            # Redirigir a la página que quería visitar o al mapa
+            next_url = request.GET.get('next', 'map')
+            return redirect(next_url)
+        else:
+            messages.error(request, 'Usuario o contraseña incorrectos')
+    
+    return render(request, 'auth/login.html')
+
+
+def logout_view(request):
+    """Vista para cerrar sesión"""
+    logout(request)
+    messages.success(request, 'Has cerrado sesión exitosamente')
+    return redirect('login')
+
+
+@login_required
+def profile_view(request):
+    """Vista del perfil del usuario"""
+    try:
+        metro_profile = request.user.metro_profile
+    except User.DoesNotExist:
+        # Si no tiene perfil Metro, crear uno
+        metro_profile = User.objects.create(
+            django_user=request.user,  # Usar 'django_user'
+            name=request.user.username,  # Usar 'name'
+            perfil='Frecuente',
+            lenguaje='Español'
+        )
+    
+    if request.method == 'POST':
+        # Actualizar perfil
+        metro_profile.name = request.POST.get('name', metro_profile.name)
+        metro_profile.perfil = request.POST.get('perfil', metro_profile.perfil)
+        metro_profile.lenguaje = request.POST.get('lenguaje', metro_profile.lenguaje)
+        metro_profile.save()
+        
+        messages.success(request, 'Perfil actualizado exitosamente')
+        return redirect('profile')
+    
+    context = {
+        'user': request.user,
+        'metro_profile': metro_profile,
+        'perfil_choices': User.PERFIL_CHOICES,
+        'lenguaje_choices': User.LENGUAJE_CHOICES
+    }
+    return render(request, 'auth/profile.html', context)

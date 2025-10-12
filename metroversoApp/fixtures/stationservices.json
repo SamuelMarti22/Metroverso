@@ -1,0 +1,142 @@
+[
+  {
+    "model": "metroversoApp.stationservice",
+    "pk": 1,
+    "fields": {
+      "station": "A10",
+      "service_type": "restroom",
+      "status": "active",
+      "description": "Baños públicos limpios y modernos con accesibilidad para personas con discapacidad.",
+      "hours": "6:00-23:00",
+      "floor": "Mezzanine",
+      "notes": "Ubicados cerca de las taquillas principales",
+      "last_updated": "2024-01-15T12:00:00Z"
+    }
+  },
+  {
+    "model": "metroversoApp.stationservice",
+    "pk": 2,
+    "fields": {
+      "station": "A10",
+      "service_type": "wifi",
+      "status": "active",
+      "description": "WiFi gratuito de alta velocidad para todos los usuarios del Metro.",
+      "hours": "24/7",
+      "floor": "All floors",
+      "notes": "Red: MetroMedellin-Free",
+      "last_updated": "2024-01-15T12:00:00Z"
+    }
+  },
+  {
+    "model": "metroversoApp.stationservice",
+    "pk": 3,
+    "fields": {
+      "station": "A10",
+      "service_type": "atm",
+      "status": "active",
+      "description": "Cajero automático Bancolombia disponible 24 horas.",
+      "hours": "24/7",
+      "floor": "Ground",
+      "notes": "Acepta tarjetas de todos los bancos",
+      "last_updated": "2024-01-15T12:00:00Z"
+    }
+  },
+  {
+    "model": "metroversoApp.stationservice",
+    "pk": 4,
+    "fields": {
+      "station": "A05",
+      "service_type": "ticket_office",
+      "status": "active",
+      "description": "Taquilla para compra de tarjetas Cívica y recarga de saldo.",
+      "hours": "6:00-22:00",
+      "floor": "Ground",
+      "notes": "Atención personalizada y múltiples métodos de pago",
+      "last_updated": "2024-01-15T11:30:00Z"
+    }
+  },
+  {
+    "model": "metroversoApp.stationservice",
+    "pk": 5,
+    "fields": {
+      "station": "A05",
+      "service_type": "elevator",
+      "status": "active",
+      "description": "Ascensor para acceso a plataformas, especialmente útil para personas con movilidad reducida.",
+      "hours": "6:00-23:00",
+      "floor": "All floors",
+      "notes": "Capacidad máxima: 8 personas",
+      "last_updated": "2024-01-15T11:30:00Z"
+    }
+  },
+  {
+    "model": "metroversoApp.stationservice",
+    "pk": 6,
+    "fields": {
+      "station": "B03",
+      "service_type": "commercial",
+      "status": "active",
+      "description": "Área comercial con tiendas de conveniencia, farmacia y cafetería.",
+      "hours": "7:00-22:00",
+      "floor": "Mezzanine",
+      "notes": "Incluye Oxxo, Farmatodo y Juan Valdez Café",
+      "last_updated": "2024-01-15T10:45:00Z"
+    }
+  },
+  {
+    "model": "metroversoApp.stationservice",
+    "pk": 7,
+    "fields": {
+      "station": "B03",
+      "service_type": "security",
+      "status": "active",
+      "description": "Puesto de seguridad con personal de la Policía Metro las 24 horas.",
+      "hours": "24/7",
+      "floor": "Ground",
+      "notes": "Punto de contacto para emergencias y asistencia",
+      "last_updated": "2024-01-15T10:45:00Z"
+    }
+  },
+  {
+    "model": "metroversoApp.stationservice",
+    "pk": 8,
+    "fields": {
+      "station": "M02",
+      "service_type": "accessibility",
+      "status": "active",
+      "description": "Estación completamente accesible con rampas, señalización braille y audio-guías.",
+      "hours": "6:00-23:00",
+      "floor": "All floors",
+      "notes": "Certificada por ICONTEC para accesibilidad universal",
+      "last_updated": "2024-01-15T09:30:00Z"
+    }
+  },
+  {
+    "model": "metroversoApp.stationservice",
+    "pk": 9,
+    "fields": {
+      "station": "M05",
+      "service_type": "information",
+      "status": "active",
+      "description": "Punto de información turística y del sistema Metro con mapas y horarios.",
+      "hours": "8:00-20:00",
+      "floor": "Ground",
+      "notes": "Personal bilingüe disponible en horario extendido",
+      "last_updated": "2024-01-15T08:15:00Z"
+    }
+  },
+  {
+    "model": "metroversoApp.stationservice",
+    "pk": 10,
+    "fields": {
+      "station": "A08",
+      "service_type": "first_aid",
+      "status": "active",
+      "description": "Puesto de primeros auxilios con personal paramédico capacitado.",
+      "hours": "6:00-23:00",
+      "floor": "Mezzanine",
+      "notes": "Coordinado con hospitales cercanos para emergencias",
+      "last_updated": "2024-01-15T07:45:00Z"
+    }
+  }
+]

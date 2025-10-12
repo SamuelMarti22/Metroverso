@@ -1,0 +1,142 @@
+[
+  {
+    "model": "metroversoApp.pointofinterest",
+    "pk": 1,
+    "fields": {
+      "name": "Centro Comercial Plaza Central",
+      "description": "Gran centro comercial con más de 200 tiendas, cines y restaurantes. Ideal para compras y entretenimiento familiar.",
+      "category": "shop",
+      "station": "A05",
+      "author": 1,
+      "address": "Calle 10 #45-67",
+      "distance_from_station": "100m",
+      "created_at": "2024-01-15T10:30:00Z"
+    }
+  },
+  {
+    "model": "metroversoApp.pointofinterest",
+    "pk": 2,
+    "fields": {
+      "name": "Universidad Nacional",
+      "description": "Campus principal de la Universidad Nacional con múltiples facultades. Una de las instituciones educativas más importantes de la ciudad.",
+      "category": "other",
+      "station": "B03",
+      "author": 1,
+      "address": "Carrera 30 #45-03",
+      "distance_from_station": "50m",
+      "created_at": "2024-01-14T09:15:00Z"
+    }
+  },
+  {
+    "model": "metroversoApp.pointofinterest",
+    "pk": 3,
+    "fields": {
+      "name": "Hospital San José",
+      "description": "Hospital de alta complejidad con servicios de urgencias 24 horas, especialidades médicas y laboratorios.",
+      "category": "hospital",
+      "station": "M02",
+      "author": 1,
+      "address": "Avenida 15 #20-30",
+      "distance_from_station": "200m",
+      "created_at": "2024-01-13T11:45:00Z"
+    }
+  },
+  {
+    "model": "metroversoApp.pointofinterest",
+    "pk": 4,
+    "fields": {
+      "name": "Parque de los Fundadores",
+      "description": "Amplio parque urbano con zonas verdes, senderos para caminar, juegos infantiles y área de picnic. Perfecto para actividades al aire libre.",
+      "category": "entertainment",
+      "station": "O02",
+      "author": 1,
+      "address": "Calle 25 #12-18",
+      "distance_from_station": "150m",
+      "created_at": "2024-01-12T14:20:00Z"
+    }
+  },
+  {
+    "model": "metroversoApp.pointofinterest",
+    "pk": 5,
+    "fields": {
+      "name": "Museo de Arte Moderno",
+      "description": "Museo con importante colección de arte contemporáneo nacional e internacional. Exposiciones permanentes y temporales.",
+      "category": "entertainment",
+      "station": "A08",
+      "author": 1,
+      "address": "Carrera 52A #51-64",
+      "distance_from_station": "80m",
+      "created_at": "2024-01-11T16:30:00Z"
+    }
+  },
+  {
+    "model": "metroversoApp.pointofinterest",
+    "pk": 6,
+    "fields": {
+      "name": "Mercado Central",
+      "description": "Tradicional mercado de abastos con productos frescos, comida típica y artesanías locales. Abierto todos los días.",
+      "category": "shop",
+      "station": "B06",
+      "author": 1,
+      "address": "Plaza del Mercado #15-20",
+      "distance_from_station": "120m",
+      "created_at": "2024-01-10T08:45:00Z"
+    }
+  },
+  {
+    "model": "metroversoApp.pointofinterest",
+    "pk": 7,
+    "fields": {
+      "name": "Teatro Municipal",
+      "description": "Teatro histórico que presenta obras de teatro, conciertos y eventos culturales. Arquitectura colonial restaurada.",
+      "category": "entertainment",
+      "station": "M05",
+      "author": 1,
+      "address": "Calle 12 #8-45",
+      "distance_from_station": "90m",
+      "created_at": "2024-01-09T15:20:00Z"
+    }
+  },
+  {
+    "model": "metroversoApp.pointofinterest",
+    "pk": 8,
+    "fields": {
+      "name": "Clínica Especializada del Norte",
+      "description": "Centro médico especializado en cirugías y tratamientos ambulatorios. Atención médica de alta calidad.",
+      "category": "hospital",
+      "station": "O10",
+      "author": 1,
+      "address": "Carrera 45 #78-12",
+      "distance_from_station": "180m",
+      "created_at": "2024-01-08T12:00:00Z"
+    }
+  },
+  {
+    "model": "metroversoApp.pointofinterest",
+    "pk": 9,
+    "fields": {
+      "name": "Instituto Tecnológico",
+      "description": "Instituto de educación técnica y tecnológica con programas en ingeniería, sistemas y ciencias aplicadas.",
+      "category": "other",
+      "station": "A11",
+      "author": 1,
+      "address": "Avenida Tecnológica #25-30",
+      "distance_from_station": "75m",
+      "created_at": "2024-01-07T11:30:00Z"
+    }
+  },
+  {
+    "model": "metroversoApp.pointofinterest",
+    "pk": 10,
+    "fields": {
+      "name": "Complejo Deportivo Metropolitano",
+      "description": "Modernas instalaciones deportivas con piscina olímpica, canchas múltiples, gimnasio y pista de atletismo.",
+      "category": "entertainment",
+      "station": "B06",
+      "author": 1,
+      "address": "Calle del Deporte #100-50",
+      "distance_from_station": "250m",
+      "created_at": "2024-01-06T17:15:00Z"
+    }
+  }
+]

@@ -1,0 +1,18 @@
+[
+  {
+    "model": "auth.user",
+    "pk": 1,
+    "fields": {
+      "password": "pbkdf2_sha256$1000000$ykg7Ej67mrjA1CyLCCXkXN$3lgqqw7jtCYjDciIRQHdRerVIPnqHla1ROxKq+vTgN4=",
+      "last_login": "2025-10-02T03:36:20.485881+00:00",
+      "is_superuser": true,
+      "username": "MetroTeam",
+      "first_name": "",
+      "last_name": "",
+      "email": "metroteam@metro.com",
+      "is_staff": true,
+      "is_active": true,
+      "date_joined": "2025-10-02T03:35:35.720540+00:00"
+    }
+  }
+]

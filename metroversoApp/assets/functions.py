@@ -76,9 +76,11 @@ def analyze_route_transfers(route):
         'line_segments': line_segments
     }
 
-def calculeRute(star, destination):
+def calculeRute(star, destination, criteria):
+
     try: 
         print(f"Calculating route from {star} to {destination}")
+        print(criteria)
         
         # Check if nodes exist in the graph
         if star not in G.nodes():
@@ -89,8 +91,8 @@ def calculeRute(star, destination):
             print(f"Error: Destination station {destination} not found in graph")
             return [], 0, {'requires_transfer': False, 'transfer_count': 0, 'transfer_stations': [], 'line_segments': []}, True, None, False, []
         
-        rute = nx.dijkstra_path(G, source=star, target=destination, weight="weight")
-        distance = nx.dijkstra_path_length(G, source=star, target=destination, weight="weight")
+        rute = nx.dijkstra_path(G, source=star, target=destination, weight=criteria)
+        distance = sum(G[u][v].get("time", 0.0) for u, v in zip(rute, rute[1:]))
         
         # Get route coordinates from the coordinates dictionary
         from metroversoApp.assets.stationGraphs import lineaA, linea1, linea2, lineaL, lineaB, lineaT, lineaZ, lineaJ, lineaH, lineaO, lineaP, lineaK

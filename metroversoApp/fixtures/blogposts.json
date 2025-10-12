@@ -1,0 +1,67 @@
+[
+  {
+    "model": "metroversoApp.blogpost",
+    "pk": 1,
+    "fields": {
+      "title": "Nuevas rutas del Metro: Línea Dorada",
+      "content": "El sistema de metro acaba de anunciar la expansión de la Línea Dorada con 5 nuevas estaciones. Esta expansión conectará el centro histórico con la zona universitaria, reduciendo significativamente los tiempos de viaje para estudiantes y trabajadores. Las obras comenzarán el próximo mes y se espera que estén finalizadas para finales del año.",
+      "author": 1,
+      "post_type": "comment",
+      "shared_route": null,
+      "created_at": "2024-01-15T10:30:00Z",
+      "updated_at": "2024-01-15T10:30:00Z"
+    }
+  },
+  {
+    "model": "metroversoApp.blogpost",
+    "pk": 2,
+    "fields": {
+      "title": "Mantenimiento programado Línea Azul",
+      "content": "Informamos a todos los usuarios que la Línea Azul tendrá mantenimiento programado los días 20 y 21 de enero. Durante este período, el servicio será limitado entre las estaciones A05 y A08. Se recomienda usar rutas alternativas a través de las líneas Verde y Roja. Agradecemos su comprensión.",
+      "author": 1,
+      "post_type": "comment",
+      "shared_route": null,
+      "created_at": "2024-01-12T08:15:00Z",
+      "updated_at": "2024-01-12T08:15:00Z"
+    }
+  },
+  {
+    "model": "metroversoApp.blogpost",
+    "pk": 3,
+    "fields": {
+      "title": "Consejos para viajeros frecuentes",
+      "content": "¿Sabías que puedes ahorrar tiempo y dinero optimizando tus rutas diarias? En este post compartimos los mejores consejos para usuarios frecuentes: usa la aplicación para planificar rutas en tiempo real, aprovecha los descuentos por recarga, y conoce las horas de menor congestión. También te contamos sobre los nuevos servicios disponibles en las estaciones.",
+      "author": 1,
+      "post_type": "comment",
+      "shared_route": null,
+      "created_at": "2024-01-10T14:45:00Z",
+      "updated_at": "2024-01-10T14:45:00Z"
+    }
+  },
+  {
+    "model": "metroversoApp.blogpost",
+    "pk": 4,
+    "fields": {
+      "title": "Sostenibilidad en el transporte público",
+      "content": "El metro es una de las formas más ecológicas de transportarse en la ciudad. Cada viaje en metro equivale a reducir las emisiones de CO2 comparado con el uso de vehículos privados. En este artículo exploramos las iniciativas verdes del sistema: energía solar en algunas estaciones, reciclaje de materiales, y programas de educación ambiental para la comunidad.",
+      "author": 1,
+      "post_type": "comment",
+      "shared_route": null,
+      "created_at": "2024-01-08T16:20:00Z",
+      "updated_at": "2024-01-08T16:20:00Z"
+    }
+  },
+  {
+    "model": "metroversoApp.blogpost",
+    "pk": 5,
+    "fields": {
+      "title": "Nuevos servicios en estaciones principales",
+      "content": "Las estaciones principales del sistema ahora cuentan con servicios mejorados para una mejor experiencia de usuario. WiFi gratuito, puntos de carga para dispositivos móviles, tiendas de conveniencia, y espacios de espera climatizados. Conoce qué servicios están disponibles en tu estación favorita y cómo aprovecharlos al máximo.",
+      "author": 1,
+      "post_type": "comment",
+      "shared_route": null,
+      "created_at": "2024-01-05T11:10:00Z",
+      "updated_at": "2024-01-05T11:10:00Z"
+    }
+  }
+]
