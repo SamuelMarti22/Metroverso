@@ -1,6 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import User as DjangoUser
 
+from django.utils import timezone
+from datetime import timedelta
+
 class User(models.Model):
 
     PERFIL_CHOICES = [
@@ -47,6 +50,21 @@ class Route(models.Model):
     price = models.FloatField()
     criterion = models.CharField(max_length=20, choices=CRITERION_CHOICES)
     id_user = models.ForeignKey(User, on_delete=models.CASCADE)
+    start_time = models.DateTimeField(default=timezone.now)
+    end_time = models.DateTimeField(null=True, blank=True)
+    
+    def is_expired(self):
+        """Verifica si la ruta tiene más de un mes"""
+        return timezone.now() - self.start_time > timedelta(days=30)
+    
+    @classmethod
+    def delete_expired_routes(cls):
+        """Elimina rutas con más de un mes de antigüedad"""
+        expiration_date = timezone.now() - timedelta(days=30)
+        expired_routes = cls.objects.filter(start_time__lt=expiration_date)
+        count = expired_routes.count()
+        expired_routes.delete()
+        return count
 
 class Package(models.Model):
     PERFIL_CHOICES = [

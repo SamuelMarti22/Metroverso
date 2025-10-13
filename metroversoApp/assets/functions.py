@@ -85,11 +85,11 @@ def calculeRute(star, destination, criteria):
         # Check if nodes exist in the graph
         if star not in G.nodes():
             print(f"Error: Start station {star} not found in graph")
-            return [], 0, {'requires_transfer': False, 'transfer_count': 0, 'transfer_stations': [], 'line_segments': []}, True, None, False, []
+            return [], 0, {'requires_transfer': False, 'transfer_count': 0, 'transfer_stations': [], 'line_segments': []}, True, None, False, [], []
         
         if destination not in G.nodes():
             print(f"Error: Destination station {destination} not found in graph")
-            return [], 0, {'requires_transfer': False, 'transfer_count': 0, 'transfer_stations': [], 'line_segments': []}, True, None, False, []
+            return [], 0, {'requires_transfer': False, 'transfer_count': 0, 'transfer_stations': [], 'line_segments': []}, True, None, False, [], []
         
         rute = nx.dijkstra_path(G, source=star, target=destination, weight=criteria)
         distance = sum(G[u][v].get("time", 0.0) for u, v in zip(rute, rute[1:]))
@@ -111,10 +111,20 @@ def calculeRute(star, destination, criteria):
         # Analyze transfers
         transfer_info = analyze_route_transfers(rute)
 
+        # Get transfer coordinates
+        transfer_coords = []
+        for station in transfer_info['transfer_stations']:
+            if station in all_coords:
+                transfer_coords.append(all_coords[station])
+            else:
+                print(f"Warning: Transfer station {station} not found in coordinates")
+                transfer_coords.append([0, 0])  # Fallback
+
         print("Rute:", rute)
         print("Distance:", round(distance, 2), "minutes")
         print("Transfer info:", transfer_info)
         print("Rute_coords:", rute_coords)
+        print("Transfer_coords:", transfer_coords)
         
         # Check if the trip can be made according to the schedule
         from metroversoApp.assets.stationGraphs import can_make_trip_now_graph, get_current_service_hours, get_arvi_service_hours
@@ -143,6 +153,7 @@ def calculeRute(star, destination, criteria):
         can_make_trip = False
         service_hours = None
         uses_arvi_station = False
+        transfer_coords = []
     except Exception as e:
         print(f"Error in calculeRute: {e}")
         rute = []
@@ -157,5 +168,6 @@ def calculeRute(star, destination, criteria):
         can_make_trip = False
         service_hours = None
         uses_arvi_station = False
+        transfer_coords = []
 
-    return list(rute), distance, transfer_info, can_make_trip, service_hours, uses_arvi_station, rute_coords
+    return list(rute), distance, transfer_info, can_make_trip, service_hours, uses_arvi_station, rute_coords, transfer_coords

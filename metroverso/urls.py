@@ -11,6 +11,7 @@ urlpatterns = [
     path('view/callRute', metroversoViews.callRute, name='callRute'),
     path('view/getServiceHours', metroversoViews.getServiceHours, name='getServiceHours'),
     path('dashboard/', dashboard, name='dashboard'),
+    path('save-journey/', metroversoViews.save_journey, name='save_journey'),
     
     # URLs de Autenticación
     path('auth/register/', metroversoViews.register_view, name='register'),

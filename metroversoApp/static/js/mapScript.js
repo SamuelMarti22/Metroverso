@@ -32,7 +32,16 @@ const UPDATE_INTERVAL = 1000; // Update interval in milliseconds
 const STATION_UPDATE_THRESHOLD = 10; // Update stations when user moves more than 10 meters
 let linesStations = null;
 
-// Carga el GeoJSON y lo guarda en la global
+// ==================== TRAVEL STORAGE SYSTEM ====================
+
+// Variables to track journey state
+let journeyStartTime = null;
+let journeyStartStation = null;
+let journeyEndStation = null;
+let journeyCriterion = 'tiempo';
+let lastRouteCompletedState = false; // To detect changes
+
+// Load the GeoJSON and store it globally
 async function loadLinesStations() {
   const cfg = window.APP_CONFIG || {};
   if (!cfg.geojsonUrl) {
@@ -702,6 +711,7 @@ const routeFindingFunction = (centerOnRoute = true) => {
       console.log("Ruta:", data.rute);
       console.log("Distancia:", data.distance);
       console.log("Información de transferencias:", data.transfer_info);
+      console.log("Coordenadas de transferencias:", data.transfer_coords);
 
       // Mostrar el botón 'Iniciar Recorrido' solo si la ruta es válida
       const btnStartJourney = document.getElementById("btnStartJourney");
@@ -751,7 +761,11 @@ const routeFindingFunction = (centerOnRoute = true) => {
             return;
           }
           // Si puede realizar el viaje, no mostrar nada
-
+          if(!initializeJourney()){
+            alert()("Error initializing journey.");
+            return;
+          }
+          onStartRouteButtonClick();
           // Mostrar el tiempo estimado en el contenedor
           const estimatedTimeBox = document.getElementById("estimatedTimeBox");
           const estimatedTimeValue =
@@ -768,7 +782,6 @@ const routeFindingFunction = (centerOnRoute = true) => {
       // Display the route on the map
       if (data.rute && data.rute_coords) {
         addNodesRouteToMap(data.rute, data.rute_coords);
-        onStartRouteButtonClick();
       }
 
       // Update service hours display with new data
@@ -2237,6 +2250,9 @@ function onStartRouteButtonClick() {
   createRecenterButton();
   startNavigationMode();
 
+  // Inicializar los datos del viaje para guardarlos al finalizar
+  initializeJourney();
+
 
 
   // const testRoute = [
@@ -2253,7 +2269,6 @@ function onStartRouteButtonClick() {
 
   const testRoute = [
 
-    [-75.55373230475944, 6.329958711908574],
     [-75.55438934140159, 6.319801665881175],
     [-75.55534580389958, 6.316001342229484],
     [-75.55851194186361, 6.299961957796953],
@@ -2397,3 +2412,145 @@ function onRouteCompleted() {
   // Detener simulación si está activa
   stopSimulation();
 }
+
+/**
+ * Initialize the trip by saving the start time and stations
+ */
+function initializeJourney() {
+  const routeData = window.lastRouteData;
+  
+  if (!routeData || !routeData.rute || routeData.rute.length < 2) {
+    console.error('❌ No hay datos de ruta válidos');
+    return false;
+  }
+
+  // Save trip data
+  journeyStartTime = new Date().toISOString();
+  journeyStartStation = routeData.rute[0]; // first station
+  journeyEndStation = routeData.rute[routeData.rute.length - 1]; // last station
+
+  // Get the selected criterion
+  const criterionElement = document.getElementById('inputCriteria');
+  const criterionValue = criterionElement ? criterionElement.value : 'time';
+
+  // Map the criterion value to the DB format
+  const criterionMap = {
+    'time': 'tiempo',
+    'distance_km': 'precio',
+    'transfer': 'tiempo'
+  };
+  journeyCriterion = criterionMap[criterionValue] || 'tiempo';
+
+  console.log('✅ Viaje inicializado:', {
+    startTime: journeyStartTime,
+    startStation: journeyStartStation,
+    endStation: journeyEndStation,
+    criterion: journeyCriterion
+  });
+
+  // Reset monitoring state
+  lastRouteCompletedState = false;
+
+  return true;
+}
+
+/**
+ * Saves the completed journey to the server
+ */
+async function saveCompletedJourney() {
+  if (!journeyStartTime || !journeyStartStation || !journeyEndStation) {
+    console.error('❌ Faltan datos del viaje para guardar');
+    return false;
+  }
+
+  console.log('💾 Guardando viaje completado...');
+
+  try {
+    const response = await fetch('/save-journey/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        start_station: journeyStartStation,
+        end_station: journeyEndStation,
+        start_time: journeyStartTime,
+        criterion: journeyCriterion
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      console.log('✅ Viaje guardado exitosamente:', data);
+      
+      // Show notification to user
+      const alertBox = document.getElementById('alerta-validacion');
+      const alertMessage = document.getElementById('mensaje-alerta');
+      
+      alertMessage.textContent = `🎉 ¡Viaje completado! Duración: ${data.duration_minutes.toFixed(1)} minutos`;
+      alertBox.className = 'alert alert-success alert-dismissible fade show position-absolute top-0 start-50 translate-middle-x mt-3';
+      alertBox.style.display = 'block';
+      
+      setTimeout(() => {
+        alertBox.style.display = 'none';
+      }, 5000);
+
+      // Reset journey variables
+      resetJourneyVariables();
+      
+      return true;
+    } else {
+      console.error('❌ Error al guardar viaje:', data.message);
+      alert('Error al guardar el viaje: ' + data.message);
+      return false;
+    }
+  } catch (error) {
+    console.error('❌ Error en la petición:', error);
+    alert('Error de conexión al guardar el viaje');
+    return false;
+  }
+}
+
+/**
+ * Resets the journey variables after saving
+ */
+function resetJourneyVariables() {
+  journeyStartTime = null;
+  journeyStartStation = null;
+  journeyEndStation = null;
+  journeyCriterion = 'tiempo';
+  routeActive = false;
+  
+  // Hide recenter button
+  if (recenterButton) {
+    recenterButton.style.display = 'none';
+  }
+  
+  console.log('🧹 Variables del viaje limpiadas');
+}
+
+/**
+ * 🔥 MONITOR THAT DETECTS WHEN routeCompleted CHANGES TO TRUE
+ * Runs every 500ms to check the status
+ */
+function monitorRouteCompletion() {
+  // Only monitor if the journey was initialized
+  if (!journeyStartTime) return;
+
+  // Save the trip
+  if (routeCompleted === true && lastRouteCompletedState === false) {
+    console.log(' Detectado: routeCompleted cambió a TRUE');
+    
+    // Save the trip
+    saveCompletedJourney();
+
+    // Update state
+    lastRouteCompletedState = true;
+  }
+}
+
+// 🔄 Start the monitor (runs every 500ms)
+setInterval(monitorRouteCompletion, 500);
+
+console.log('✅ Monitor de finalización de ruta activado');
