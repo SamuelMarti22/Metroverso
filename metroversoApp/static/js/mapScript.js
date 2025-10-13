@@ -768,6 +768,7 @@ const routeFindingFunction = (centerOnRoute = true) => {
       // Display the route on the map
       if (data.rute && data.rute_coords) {
         addNodesRouteToMap(data.rute, data.rute_coords);
+        onStartRouteButtonClick();
       }
 
       // Update service hours display with new data
@@ -1112,21 +1113,19 @@ function addNodesRouteToMap(rute, rute_coords) {
     console.log(fromId, toId, lineFC, startIdx, endIdx);
 
     if (startIdx !== -1 && endIdx !== -1) {
-      // Pinta tramo dentro de la misma línea
+      // ✅ DETECTAR DIRECCIÓN
+      const direction = startIdx <= endIdx ? "forward" : "reverse";
+
       paintLineSegment(lineFC, startIdx, endIdx, sourceId, layerId);
+
       const color = COLOR_BY_LINE?.[fromLineVal] || "#FF0000";
       if (map.getLayer(layerId)) {
         map.setPaintProperty(layerId, "line-color", color);
         map.setPaintProperty(layerId, "line-width", 4);
       }
 
-      registerPaintedSubsegment({
-        linea: fromLineVal,          // p.ej. "C"
-        lineFC,                      // el FeatureCollection de esa línea (ya lo tienes)
-        fromCoord, toCoord,          // coords de rute_coords[i] y rute_coords[i+1]
-        startIdx, endIdx,            // índices que usaste para el pintado
-        sourceId, layerId            // "sub-line-1", "sub-line-layer-1", etc.
-      });
+      // ✅ PASAR DIRECCIÓN AL REGISTRO
+      registerPaintedSegment(sourceId, layerId, startIdx, endIdx, fromLineVal, direction);
       continue;
     }
 
@@ -1191,6 +1190,8 @@ function clearRouteVisualization() {
       map.removeSource(sourceId);
     }
   });
+
+  clearPaintedSegments();
 }
 
 // Handle sidebar active states
@@ -1257,7 +1258,7 @@ const pickStartingPoint = (originPoint, heading = 0) => {
       .setLngLat(originPoint)
       .setRotation?.(heading);
   } else {
-    
+
     markerOrigin = NavMarker({
       fill: "#3b82f6",                 // azul del triángulo
       stroke: "#ffffff",               // borde blanco
@@ -1668,310 +1669,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-// Follow and unfollow user location
-let followingUserLocations = [];
-let markerFollow;
-let isFollowing = false;
-let ROUTE_COMPLETED = false; // ← flag cuando ya no queda nada pintado
-
-/***** CONFIG *****/
-const CUT_MAX_METERS = 5;
-const BBOX_MARGIN_METERS = 5;
-
-/***** ESTADO *****/
-// Lista ordenada de subtramos pintados (de izquierda a derecha: sub-line-1, sub-line-2, ...)
-// Cada descriptor: { sourceId, layerId, linea, featureIdx, startIdx, endIdx, reversed, bbox }
-const ROUTE_DESC = [];
-// Cursor que apunta al PRIMER subtramo aún vigente (optimiza llamadas repetidas)
-let TRIM_CURSOR = 0;
-
-// Cache opcional del tramo activo (reduce reconstrucciones)
-let ACTIVE_CACHE = {
-  idx: -1,          // índice en ROUTE_DESC del tramo cacheado
-  coords: null,     // [[lon,lat], ...] del tramo (sin Z)
-  bbox: null
-};
-
-/***** HELPERS NUMÉRICOS Y GEOM *****/
-function metersToDegLat(m) { return m / 111320; }
-function metersToDegLon(m, latDeg) {
-  const rad = latDeg * Math.PI / 180;
-  const denom = 111320 * Math.max(Math.cos(rad), 1e-6);
-  return m / denom;
-}
-function stripZ(coord) { return Array.isArray(coord) && coord.length >= 2 ? [coord[0], coord[1]] : coord; }
-
-function bboxOfCoords(coords) {
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  for (const c of coords || []) {
-    if (!c) continue;
-    const x = c[0], y = c[1];
-    if (x < minX) minX = x; if (y < minY) minY = y;
-    if (x > maxX) maxX = x; if (y > maxY) maxY = y;
-  }
-  return [minX, minY, maxX, maxY];
-}
-function pointInBBoxWithMargin(coord, bbox, marginMeters = BBOX_MARGIN_METERS) {
-  if (!bbox) return false;
-  const [minX, minY, maxX, maxY] = bbox;
-  const lat = coord[1];
-  const dx = metersToDegLon(marginMeters, lat);
-  const dy = metersToDegLat(marginMeters);
-  return coord[0] >= (minX - dx) && coord[0] <= (maxX + dx)
-    && coord[1] >= (minY - dy) && coord[1] <= (maxY + dy);
-}
-
-function getFeatureForLinea(linea, featureIdx) {
-  const lineFC = getLine(linea);                 // <- tu función existente
-  return lineFC?.features?.[featureIdx] || null; // features ya filtradas por "linea"
-}
-function sliceCoordsFromFeature(feature, startIdx, endIdx, reversed = false) {
-  if (!feature?.geometry) return [];
-  const geom = feature.geometry;
-  let coords = [];
-  if (geom.type === "LineString") {
-    coords = geom.coordinates || [];
-  } else if (geom.type === "MultiLineString") {
-    coords = (geom.coordinates?.[0]) || []; // ajusta si usas otro segmento
-  } else {
-    return [];
-  }
-  const a = Math.min(startIdx, endIdx);
-  const b = Math.max(startIdx, endIdx);
-  const slice = coords.slice(a, b + 1).map(stripZ);
-  return reversed ? slice.slice().reverse() : slice;
-}
-
-function pointToLineDistanceMeters(coord, coordsLine) {
-  if (!coordsLine || coordsLine.length < 2) return Infinity;
-  const ls = turf.lineString(coordsLine);
-  const p = turf.point(coord);
-  return turf.pointToLineDistance(p, ls, { units: "meters" });
-}
-function nearestVertexIndex(coords, target) {
-  let bestIdx = -1, best = Infinity;
-  const p = turf.point(target);
-  for (let i = 0; i < coords.length; i++) {
-    const d = turf.distance(p, turf.point(coords[i]), { units: "meters" });
-    if (d < best) { best = d; bestIdx = i; }
-  }
-  return { idx: bestIdx, distM: best };
-}
-
-/***** CACHE ACTIVO *****/
-function invalidateActiveCache() { ACTIVE_CACHE.idx = -1; ACTIVE_CACHE.coords = null; ACTIVE_CACHE.bbox = null; }
-function warmActiveCache(descIndex) {
-  if (descIndex === ACTIVE_CACHE.idx && ACTIVE_CACHE.coords?.length >= 2) return ACTIVE_CACHE;
-  const d = ROUTE_DESC[descIndex]; if (!d) return null;
-  const feature = getFeatureForLinea(d.linea, d.featureIdx);
-  const coords = sliceCoordsFromFeature(feature, d.startIdx, d.endIdx, d.reversed);
-  const bbox = bboxOfCoords(coords);
-  ACTIVE_CACHE = { idx: descIndex, coords, bbox };
-  // Mantén también el bbox en el descriptor (útil para filtros posteriores)
-  d.bbox = bbox;
-  return ACTIVE_CACHE;
-}
-
-/***** GESTIÓN DE SUBTRAMOS *****/
-function updateSourceWithCoords(sourceId, coords) {
-  const src = map.getSource(sourceId);
-  if (!src || src.type !== "geojson") return false;
-  const feature = {
-    type: "Feature",
-    geometry: { type: "LineString", coordinates: coords },
-    properties: {}
-  };
-  src.setData(feature);
-  return true;
-}
-function removeSegmentByIndex(descIndex) {
-  const d = ROUTE_DESC[descIndex]; if (!d) return;
-  if (map.getLayer(d.layerId)) map.removeLayer(d.layerId);
-  if (map.getSource(d.sourceId)) map.removeSource(d.sourceId);
-  ROUTE_DESC.splice(descIndex, 1);
-  // Ajusta cursor y cache
-  if (descIndex < TRIM_CURSOR) TRIM_CURSOR = Math.max(0, TRIM_CURSOR - 1);
-  if (ACTIVE_CACHE.idx === descIndex) invalidateActiveCache();
-  else if (ACTIVE_CACHE.idx > descIndex) ACTIVE_CACHE.idx -= 1;
-}
-
-/***** REGISTRO DEL SUBTRAMO CUANDO PINtas *****/
-// Llama esto justo después de pintar cada tramo “misma línea”
-function registerPaintedSubsegment({ linea, lineFC, fromCoord, toCoord, startIdx, endIdx, sourceId, layerId }) {
-  // Encuentra en qué feature del lineFC cayeron (usamos la de inicio como referencia)
-  const findIndexAndFeature = (lineFC, target, eps = 1e-6) => {
-    const almostEq = (a, b) => Math.abs(a - b) < eps;
-    const isSame = (c) => c && almostEq(c[0], target[0]) && almostEq(c[1], target[1]);
-    for (let fi = 0; fi < (lineFC.features || []).length; fi++) {
-      const f = lineFC.features[fi]; const g = f?.geometry;
-      if (!g) continue;
-      const segments = (g.type === "LineString") ? [g.coordinates]
-        : (g.type === "MultiLineString" ? g.coordinates : []);
-      for (const coords of segments) {
-        const idx = coords.findIndex(isSame);
-        if (idx !== -1) return { featureIdx: fi, idx };
-      }
-    }
-    return { featureIdx: 0, idx: startIdx }; // fallback razonable
-  };
-
-  const fromFi = findIndexAndFeature(lineFC, fromCoord);
-  const toFi = findIndexAndFeature(lineFC, toCoord);
-
-  let featureIdx = (fromFi.featureIdx != null ? fromFi.featureIdx : 0);
-  let sIdx = (fromFi.idx != null ? fromFi.idx : startIdx);
-  let eIdx = (toFi.idx != null ? toFi.idx : endIdx);
-
-  const reversed = sIdx > eIdx;
-  const preview = sliceCoordsFromFeature(getFeatureForLinea(linea, featureIdx), sIdx, eIdx, reversed);
-  const bbox = bboxOfCoords(preview);
-
-  ROUTE_DESC.push({
-    sourceId, layerId, linea,
-    featureIdx,
-    startIdx: Math.min(sIdx, eIdx),
-    endIdx: Math.max(sIdx, eIdx),
-    reversed,
-    bbox
-  });
-}
-
-function markRouteCompletedIfDone() {
-  if (ROUTE_DESC.length === 0 && !ROUTE_COMPLETED) {
-    ROUTE_COMPLETED = true;
-    console.log("ruta terminada");
-  }
-}
-
-/***** RECORTE DESDE EL INICIO ABSOLUTO (ELIMINANDO LO YA DESPINTADO) *****/
-function trimRouteFromAbsoluteStart(coordCut) {
-  // Primera vez: cambia markerOrigin → markerFollow
-  if (!isFollowing) {
-    if (typeof markerOrigin?.remove === "function") {
-      markerOrigin.remove();
-    } else if (typeof markerOrigin?.removeFrom === "function") {
-      markerOrigin.removeFrom(map);
-    }
-    markerOrigin = null;
-    ensureFollowMarker(/* heading si lo tienes disponible */);
-    isFollowing = true;
-  }
-
-  // Si no hay nada, marca fin y sal
-  if (ROUTE_DESC.length === 0) {
-    markRouteCompletedIfDone();
-    return false;
-  }
-
-  // Asegura cursor en rango
-  TRIM_CURSOR = Math.min(TRIM_CURSOR, ROUTE_DESC.length - 1);
-
-  while (TRIM_CURSOR < ROUTE_DESC.length) {
-    const idx = TRIM_CURSOR;
-    const d   = ROUTE_DESC[idx];
-
-    // --- 1) Filtro bbox: si NO cae, elimina tramo completo y mueve marcador al último punto de ese tramo ---
-    if (!pointInBBoxWithMargin(coordCut, d.bbox, BBOX_MARGIN_METERS)) {
-      const cacheForRemoval = warmActiveCache(idx);
-      if (cacheForRemoval?.coords?.length >= 2) {
-        const lastCoord = cacheForRemoval.coords[cacheForRemoval.coords.length - 1];
-        setFollowMarker(lastCoord);
-      }
-      removeSegmentByIndex(idx);
-      markRouteCompletedIfDone();
-      if (ROUTE_COMPLETED) return true;
-      continue;
-    }
-
-    // --- 2) Prepara cache del tramo activo ---
-    const cache = warmActiveCache(idx);
-    if (!cache || !cache.coords || cache.coords.length < 2) {
-      const cacheForRemoval = warmActiveCache(idx);
-      if (cacheForRemoval?.coords?.length >= 2) {
-        const lastCoord = cacheForRemoval.coords[cacheForRemoval.coords.length - 1];
-        setFollowMarker(lastCoord);
-      }
-      removeSegmentByIndex(idx);
-      markRouteCompletedIfDone();
-      if (ROUTE_COMPLETED) return true;
-      continue;
-    }
-
-    // --- 3) Chequeo preciso de distancia al tramo activo ---
-    const distM = pointToLineDistanceMeters(coordCut, cache.coords);
-    if (distM > CUT_MAX_METERS) {
-      // No cae aquí: elimina tramo completo y mueve marcador al último punto de ese tramo
-      const cacheForRemoval = warmActiveCache(idx);
-      if (cacheForRemoval?.coords?.length >= 2) {
-        const lastCoord = cacheForRemoval.coords[cacheForRemoval.coords.length - 1];
-        setFollowMarker(lastCoord);
-      }
-      removeSegmentByIndex(idx);
-      markRouteCompletedIfDone();
-      if (ROUTE_COMPLETED) return true;
-      continue;
-    }
-
-    // --- 4) Aquí SÍ cae el corte: localizar vértice de corte y mover marcador ---
-    const { idx: localCutIdx } = nearestVertexIndex(cache.coords, coordCut);
-    if (localCutIdx === -1) {
-      // No se pudo localizar vértice de corte: elimina tramo y coloca marcador al último punto
-      const cacheForRemoval = warmActiveCache(idx);
-      if (cacheForRemoval?.coords?.length >= 2) {
-        const lastCoord = cacheForRemoval.coords[cacheForRemoval.coords.length - 1];
-        setFollowMarker(lastCoord);
-      }
-      removeSegmentByIndex(idx);
-      markRouteCompletedIfDone();
-      if (ROUTE_COMPLETED) return true;
-      continue;
-    }
-
-    // Mueve el marcador EXACTAMENTE al punto de corte
-    const cutCoord = cache.coords[localCutIdx];
-    setFollowMarker(cutCoord);
-
-    // Traducir índice local a índice absoluto de la feature original
-    const d0 = ROUTE_DESC[idx];
-    const newStartAbs = d0.reversed
-      ? (d0.endIdx - localCutIdx)
-      : (d0.startIdx + localCutIdx);
-
-    // --- 5) ¿Consumimos todo el tramo activo? Elimínalo ---
-    if (newStartAbs >= d0.endIdx) {
-      removeSegmentByIndex(idx);
-      markRouteCompletedIfDone();
-      return true; // deja cursor apuntando al siguiente tramo para la próxima llamada
-    }
-
-    // --- 6) Reconstruir nuevo slice (normalizado) y actualizar ---
-    const feature = getFeatureForLinea(d0.linea, d0.featureIdx);
-    const newSlice = sliceCoordsFromFeature(feature, newStartAbs, d0.endIdx, false);
-    if (newSlice.length < 2) {
-      removeSegmentByIndex(idx);
-      markRouteCompletedIfDone();
-      return true;
-    }
-
-    // Actualiza source y descriptor
-    updateSourceWithCoords(d0.sourceId, newSlice);
-    d0.startIdx = newStartAbs;
-    d0.reversed = false;
-    d0.bbox     = bboxOfCoords(newSlice);
-
-    // Refresca cache activo
-    ACTIVE_CACHE = { idx, coords: newSlice, bbox: d0.bbox };
-
-    // Hecho: recortamos el tramo actual; cursor permanece en el mismo idx
-    return true;
-  }
-
-  // Por si salimos del while sin acciones adicionales
-  markRouteCompletedIfDone();
-  return true;
-}
-
-
 function createNavMarkerEl({
   halo = "rgba(0,128,255,.18)",
   fill = "#06b6d4",         // cian
@@ -2018,23 +1715,684 @@ function NavMarker({
   return marker;
 }
 
-function ensureFollowMarker(heading = 0) {
-  if (!markerFollow) {
-    // crea el marcador de seguimiento, pero NO lo agregues aún hasta que tengas coordenada
-    markerFollow = NavMarker({
-      fill: "#3b82f6",
+// Funcione macro para despintar
+
+// Registro de segmentos pintados
+let paintedSegments = [];
+let routeCompleted = false;
+
+function registerPaintedSegment(sourceId, layerId, startIndex, endIndex, lineId, direction) {
+  paintedSegments.push({
+    sourceId: sourceId,
+    layerId: layerId,
+    startIndex: startIndex,
+    endIndex: endIndex,
+    lineId: lineId,
+    direction: direction,  // ← NUEVO
+    isActive: true
+  });
+
+  console.log(`✓ Segmento registrado: ${sourceId} (línea ${lineId}) [${direction}]`, paintedSegments.length, 'segmentos totales');
+}
+
+// Obtiene las coordenadas de un segmento desde el source de Mapbox
+
+function getSegmentCoordinates(segment) {
+  const source = map.getSource(segment.sourceId);
+  if (!source) {
+    console.warn(`Source ${segment.sourceId} no encontrado`);
+    return null;
+  }
+
+  const data = source._data;
+  if (!data || !data.geometry || !data.geometry.coordinates) {
+    console.warn(`Datos inválidos en source ${segment.sourceId}`);
+    return null;
+  }
+
+  return data.geometry.coordinates;
+}
+
+function clearPaintedSegments() {
+  paintedSegments = [];
+  console.log('✓ Registro de segmentos limpiado');
+}
+
+function getDistanceInMeters(coord1, coord2) {
+  const R = 6371e3; // Radio de la Tierra en metros
+  const lat1 = coord1[1] * Math.PI / 180;
+  const lat2 = coord2[1] * Math.PI / 180;
+  const deltaLat = (coord2[1] - coord1[1]) * Math.PI / 180;
+  const deltaLng = (coord2[0] - coord1[0]) * Math.PI / 180;
+
+  const a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+    Math.cos(lat1) * Math.cos(lat2) *
+    Math.sin(deltaLng / 2) * Math.sin(deltaLng / 2);
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return R * c;
+}
+
+/**
+ * Encuentra el punto más cercano proyectado sobre los segmentos de la línea
+ * @param {Array} userCoord - [lng, lat] del usuario
+ * @param {Array} segmentCoords - Array de coordenadas del segmento
+ * @returns {Object|null} { index, distance, coordinate, interpolationFactor }
+ */
+function findClosestPointInSegment(userCoord, segmentCoords) {
+  if (!segmentCoords || segmentCoords.length < 2) {
+    return null;
+  }
+
+  let closestIndex = 0;
+  let minDistance = Infinity;
+  let closestCoord = segmentCoords[0];
+  let interpolationFactor = 0; // 0-1, posición dentro del segmento [index, index+1]
+
+  // Iterar sobre cada segmento de línea (par de puntos consecutivos)
+  for (let i = 0; i < segmentCoords.length - 1; i++) {
+    const segmentStart = segmentCoords[i];
+    const segmentEnd = segmentCoords[i + 1];
+
+    const projection = projectPointOnSegment(userCoord, segmentStart, segmentEnd);
+
+    if (projection.distance < minDistance) {
+      minDistance = projection.distance;
+      closestIndex = i;
+      closestCoord = projection.coordinate;
+      interpolationFactor = projection.t;
+    }
+  }
+
+  // También verificar el último punto (por si acaso)
+  const lastPoint = segmentCoords[segmentCoords.length - 1];
+  const lastDistance = getDistanceInMeters(userCoord, lastPoint);
+  if (lastDistance < minDistance) {
+    minDistance = lastDistance;
+    closestIndex = segmentCoords.length - 1;
+    closestCoord = lastPoint;
+    interpolationFactor = 0;
+  }
+
+  return {
+    index: closestIndex,
+    distance: minDistance,
+    coordinate: closestCoord,
+    interpolationFactor: interpolationFactor  // NUEVO: para saber posición exacta
+  };
+}
+
+function findUserPositionInRoute(userCoord) {
+  let bestMatch = null;
+  let minDistance = Infinity;
+
+  for (let i = 0; i < paintedSegments.length; i++) {
+    const segment = paintedSegments[i];
+
+    if (!segment.isActive) continue;
+
+    // Verificar que el source existe antes de intentar leer
+    if (!map.getSource(segment.sourceId)) {
+      console.warn(`⚠️ Source ${segment.sourceId} no existe, marcando como inactivo`);
+      segment.isActive = false;
+      continue;
+    }
+
+    const coords = getSegmentCoordinates(segment);
+    if (!coords) continue;
+
+    const closestPoint = findClosestPointInSegment(userCoord, coords);
+
+    if (closestPoint && closestPoint.distance < minDistance) {
+      minDistance = closestPoint.distance;
+      bestMatch = {
+        segmentIndex: i,
+        closestPoint: closestPoint,
+        segment: segment
+      };
+    }
+  }
+
+  if (bestMatch) {
+    console.log(`✓ Usuario en segmento ${bestMatch.segmentIndex}, distancia: ${bestMatch.closestPoint.distance.toFixed(2)}m`);
+  }
+
+  return bestMatch;
+}
+
+// Variable global para el marcador de seguimiento
+let userFollowMarker = null;
+let navigationMode = false;
+let routeActive = false;
+let recenterButton = null;
+
+/**
+ * Calcula el ángulo/rumbo entre dos coordenadas
+ * @param {Array} coord1 - [lng, lat] punto inicial
+ * @param {Array} coord2 - [lng, lat] punto final
+ * @returns {number} Ángulo en grados (0° = Norte, 90° = Este, etc.)
+ */
+function calculateBearing(coord1, coord2) {
+  const lon1 = coord1[0] * Math.PI / 180;
+  const lon2 = coord2[0] * Math.PI / 180;
+  const lat1 = coord1[1] * Math.PI / 180;
+  const lat2 = coord2[1] * Math.PI / 180;
+
+  const y = Math.sin(lon2 - lon1) * Math.cos(lat2);
+  const x = Math.cos(lat1) * Math.sin(lat2) -
+    Math.sin(lat1) * Math.cos(lat2) * Math.cos(lon2 - lon1);
+
+  const bearing = Math.atan2(y, x) * 180 / Math.PI;
+
+  return (bearing + 360) % 360;
+}
+
+/**
+ * Calcula el heading hacia donde debe apuntar el marcador
+ * @param {Object} position - Objeto retornado por findUserPositionInRoute
+ * @returns {number|null} Heading en grados o null si no se puede calcular
+ */
+function calculateMarkerHeading(position) {
+  const coords = getSegmentCoordinates(position.segment);
+  if (!coords) return null;
+
+  const currentIndex = position.closestPoint.index;
+
+  // Si no hay punto siguiente en este segmento, buscar en el siguiente segmento
+  if (currentIndex >= coords.length - 1) {
+    // Buscar el siguiente segmento activo
+    const nextSegment = paintedSegments.find((seg, idx) =>
+      idx > position.segmentIndex && seg.isActive
+    );
+
+    if (nextSegment) {
+      const nextCoords = getSegmentCoordinates(nextSegment);
+      if (nextCoords && nextCoords.length > 0) {
+        return calculateBearing(coords[currentIndex], nextCoords[0]);
+      }
+    }
+
+    // Si no hay siguiente segmento, usar el último tramo de este segmento
+    if (coords.length >= 2) {
+      return calculateBearing(coords[coords.length - 2], coords[coords.length - 1]);
+    }
+
+    return null;
+  }
+
+  // Calcular heading hacia el siguiente punto en el mismo segmento
+  return calculateBearing(coords[currentIndex], coords[currentIndex + 1]);
+}
+
+/**
+ * Actualiza o crea el marcador de seguimiento del usuario
+ * @param {Array} coordinate - [lng, lat] donde posicionar el marcador
+ * @param {number} heading - Ángulo en grados hacia donde debe apuntar
+ */
+function updateUserFollowMarker(coordinate, heading = 0) {
+  if (!userFollowMarker) {
+    // Crear el marcador por primera vez SIN rotación
+    userFollowMarker = NavMarker({
+      fill: "#06b6d4",
       stroke: "#ffffff",
-      halo: "rgba(59,130,246,.18)",
+      halo: "rgba(0,128,255,.18)",
       size: 36,
-      heading
+      heading: 0  // Siempre 0, sin rotación
     });
+    userFollowMarker.setLngLat(coordinate).addTo(map);
+    console.log('✓ Marcador de seguimiento creado (sin rotación)');
+  } else {
+    // Actualizar posición pero NO rotación
+    userFollowMarker.setLngLat(coordinate);
+    // userFollowMarker.setRotation(heading); // COMENTADO
+    console.log('✓ Marcador actualizado (sin rotación)');
   }
 }
 
-function setFollowMarker(lngLat) {
-  if (!lngLat) return;
-  ensureFollowMarker();
-  markerFollow.setLngLat(lngLat);
-  // si tu NavMarker requiere addTo explícito:
-  markerFollow.addTo?.(map);
+function unpaintCompletedSegments(upToSegmentIndex, upToPointIndex, interpolationFactor = 0) {
+  let segmentsRemoved = 0;
+
+  // Eliminar todos los segmentos anteriores completamente
+  for (let i = 0; i < upToSegmentIndex; i++) {
+    const segment = paintedSegments[i];
+
+    if (!segment.isActive) continue;
+
+    // Remover del mapa
+    if (map.getLayer(segment.layerId)) {
+      map.removeLayer(segment.layerId);
+    }
+    if (map.getSource(segment.sourceId)) {
+      map.removeSource(segment.sourceId);
+    }
+
+    segment.isActive = false;
+    segmentsRemoved++;
+    console.log(`✓ Segmento ${i} eliminado completamente (${segment.sourceId})`);
+  }
+
+  // Actualizar el segmento actual (donde está el usuario)
+  if (upToSegmentIndex < paintedSegments.length) {
+    const currentSegment = paintedSegments[upToSegmentIndex];
+
+    if (currentSegment.isActive) {
+      const coords = getSegmentCoordinates(currentSegment);
+
+      if (!coords) {
+        console.warn(`No se pudieron obtener coordenadas del segmento ${upToSegmentIndex}`);
+        return segmentsRemoved;
+      }
+
+      const isReverse = currentSegment.direction === "reverse";
+
+      // Ajustar el índice según la interpolación
+      // Si interpolationFactor > 0.5, consideramos que ya pasó ese punto
+      const effectiveIndex = interpolationFactor > 0.5 ? upToPointIndex + 1 : upToPointIndex;
+
+      console.log(`Segmento actual: ${upToSegmentIndex}, punto: ${upToPointIndex}/${coords.length}, interpolación: ${interpolationFactor.toFixed(2)}, efectivo: ${effectiveIndex}, dirección: ${isReverse ? 'REVERSA' : 'FORWARD'}`);
+
+      if (isReverse) {
+        // ===== LÓGICA INVERSA =====
+
+        if (effectiveIndex >= coords.length - 1) {
+          // Eliminar segmento completo
+          if (map.getLayer(currentSegment.layerId)) {
+            map.removeLayer(currentSegment.layerId);
+          }
+          if (map.getSource(currentSegment.sourceId)) {
+            map.removeSource(currentSegment.sourceId);
+          }
+          currentSegment.isActive = false;
+          segmentsRemoved++;
+          console.log(`✓ Segmento ${upToSegmentIndex} eliminado (REVERSA - usuario en punto final)`);
+        }
+        else if (effectiveIndex < coords.length - 1) {
+          const remainingCoords = coords.slice(0, effectiveIndex + 1);
+
+          if (remainingCoords.length >= 2) {
+            const source = map.getSource(currentSegment.sourceId);
+            if (source) {
+              source.setData({
+                type: "Feature",
+                geometry: {
+                  type: "LineString",
+                  coordinates: remainingCoords
+                },
+                properties: {}
+              });
+              console.log(`✓ Segmento ${upToSegmentIndex} recortado (REVERSA): de ${coords.length} a ${remainingCoords.length} puntos`);
+            }
+          } else {
+            // Eliminar si quedan muy pocos puntos
+            if (map.getLayer(currentSegment.layerId)) {
+              map.removeLayer(currentSegment.layerId);
+            }
+            if (map.getSource(currentSegment.sourceId)) {
+              map.removeSource(currentSegment.sourceId);
+            }
+            currentSegment.isActive = false;
+            segmentsRemoved++;
+            console.log(`✓ Segmento ${upToSegmentIndex} eliminado (REVERSA - quedaban muy pocos puntos)`);
+          }
+        }
+
+      } else {
+        // ===== LÓGICA NORMAL =====
+
+        if (effectiveIndex === 0) {
+          // Eliminar segmento completo
+          if (map.getLayer(currentSegment.layerId)) {
+            map.removeLayer(currentSegment.layerId);
+          }
+          if (map.getSource(currentSegment.sourceId)) {
+            map.removeSource(currentSegment.sourceId);
+          }
+          currentSegment.isActive = false;
+          segmentsRemoved++;
+          console.log(`✓ Segmento ${upToSegmentIndex} eliminado (FORWARD - usuario en punto inicial)`);
+        }
+        else if (effectiveIndex > 0) {
+          const remainingCoords = coords.slice(effectiveIndex);
+
+          if (remainingCoords.length >= 2) {
+            const source = map.getSource(currentSegment.sourceId);
+            if (source) {
+              source.setData({
+                type: "Feature",
+                geometry: {
+                  type: "LineString",
+                  coordinates: remainingCoords
+                },
+                properties: {}
+              });
+              console.log(`✓ Segmento ${upToSegmentIndex} recortado (FORWARD): de ${coords.length} a ${remainingCoords.length} puntos`);
+            }
+          } else {
+            // Eliminar si quedan muy pocos puntos
+            if (map.getLayer(currentSegment.layerId)) {
+              map.removeLayer(currentSegment.layerId);
+            }
+            if (map.getSource(currentSegment.sourceId)) {
+              map.removeSource(currentSegment.sourceId);
+            }
+            currentSegment.isActive = false;
+            segmentsRemoved++;
+            console.log(`✓ Segmento ${upToSegmentIndex} eliminado (FORWARD - quedaban muy pocos puntos)`);
+          }
+        }
+      }
+    }
+  }
+
+  return segmentsRemoved;
+}
+
+function updateUserProgress(userGPSCoord, markerOrigin = null) {
+  // Eliminar marcador de origen si existe y aún no se ha eliminado
+  if (markerOrigin && map.hasImage && markerOrigin.remove) {
+    markerOrigin.remove();
+    console.log('✓ Marcador de origen eliminado');
+  }
+
+  // Encontrar posición del usuario en la ruta
+  const position = findUserPositionInRoute(userGPSCoord);
+
+  if (!position) {
+    console.warn('⚠️ Usuario no encontrado cerca de la ruta');
+    return;
+  }
+
+  // Calcular hacia dónde debe apuntar el marcador
+  const heading = calculateMarkerHeading(position);
+
+  // Actualizar/crear marcador de seguimiento
+  updateUserFollowMarker(position.closestPoint.coordinate, heading || 0);
+
+  // ✅ APLICAR MODO NAVEGACIÓN SI ESTÁ ACTIVADO
+  if (navigationMode) {
+    map.easeTo({
+      center: position.closestPoint.coordinate,
+      zoom: 17, // ← Ajusta entre 17-19 según prefieras
+      bearing: heading || 0,
+      pitch: 45, // ← Ajusta entre 0-60 según prefieras
+      duration: 800,
+      essential: true
+    });
+  }
+
+  // Despintar segmentos completados
+  const removed = unpaintCompletedSegments(
+    position.segmentIndex,
+    position.closestPoint.index
+  );
+
+  console.log(`📍 Progreso actualizado: ${removed} segmentos eliminados, distancia a ruta: ${position.closestPoint.distance.toFixed(2)}m`);
+
+  if (checkRouteCompletion()) {
+    onRouteCompleted();
+  }
+}
+
+/**
+ * Proyecta un punto sobre un segmento de línea y devuelve el punto más cercano
+ * @param {Array} point - [lng, lat] punto a proyectar
+ * @param {Array} segmentStart - [lng, lat] inicio del segmento
+ * @param {Array} segmentEnd - [lng, lat] fin del segmento
+ * @returns {Object} { coordinate: [lng, lat], distance: number, t: number }
+ */
+function projectPointOnSegment(point, segmentStart, segmentEnd) {
+  const [px, py] = point;
+  const [ax, ay] = segmentStart;
+  const [bx, by] = segmentEnd;
+
+  // Vector del segmento AB
+  const abx = bx - ax;
+  const aby = by - ay;
+
+  // Vector de A al punto P
+  const apx = px - ax;
+  const apy = py - ay;
+
+  // Magnitud cuadrada del segmento
+  const abSquared = abx * abx + aby * aby;
+
+  // Evitar división por cero (segmento degenerado)
+  if (abSquared === 0) {
+    return {
+      coordinate: segmentStart,
+      distance: getDistanceInMeters(point, segmentStart),
+      t: 0
+    };
+  }
+
+  // Proyección escalar de AP sobre AB (normalizada de 0 a 1)
+  let t = (apx * abx + apy * aby) / abSquared;
+
+  // Clamping: limitar t al rango [0, 1] para mantenerlo dentro del segmento
+  t = Math.max(0, Math.min(1, t));
+
+  // Punto proyectado sobre el segmento
+  const projectedX = ax + t * abx;
+  const projectedY = ay + t * aby;
+  const projectedCoord = [projectedX, projectedY];
+
+  return {
+    coordinate: projectedCoord,
+    distance: getDistanceInMeters(point, projectedCoord),
+    t: t  // 0 = inicio del segmento, 1 = final del segmento
+  };
+}
+
+/**
+ * Activa el modo navegación (seguimiento GPS con cámara)
+ */
+function startNavigationMode() {
+  navigationMode = true;
+  hideRecenterButton(); // Ocultar botón cuando está en navegación
+  console.log('🧭 Modo navegación activado');
+}
+
+function stopNavigationMode() {
+  navigationMode = false;
+
+  // Solo mostrar el botón si la ruta sigue activa
+  if (routeActive) {
+    showRecenterButton();
+  }
+
+  console.log('🧭 Modo navegación desactivado');
+
+  // Restablecer pitch y bearing suavemente
+  map.easeTo({
+    pitch: 0,
+    bearing: 0,
+    duration: 800
+  });
+}
+
+// Desactivar modo navegación si el usuario toca/arrastra el mapa
+map.on('dragstart', () => {
+  if (navigationMode) {
+    stopNavigationMode(); // Usar stopNavigationMode en lugar de solo cambiar la variable
+    console.log('🧭 Modo navegación pausado - usuario arrastró el mapa');
+  }
+});
+
+// Opcional: también con zoom manual
+map.on('zoomstart', (e) => {
+  if (!e.originalEvent) return; // Ignorar zooms programáticos
+
+  if (navigationMode) {
+    stopNavigationMode();
+    console.log('🧭 Modo navegación pausado - usuario hizo zoom manual');
+  }
+});
+
+function onStartRouteButtonClick() {
+  routeCompleted = false;
+
+  // Marcar ruta como activa
+  routeActive = true;
+  createRecenterButton();
+  startNavigationMode();
+
+
+
+  // const testRoute = [
+  //   // [-75.61420338, 6.281093175],  // Punto 1
+  //   [-75.61401716, 6.275360769],  // Punto 2
+  //   [-75.61370257, 6.26567653],  // Punto 3
+  //   [-75.6136642, 6.256780931],  // Punto 4 
+  //   [-75.6136642, 6.256780931], // Punto 5
+  //   [-75.6136642, 6.256780931], // Punto 5
+  //   [-75.60374625, 6.25808821],
+  //   [-75.5977437, 6.258709043],
+  // ];
+
+
+  const testRoute = [
+
+    [-75.55373230475944, 6.329958711908574],
+    [-75.55534580389958, 6.316001342229484],
+    [-75.55851194186361, 6.299961957796953],
+    [-75.56470061709405, 6.290310300270889],
+    [-75.56938422818597, 6.278324369727542],
+    [-75.5657915298572, 6.269405972933399],
+    [-75.56327830924161, 6.2640097938723756],
+  ];
+
+  // Iniciar simulación (cada 2 segundos por defecto)
+  simulateUserMovement(testRoute, 3000, 2000);
+
+  console.log('🚀 Ruta iniciada con simulación');
+}
+function createRecenterButton() {
+  if (recenterButton) return; // Ya existe
+
+  const button = document.createElement('button');
+  button.innerHTML = '🧭'; // o '📍' o un SVG
+  button.className = 'recenter-button';
+  button.title = 'Volver a modo navegación';
+  button.style.cssText = `
+    position: absolute;
+    bottom: 100px;
+    right: 10px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid #06b6d4;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    z-index: 1000;
+    display: none; /* Inicialmente oculto */
+    transition: all 0.3s ease;
+  `;
+
+  button.onclick = () => {
+    startNavigationMode();
+  };
+
+  document.body.appendChild(button);
+  recenterButton = button;
+
+  console.log('✓ Botón de recentrar creado');
+}
+
+function showRecenterButton() {
+  if (recenterButton) {
+    recenterButton.style.display = 'block';
+    console.log('👁️ Botón de recentrar visible');
+  }
+}
+
+function hideRecenterButton() {
+  if (recenterButton) {
+    recenterButton.style.display = 'none';
+    console.log('🙈 Botón de recentrar oculto');
+  }
+}
+
+
+// Variable global para el simulador
+let simulationInterval = null;
+let simulationIndex = 0;
+
+/**
+ * Simula el recorrido del usuario usando un array de coordenadas
+ * @param {Array} coordsArray - Array de coordenadas [[lng, lat], [lng, lat], ...]
+ * @param {number} intervalMs - Tiempo entre cada actualización en milisegundos (default: 2000ms = 2seg)
+ */
+function simulateUserMovement(coordsArray, intervalMs = 2000, initialDelay = 3000) {
+  if (simulationInterval) {
+    clearInterval(simulationInterval);
+    simulationInterval = null;
+  }
+
+  simulationIndex = 0;
+  console.log(`⏳ La simulación comenzará en ${initialDelay / 1000} segundos...`);
+
+  // ✅ DELAY ANTES DE EMPEZAR
+  setTimeout(() => {
+    console.log(`🎮 Iniciando simulación con ${coordsArray.length} puntos`);
+
+    // Primera coordenada
+    if (coordsArray.length > 0) {
+      updateUserProgress(coordsArray[0]);
+    }
+
+    // Resto de coordenadas
+    simulationInterval = setInterval(() => {
+      simulationIndex++;
+
+      if (simulationIndex >= coordsArray.length) {
+        console.log('✓ Simulación completada');
+        clearInterval(simulationInterval);
+        simulationInterval = null;
+        return;
+      }
+
+      const currentCoord = coordsArray[simulationIndex];
+      console.log(`📍 Simulación paso ${simulationIndex}/${coordsArray.length}`);
+
+      updateUserProgress(currentCoord);
+    }, intervalMs);
+
+  }, initialDelay);
+}
+
+/**
+ * Detiene la simulación en curso
+ */
+function stopSimulation() {
+  if (simulationInterval) {
+    clearInterval(simulationInterval);
+    simulationInterval = null;
+    console.log('⏹️ Simulación detenida');
+  }
+}
+
+function checkRouteCompletion() {
+  // Contar segmentos activos
+  const activeSegments = paintedSegments.filter(seg => seg.isActive);
+
+  // Si no quedan segmentos activos y había segmentos registrados
+  if (activeSegments.length === 0 && paintedSegments.length > 0) {
+    return true;
+  }
+
+  return false;
+}
+
+function onRouteCompleted() {
+  if (routeCompleted) return; // Evitar ejecutar múltiples veces
+
+  routeCompleted = true;
+
+  console.log('🎉 RUTA TERMINADA');
+
+  // Detener simulación si está activa
+  stopSimulation();
 }
