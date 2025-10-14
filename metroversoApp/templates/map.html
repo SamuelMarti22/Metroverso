@@ -233,16 +233,6 @@
         </svg>
       </div>
 
-      <!-- Idiomas icon -->
-      <div
-        class="subCategory d-flex justify-content-center align-items-center"
-        type="button"
-        data-bs-toggle="offcanvas"
-        data-bs-target="#offcanvasLanguages"
-        aria-controls="offcanvasLanguages"
-        title="Idiomas"
-      ></div>
-
       <div class="profileIcon d-flex justify-content-center align-items-center">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -699,7 +689,8 @@
       </div>
     </div>
 
-    <div id="estimatedTimeBox">
+  <div class="estimated-info-container">
+  <div id="estimatedTimeBox">
       <div style="font-size: 1rem; font-weight: 400">
         {% trans "Estimated Time" %}
       </div>
@@ -724,9 +715,9 @@
           <polyline points="12 6 12 12 16 14" />
         </svg>
       </div>
-    </div>
+  </div>
 
-    <div id="estimatedPriceBox">
+  <div id="estimatedPriceBox">
   <div style="font-size: 1rem; font-weight: 400">
     {% trans "Estimated Price" %}
   </div>
@@ -738,7 +729,8 @@
   </div>
   <div style="position: absolute; right: 24px; top: 16px">
   </div>
-</div>
+  </div>
+  </div>
 
     <script src="{% static 'js/mapScript.js' %}"></script>
     <script src="{% static 'js/dictionary.js' %}"></script>

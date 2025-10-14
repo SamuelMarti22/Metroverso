@@ -225,6 +225,12 @@ const setInRoute = (value) => {
   document.getElementById("estimatedTimeBox").style.display = value
     ? "block"
     : "none";
+  // Hide closest stations box while in route mode to avoid UI conflicts
+  try {
+    setClosestStationsBoxVisible(!value);
+  } catch (e) {
+    console.warn('[setInRoute] could not toggle closestStationsBox:', e.message);
+  }
 };
 
 // Function to get walking route
@@ -301,13 +307,12 @@ function walkingRouteToOrigin() {
             return;
           }
 
-          // asegurar que sea visible y fijo
+          // asegurar que sea visible; dejar la posicionamiento a CSS (.estimated-info-container)
           const cs = window.getComputedStyle(estimatedTimeBox);
-          if (cs.position === "static" || !cs.position) {
-            estimatedTimeBox.style.position = "fixed";
-          }
-          estimatedTimeBox.style.zIndex =
-            estimatedTimeBox.style.zIndex || "1060";
+          // No forzamos 'fixed' aquí porque el contenedor `.estimated-info-container`
+          // maneja el anclaje en la esquina superior derecha. Si el estilo computado
+          // es 'static' el CSS debería actualizarse en lugar de forzar inline styles.
+          estimatedTimeBox.style.zIndex = estimatedTimeBox.style.zIndex || "1060";
 
           // función para actualizar el valor mostrado (acepta segundos)
           function setEstimatedFromSeconds(sec) {
