@@ -1062,58 +1062,70 @@ function paintLineSegment(
 }
 
 function showLines(selectedLines) {
-  setInRoute(false); // Set inRoute to false
-  if (map.getSource("lineasCompletas")) {
-    map.getSource("lineasCompletas").setData(selectedLines);
-    return;
-  }
-  map.addSource("lineasCompletas", {
-    type: "geojson",
-    data: selectedLines,
-  });
-  map.addLayer({
-    id: "lineas-layer",
-    type: "line",
-    source: "lineasCompletas",
-    layout: {
-      "line-join": "round",
-      "line-cap": "round",
-    },
-    paint: {
-      "line-color": [
+  setInRoute(false);
 
-        "match",
-        ["get", "linea"],
-        "A",
-        "#005d9a",
-        "B",
-        "#e88530",
-        "O",
-        "#e3807b",
-        "Z",
-        "#e0007a",
-        "2",
-        "#66a7ab",
-        "1",
-        "#017077",
-        "K",
-        "#bacc44",
-        "P",
-        "#e10521",
-        "L",
-        "#8b622a",
-        "J",
-        "#f5c439",
-        "H",
-        "#6a206b",
-        "T",
-        "#008f37",
-        /* default */
-        "#000000",
-      ],
-      "line-width": 3,
-    },
-  });
+  const bbox = (window.turf && window.turf.bbox) || null;
+  const center = (window.turf && window.turf.center) || null;
+
+  const sourceId = "lineasCompletas";
+  const layerId  = "lineas-layer";
+
+  // 1) Crear/actualizar source + layer
+  if (map.getSource(sourceId)) {
+    map.getSource(sourceId).setData(selectedLines);
+  } else {
+    map.addSource(sourceId, { type: "geojson", data: selectedLines });
+    map.addLayer({
+      id: layerId,
+      type: "line",
+      source: sourceId,
+      layout: { "line-join": "round", "line-cap": "round" },
+      paint: {
+        "line-color": [
+          "match", ["get", "linea"],
+          "A", "#005d9a",
+          "B", "#e88530",
+          "O", "#e3807b",
+          "Z", "#e0007a",
+          "2", "#66a7ab",
+          "1", "#017077",
+          "K", "#bacc44",
+          "P", "#e10521",
+          "L", "#8b622a",
+          "J", "#f5c439",
+          "H", "#6a206b",
+          "T", "#008f37",
+          /* default */ "#000000",
+        ],
+        "line-width": 3,
+      },
+    });
+  }
+
+  // 2) Ajustar la vista al contenido (zoom out)
+  try {
+    if (!bbox) throw new Error("turf.bbox no disponible");
+    const [minX, minY, maxX, maxY] = bbox(selectedLines);
+
+    // Si hay un rectángulo válido, ajusta bounds
+    if (
+      Number.isFinite(minX) && Number.isFinite(minY) &&
+      Number.isFinite(maxX) && Number.isFinite(maxY) &&
+      (minX !== maxX || minY !== maxY)
+    ) {
+      map.fitBounds([[minX, minY], [maxX, maxY]], {
+        padding: 80,              // o {top:40,right:40,bottom:40,left:300} si tienes sidebar
+        duration: 800,
+        maxZoom: 14               // evita acercarte demasiado
+      });
+    } else if (center) {
+      // Fallback: si es un punto o bbox degenerado
+      const c = center(selectedLines).geometry.coordinates;
+      map.flyTo({ center: c, zoom: 12, duration: 600 });
+    }
+  } catch (e) {
+    console.warn("No pude ajustar bounds:", e);
+  }
 }
 
 document.getElementById("btnShowLines").addEventListener("click", () => {
