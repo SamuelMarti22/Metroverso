@@ -662,9 +662,6 @@
                 <span class="badge bg-success bg-opacity-10 text-success">
                   {{ user_data.metro_profile.perfil }}
                 </span>
-                <span class="badge bg-info bg-opacity-10 text-info">
-                  {{ user_data.metro_profile.lenguaje }}
-                </span>
               </div>
             {% endif %}
           </div>
@@ -697,13 +694,6 @@
                   <option value="AdultoMayor">Adulto Mayor</option>
                   <option value="Estudiantil">Estudiantil</option>
                   <option value="PcD">PcD</option>
-                </select>
-              </div>
-              <div class="mb-3">
-                <label for="profileLenguaje" class="form-label small">Idioma preferido</label>
-                <select class="form-select form-select-sm" id="profileLenguaje" name="lenguaje">
-                  <option value="Español">Español</option>
-                  <option value="Ingles">Inglés</option>
                 </select>
               </div>
               <div class="d-grid gap-2">
@@ -1023,7 +1013,6 @@
             if (data.metro_profile) {
               document.getElementById('profileName').value = data.metro_profile.name || '';
               document.getElementById('profilePerfil').value = data.metro_profile.perfil || 'Frecuente';
-              document.getElementById('profileLenguaje').value = data.metro_profile.lenguaje || 'Español';
             }
           })
           .catch(error => {
