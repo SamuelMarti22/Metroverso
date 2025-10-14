@@ -306,7 +306,7 @@ def save_journey(request):
             start_time = timezone.now()
         
         # Calcular el precio usando la función existente
-        rute, distance, transfer_info, _, _, _, _, _ = functions.calculeRute(
+        rute, distance, transfer_info, _, _, _, _, _, _, price = functions.calculeRute(
             start_station_id, 
             end_station_id,
             criterion
