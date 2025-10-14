@@ -762,11 +762,11 @@ const routeFindingFunction = (centerOnRoute = true) => {
             return;
           }
           // Si puede realizar el viaje, no mostrar nada
-          if(!initializeJourney()){
+          if (!initializeJourney()) {
             alert()("Error initializing journey.");
             return;
           }
-          onStartRouteButtonClick();
+
           // Mostrar el tiempo estimado en el contenedor
           const estimatedTimeBox = document.getElementById("estimatedTimeBox");
           const estimatedTimeValue =
@@ -783,6 +783,7 @@ const routeFindingFunction = (centerOnRoute = true) => {
       // Display the route on the map
       if (data.rute && data.rute_coords) {
         addNodesRouteToMap(data.rute, data.rute_coords);
+        onStartRouteButtonClick();
       }
 
       // Update service hours display with new data
@@ -2258,27 +2259,34 @@ function onStartRouteButtonClick() {
 
 
 
-  // const testRoute = [
-  //   // [-75.61420338, 6.281093175],  // Punto 1
-  //   [-75.61401716, 6.275360769],  // Punto 2
-  //   [-75.61370257, 6.26567653],  // Punto 3
-  //   [-75.6136642, 6.256780931],  // Punto 4 
-  //   [-75.6136642, 6.256780931], // Punto 5
-  //   [-75.6136642, 6.256780931], // Punto 5
-  //   [-75.60374625, 6.25808821],
-  //   [-75.5977437, 6.258709043],
-  // ];
-
-
   const testRoute = [
-    [-75.55438934140159, 6.319801665881175],
-    [-75.55534580389958, 6.316001342229484],
-    [-75.55851194186361, 6.299961957796953],
-    [-75.56470061709405, 6.290310300270889],
-    [-75.56938422818597, 6.278324369727542],
-    [-75.5657915298572, 6.269405972933399],
-    [-75.56327830924161, 6.2640097938723756],
+    // [-75.61420338, 6.281093175],  // Punto 1
+    [-75.61401716, 6.275360769],  // Punto 2
+    [-75.61370257, 6.26567653],  // Punto 3
+    [-75.6136642, 6.256780931],  // Punto 4 
+    [-75.6136642, 6.256780931], // Punto 5
+    [-75.6136642, 6.256780931], // Punto 5
+    [-75.60374625, 6.25808821],
+    [-75.5977437, 6.258709043],
+    [ -75.56967864286219,6.247175927579917],
+    [-75.57014923566216, 6.246098926651181]
+    [-75.57043010796497,6.245463747245475],
+    [-75.5691065931842,6.24858643686346],
+    [-75.56918460560735,6.248433855368293],
+    [-75.56934537680426, 6.248083436588248 ],
+    [-75.56947112836812,6.2477782199831],
   ];
+
+
+  // const testRoute = [
+  //   [-75.55438934140159, 6.319801665881175],
+  //   [-75.55534580389958, 6.316001342229484],
+  //   [-75.55851194186361, 6.299961957796953],
+  //   [-75.56470061709405, 6.290310300270889],
+  //   [-75.56938422818597, 6.278324369727542],
+  //   [-75.5657915298572, 6.269405972933399],
+  //   [-75.56327830924161, 6.2640097938723756],
+  // ];
 
   // Iniciar simulación (cada 2 segundos por defecto)
   simulateUserMovement(testRoute, 3000, 2000);
@@ -2420,7 +2428,7 @@ function onRouteCompleted() {
  */
 function initializeJourney() {
   const routeData = window.lastRouteData;
-  
+
   if (!routeData || !routeData.rute || routeData.rute.length < 2) {
     console.error('❌ No hay datos de ruta válidos');
     return false;
@@ -2485,22 +2493,22 @@ async function saveCompletedJourney() {
 
     if (data.success) {
       console.log('✅ Viaje guardado exitosamente:', data);
-      
+
       // Show notification to user
       const alertBox = document.getElementById('alerta-validacion');
       const alertMessage = document.getElementById('mensaje-alerta');
-      
+
       alertMessage.textContent = `🎉 ¡Viaje completado! Duración: ${data.duration_minutes.toFixed(1)} minutos`;
       alertBox.className = 'alert alert-success alert-dismissible fade show position-absolute top-0 start-50 translate-middle-x mt-3';
       alertBox.style.display = 'block';
-      
+
       setTimeout(() => {
         alertBox.style.display = 'none';
       }, 5000);
 
       // Reset journey variables
       resetJourneyVariables();
-      
+
       return true;
     } else {
       console.error('❌ Error al guardar viaje:', data.message);
@@ -2523,12 +2531,12 @@ function resetJourneyVariables() {
   journeyEndStation = null;
   journeyCriterion = 'tiempo';
   routeActive = false;
-  
+
   // Hide recenter button
   if (recenterButton) {
     recenterButton.style.display = 'none';
   }
-  
+
   console.log('🧹 Variables del viaje limpiadas');
 }
 
@@ -2543,7 +2551,7 @@ function monitorRouteCompletion() {
   // Save the trip
   if (routeCompleted === true && lastRouteCompletedState === false) {
     console.log(' Detectado: routeCompleted cambió a TRUE');
-    
+
     // Save the trip
     saveCompletedJourney();
 
@@ -2570,23 +2578,23 @@ let currentTransferAlert = {
  */
 function initializeTransferPoints(transferCoords) {
   transferPoints = [];
-  
+
   if (!transferCoords || transferCoords.length === 0) {
     console.log('ℹ️ No hay transferencias en esta ruta');
     return;
   }
-  
+
   // Copiar las coordenadas al array
   transferPoints = transferCoords.map(coord => ({
     coords: coord
   }));
-  
+
   // Resetear alertas
   currentTransferAlert = {
     alerted50m: false,
     alerted10m: false
   };
-  
+
   console.log(`✅ ${transferPoints.length} transferencias inicializadas`);
 }
 
@@ -2597,36 +2605,36 @@ function initializeTransferPoints(transferCoords) {
 function checkTransferProximity(userCoord) {
   // Si no hay transferencias pendientes, no hacer nada
   if (transferPoints.length === 0) return;
-  
+
   // Obtener la primera transferencia (la siguiente en la ruta)
   const nextTransfer = transferPoints[0];
-  
+
   // Calcular distancia
   const distance = getDistanceInMeters(userCoord, nextTransfer.coords);
-  
+
   console.log(`📏 Distancia a próxima transferencia: ${distance.toFixed(2)}m`);
-  
+
   // Alerta a 50 metros
   if (distance <= 50 && !currentTransferAlert.alerted50m) {
     showTransferAlert('⚠️ Prepárate, transferencia próxima en 50 metros', 'warning');
     currentTransferAlert.alerted50m = true;
     console.log('🔔 Alerta de 50m activada');
   }
-  
+
   // Alerta a 10 metros y eliminar transferencia
   if (distance <= 10 && !currentTransferAlert.alerted10m) {
     showTransferAlert('🚏 ¡Transferencia! Prepárate para descender', 'danger');
     currentTransferAlert.alerted10m = true;
-    
+
     // Eliminar esta transferencia del array
     transferPoints.shift();
-    
+
     // Resetear alertas para la siguiente transferencia
     currentTransferAlert = {
       alerted50m: false,
       alerted10m: false
     };
-    
+
     console.log(`✅ Transferencia completada. Quedan ${transferPoints.length} transferencias`);
   }
 }
@@ -2639,27 +2647,27 @@ function checkTransferProximity(userCoord) {
 function showTransferAlert(message, type = 'warning') {
   const alertBox = document.getElementById('alerta-validacion');
   const alertMessage = document.getElementById('mensaje-alerta');
-  
+
   if (!alertBox || !alertMessage) {
     console.warn('⚠️ Elementos de alerta no encontrados en el DOM');
     return;
   }
-  
+
   // Configurar mensaje
   alertMessage.textContent = message;
-  
+
   // Configurar estilo según tipo
-  const alertClass = type === 'danger' 
+  const alertClass = type === 'danger'
     ? 'alert alert-danger alert-dismissible fade show position-absolute top-0 start-50 translate-middle-x mt-3'
     : 'alert alert-warning alert-dismissible fade show position-absolute top-0 start-50 translate-middle-x mt-3';
-  
+
   alertBox.className = alertClass;
   alertBox.style.display = 'block';
-  
+
   // Ocultar después de 6 segundos
   setTimeout(() => {
     alertBox.style.display = 'none';
   }, 6000);
-  
+
   console.log(`🔔 Alerta mostrada: ${message}`);
 }
