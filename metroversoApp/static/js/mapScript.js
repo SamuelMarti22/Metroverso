@@ -147,11 +147,11 @@ function updateUserLocation(position) {
     const btn1 = document.getElementById("btnClosestStation1");
     const btn2 = document.getElementById("btnClosestStation2");
     const btn3 = document.getElementById("btnClosestStation3");
-    btn1.innerHTML = `<i class="bi bi-geo-alt"></i> ${closestStationsToUser[0]?.properties.ID || ""
+    btn1.innerHTML = `<i class="bi bi-geo-alt"></i> ${closestStationsToUser[0]?.properties.name || ""
       }`;
-    btn2.innerHTML = `<i class="bi bi-geo-alt"></i> ${closestStationsToUser[1]?.properties.ID || ""
+    btn2.innerHTML = `<i class="bi bi-geo-alt"></i> ${closestStationsToUser[1]?.properties.name || ""
       }`;
-    btn3.innerHTML = `<i class="bi bi-geo-alt"></i> ${closestStationsToUser[2]?.properties.ID || ""
+    btn3.innerHTML = `<i class="bi bi-geo-alt"></i> ${closestStationsToUser[2]?.properties.name || ""
       }`;
   }
 
@@ -791,6 +791,8 @@ const routeFindingFunction = (centerOnRoute = true) => {
             return;
           }
 
+          onStartRouteButtonClick();
+
           // Show estimated time box
           const estimatedTimeBox = document.getElementById("estimatedTimeBox");
           const estimatedTimeValue =
@@ -807,7 +809,6 @@ const routeFindingFunction = (centerOnRoute = true) => {
       // Display the route on the map
       if (data.rute && data.rute_coords) {
         addNodesRouteToMap(data.rute, data.rute_coords);
-        onStartRouteButtonClick();
       }
 
       // Update service hours display with new data
@@ -2513,7 +2514,11 @@ async function saveCompletedJourney() {
         start_station: journeyStartStation,
         end_station: journeyEndStation,
         start_time: journeyStartTime,
-        criterion: journeyCriterion
+        criterion: journeyCriterion,
+        // Enviar el precio calculado mostrado en la UI cuando esté disponible
+        price: (window.lastRouteData && window.lastRouteData.price !== undefined) ? Number(window.lastRouteData.price) : null,
+        // Enviar el perfil seleccionado por el usuario (si existe)
+        perfil: (document.getElementById('profileSelection') ? document.getElementById('profileSelection').value : null)
       })
     });
 

@@ -2353,7 +2353,7 @@ def _service_window(start_time: datetime.datetime):
         close_time = start_time.replace(hour=22, minute=0, second=0, microsecond=0)
     else:  # Monday to Saturday
         open_time  = start_time.replace(hour=4,  minute=30, second=0, microsecond=0)
-        close_time = start_time.replace(hour=23, minute=0, second=0, microsecond=0)
+        close_time = start_time.replace(hour=23, minute=00, second=0, microsecond=0)
     return open_time, close_time
 
 def _arvi_service_window(start_time: datetime.datetime):

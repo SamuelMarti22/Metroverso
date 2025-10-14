@@ -305,15 +305,34 @@ def save_journey(request):
         else:
             start_time = timezone.now()
         
-        # Calcular el precio usando la función existente
-        rute, distance, transfer_info, _, _, _, _, _, _, price = functions.calculeRute(
+        # Calcular el precio y paquetes usando la función existente
+        rute, distance, transfer_info, _, _, _, _, _, price_packages, price_calc = functions.calculeRute(
             start_station_id, 
             end_station_id,
             criterion
         )
-        
-        # Precio genérico basado en la distancia (puedes ajustar la lógica)
-        price = 1200.0 if distance < 30 else 1500.0
+
+        # Allow client to override price/profile by sending them in the request body
+        client_price = data.get('price', None)
+        client_perfil = data.get('perfil', None)
+
+        # If the client provided a numeric price, prefer it; otherwise fall back to calculated price
+        try:
+            price = float(client_price) if client_price is not None else (float(price_calc) if price_calc is not None else 0.0)
+        except Exception:
+            price = float(price_calc) if price_calc is not None else 0.0
+
+        # If a perfil was sent, try to use it when calculating package prices (best-effort)
+        if client_perfil:
+            # Attempt to compute total from packages using the provided perfil
+            try:
+                from .assets.functions import get_price_from_packages
+                computed_from_packages = get_price_from_packages(price_packages, client_perfil)
+                # If computed value is greater than 0, prefer it unless client explicitly sent a price
+                if computed_from_packages and client_price is None:
+                    price = float(computed_from_packages)
+            except Exception:
+                pass
         
         # Crear el registro de ruta
         route = Route.objects.create(
