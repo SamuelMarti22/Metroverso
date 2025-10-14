@@ -343,6 +343,18 @@
             <select id="selectStart" class="form-select visually-hidden"></select>
             <select id="selectDestination" class="form-select visually-hidden"></select>
 
+            <!-- perfil type filter -->
+            <div class="mb-3">
+              <label for="profileSelection" class="form-label text-muted small">Profile:</label>
+              <select id="profileSelection" class="form-select" aria-label="Select passenger type">
+                <option selected value="Frecuente">Frequent</option>
+                <option value="AdultoMayor">Senior</option>
+                <option value="Estudiantil">Student</option>
+                <option value="PcD">PcD</option>
+                <option value="Eventual">Occasional</option>
+              </select>
+            </div>
+
             <label for="inputDestination" class="form-label text-muted small">Filtrar por:</label>
             <div style="display: flex; flex-direction: row; gap: 5px;">
               <select class="form-select" aria-label="Default select example" id="inputCriteria">
@@ -713,6 +725,20 @@
         </svg>
       </div>
     </div>
+
+    <div id="estimatedPriceBox">
+  <div style="font-size: 1rem; font-weight: 400">
+    {% trans "Estimated Price" %}
+  </div>
+  <div
+    id="estimatedPriceValue"
+    style="font-size: 1.5rem; font-weight: 700; margin-top: 4px"
+  >
+    -- {% trans "COP" %}
+  </div>
+  <div style="position: absolute; right: 24px; top: 16px">
+  </div>
+</div>
 
     <script src="{% static 'js/mapScript.js' %}"></script>
     <script src="{% static 'js/dictionary.js' %}"></script>

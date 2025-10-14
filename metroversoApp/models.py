@@ -11,6 +11,7 @@ class User(models.Model):
         ("AdultoMayor", "Adulto Mayor"),
         ("Estudiantil", "Estudiantil"),
         ("PcD", "PcD"),
+        ("Eventual", "Al portador y eventual"),
     ]
     LENGUAJE_CHOICES = [
         ("Español", "Español"),

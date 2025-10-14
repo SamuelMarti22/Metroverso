@@ -136,10 +136,8 @@ function updateUserLocation(position) {
   userLocation = newUserLocation;
   lastUpdateTime = currentTime;
 
-  // Show the box if there is userLocation, hide if not
   setClosestStationsBoxVisible(true);
 
-  // Update closest stations only if user has moved significantly
   if (shouldUpdateStations) {
     closestStationsToUser = closestPoints(turf.point(userLocation), 2000);
     closestStations(turf.point(userLocation), 2000);
@@ -323,7 +321,6 @@ function walkingRouteToOrigin() {
                 estimatedTimeValue.textContent = "-- min";
               }
             }
-            estimatedTimeBox.style.display = "block";
           }
 
           // si estamos dentro de un .then(route) y existe `route`, actualiza con ello;
@@ -704,28 +701,32 @@ const routeFindingFunction = (centerOnRoute = true) => {
 
   setInRoute(true); // Set route mode
 
-  fetch(`/view/callRute?inputStart=${startId}&inputDestination=${endId}`
-    + `&inputCriteria=${encodeURIComponent(inputCriteria)}` + `&nameStart=${encodeURIComponent(nameStart)}` + `&nameDestination=${encodeURIComponent(nameDestination)}`)
+  // get user profile
+  const profileSelectionEl = document.getElementById('profileSelection');
+  const profileSelection = profileSelectionEl ? profileSelectionEl.value : 'Frecuente';
+
+  fetch(`/view/callRute?inputStart=${startId}&inputDestination=${endId}` + `&inputCriteria=${encodeURIComponent(inputCriteria)}`
+  + `&nameStart=${encodeURIComponent(nameStart)}` + `&nameDestination=${encodeURIComponent(nameDestination)}` + `&profileSelection=${encodeURIComponent(profileSelection)}`)
     .then((res) => res.json())
     .then((data) => {
       console.log("Ruta:", data.rute);
       console.log("Distancia:", data.distance);
+      console.log("Precio:", data.price);
       console.log("Información de transferencias:", data.transfer_info);
       console.log("Coordenadas de transferencias:", data.transfer_coords);
 
-      // Mostrar el botón 'Iniciar Recorrido' solo si la ruta es válida
+      // Show the 'Start Journey' button only if a route is found
       const btnStartJourney = document.getElementById("btnStartJourney");
       btnStartJourney.style.display = "block";
 
-      // Guardar los datos de la ruta para usarlos en el botón de iniciar recorrido
+      // Store the last route data globally for access in other functions
       window.lastRouteData = data;
 
       // Ocultar cualquier alerta previa
       const alertBox = document.getElementById("alerta-validacion");
       alertBox.style.display = "none";
 
-      // Mostrar el tiempo estimado en el contenedor
-      const estimatedTimeBox = document.getElementById("estimatedTimeBox");
+      // Update estimated time display in its own box
       const estimatedTimeValue = document.getElementById("estimatedTimeValue");
       if (typeof data.distance === "number" && data.distance > 0) {
         const totalMinutes = Math.round(data.distance);
@@ -739,8 +740,25 @@ const routeFindingFunction = (centerOnRoute = true) => {
       } else {
         estimatedTimeValue.textContent = `-- min`;
       }
-      estimatedTimeBox.style.display = "block";
-      // Lógica para el botón 'Iniciar Recorrido'
+      // Update price display in its own box
+      const estimatedPriceValue = document.getElementById("estimatedPriceValue");
+      const estimatedPriceBox = document.getElementById("estimatedPriceBox");
+      const estimatedTimeBoxEl = document.getElementById("estimatedTimeBox");
+      // Ensure time box is visible
+      if (estimatedTimeBoxEl) estimatedTimeBoxEl.style.display = "block";
+      if (estimatedPriceValue && estimatedPriceBox) {
+        if (data.price !== undefined && data.price !== null) {
+          const priceNum = Number(data.price) || 0;
+          estimatedPriceValue.textContent = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(priceNum);
+          estimatedPriceBox.classList.add('show-price');
+          estimatedPriceBox.style.display = 'block';
+        } else {
+          estimatedPriceValue.textContent = "--";
+          estimatedPriceBox.classList.remove('show-price');
+          estimatedPriceBox.style.display = 'none';
+        }
+      }
+      // Set up event listener for 'Start Journey' button
       document
         .getElementById("btnStartJourney")
         .addEventListener("click", function () {
@@ -760,18 +778,20 @@ const routeFindingFunction = (centerOnRoute = true) => {
             showAutoClosingAlert(alertBox, alertMessage, alertMessageText);
             return;
           }
-          // Si puede realizar el viaje, no mostrar nada
+
+          // If can make the trip, do not show anything
           if(!initializeJourney()){
-            alert()("Error initializing journey.");
+            alert("Error initializing journey.");
             return;
           }
           onStartRouteButtonClick();
-          // Mostrar el tiempo estimado en el contenedor
+
+          // Show estimated time box
           const estimatedTimeBox = document.getElementById("estimatedTimeBox");
           const estimatedTimeValue =
             document.getElementById("estimatedTimeValue");
           if (data.duration) {
-            // Redondear minutos
+            // Round minutes
             const minutes = Math.round(data.duration / 60);
             estimatedTimeValue.textContent = `${minutes} min`;
             estimatedTimeBox.style.display = "block";
@@ -1463,6 +1483,7 @@ function savePageState() {
     markerOrigin: markerOrigin ? markerOrigin.getLngLat() : null,
     markerDestiny: markerDestiny ? markerDestiny.getLngLat() : null,
     userLocation: userLocation,
+    profileSelection: (document.getElementById('profileSelection') ? document.getElementById('profileSelection').value : null),
   };
   localStorage.setItem("metroversoMapState", JSON.stringify(state));
 }
@@ -1478,6 +1499,9 @@ async function restorePageState() {
 
   if (state.inputDestination)
     document.getElementById("inputDestination").value = state.inputDestination;
+
+  if (state.profileSelection && document.getElementById('profileSelection'))
+    document.getElementById('profileSelection').value = state.profileSelection;
 
   if (state.routeStarted) routeFindingFunction(false);
   else if (state.selectedLines) {
