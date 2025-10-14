@@ -137,7 +137,32 @@ def dashboard(request):
             })
         except Station.DoesNotExist:
             continue
-    return JsonResponse({'top_stations': result_stations, 'top_routes': result_routes})
+
+    # Get the three most recent routes for the logged-in user
+    recent_routes = []
+    if request.user.is_authenticated:
+        try:
+            user_profile = request.user.metro_profile
+            routes = Route.objects.filter(id_user=user_profile).order_by('-start_time')[:3]
+            for route in routes:
+                rute, _, _, _, _, _, _, _, _, _ = calculeRute(route.id_start.id_station, route.id_end.id_station, 'time')
+                rute_names = []
+                for station_id in rute:
+                    try:
+                        station_obj = Station.objects.get(pk=station_id)
+                        rute_names.append(station_obj.name)
+                    except Station.DoesNotExist:
+                        rute_names.append(station_id)
+                recent_routes.append({
+                    'start': route.id_start.name,
+                    'end': route.id_end.name,
+                    'date': route.start_time.strftime('%Y-%m-%d %H:%M'),
+                    'rute': rute_names
+                })
+        except User.DoesNotExist:
+            pass
+
+    return JsonResponse({'top_stations': result_stations, 'top_routes': result_routes, 'recent_routes': recent_routes})
 
 
 # ==================== SISTEMA DE AUTENTICACIÓN ====================

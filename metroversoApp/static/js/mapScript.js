@@ -791,7 +791,7 @@ const routeFindingFunction = (centerOnRoute = true) => {
             return;
           }
 
-          onStartRouteButtonClick();
+          
 
           // Show estimated time box
           const estimatedTimeBox = document.getElementById("estimatedTimeBox");
@@ -809,6 +809,7 @@ const routeFindingFunction = (centerOnRoute = true) => {
       // Display the route on the map
       if (data.rute && data.rute_coords) {
         addNodesRouteToMap(data.rute, data.rute_coords);
+        onStartRouteButtonClick();
       }
 
       // Update service hours display with new data

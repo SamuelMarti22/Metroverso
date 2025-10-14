@@ -803,6 +803,31 @@
               });
             }
             html += "</div>";
+
+            // Display recent routes
+            const recentRoutes = data.recent_routes || [];
+            html +=
+              '<div class="mt-3 mb-1 fw-bold text-success" style="font-size:1rem; text-align:center;">Rutas más recientes</div>';
+            html +=
+              '<div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;">';
+            if (recentRoutes.length === 0) {
+              html +=
+                '<div style="color:#dc3545;">No hay rutas recientes.</div>';
+            } else {
+              recentRoutes.forEach((route) => {
+                const ruteStr =
+                  route.rute && route.rute.length
+                    ? route.rute.join(" &rarr; ")
+                    : "";
+                html += `<div style="background:#fff; border:1px solid #198754; border-radius:8px; padding:8px 10px; width:260px; min-width:260px; max-width:260px; text-align:center; margin-bottom:4px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                        <span style="font-weight:bold;">${route.start} → ${route.end}</span><br>
+                        <span style="font-size:12px; color:#888;">${route.date}</span><br>
+                        <span style="font-size:11px; color:#198754; margin-top:6px; word-break:normal; white-space:pre-line;">${ruteStr}</span>
+                    </div>`;
+              });
+            }
+            html += "</div>";
+            
             document.getElementById("dashboard-stations").innerHTML = html;
           })
           .catch(() => {
@@ -817,4 +842,3 @@
     </script>
   </body>
 </html>
-
