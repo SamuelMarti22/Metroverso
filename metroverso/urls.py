@@ -18,4 +18,5 @@ urlpatterns = [
     path('auth/login/', metroversoViews.login_view, name='login'),
     path('auth/logout/', metroversoViews.logout_view, name='logout'),
     path('auth/profile/', metroversoViews.profile_view, name='profile'),
+    path('auth/profile-data/', metroversoViews.profile_data_view, name='profile_data'),
 ]

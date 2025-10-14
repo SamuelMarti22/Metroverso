@@ -20,7 +20,25 @@ import json
 
 def map(request):
     language_code = translation.get_language()
-    return render(request, 'map.html', {'LANGUAGE_CODE': language_code})
+    
+    # Get user information for profile display
+    user_data = {
+        'is_authenticated': request.user.is_authenticated,
+        'username': request.user.username if request.user.is_authenticated else None,
+        'metro_profile': None
+    }
+    
+    # Get Metro profile if user is authenticated
+    if request.user.is_authenticated:
+        try:
+            user_data['metro_profile'] = request.user.metro_profile
+        except:
+            user_data['metro_profile'] = None
+    
+    return render(request, 'map.html', {
+        'LANGUAGE_CODE': language_code,
+        'user_data': user_data
+    })
 
 def getServiceHours(request):
     # Get current service hours
@@ -283,6 +301,51 @@ def profile_view(request):
         'lenguaje_choices': User.LENGUAJE_CHOICES
     }
     return render(request, 'auth/profile.html', context)
+
+def profile_data_view(request):
+    """Vista AJAX para obtener datos del perfil para el offcanvas"""
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'No autenticado'}, status=401)
+    
+    try:
+        metro_profile = request.user.metro_profile
+    except User.DoesNotExist:
+        # Si no tiene perfil Metro, crear uno básico
+        metro_profile = User.objects.create(
+            django_user=request.user,
+            name=request.user.username,
+            perfil='Frecuente',
+            lenguaje='Español'
+        )
+    
+    if request.method == 'POST':
+        # Actualizar perfil desde el offcanvas
+        metro_profile.name = request.POST.get('name', metro_profile.name)
+        metro_profile.perfil = request.POST.get('perfil', metro_profile.perfil)
+        metro_profile.lenguaje = request.POST.get('lenguaje', metro_profile.lenguaje)
+        metro_profile.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Perfil actualizado exitosamente'
+        })
+    
+    # GET - Devolver datos del perfil
+    return JsonResponse({
+        'user': {
+            'username': request.user.username,
+            'email': request.user.email,
+            'first_name': request.user.first_name,
+            'last_name': request.user.last_name,
+        },
+        'metro_profile': {
+            'name': metro_profile.name,
+            'perfil': metro_profile.perfil,
+            'lenguaje': metro_profile.lenguaje,
+        },
+        'perfil_choices': User.PERFIL_CHOICES,
+        'lenguaje_choices': User.LENGUAJE_CHOICES
+    })
 
 @csrf_exempt
 @require_http_methods(["POST"])
