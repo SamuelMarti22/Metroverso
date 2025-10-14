@@ -712,6 +712,7 @@ const routeFindingFunction = (centerOnRoute = true) => {
       console.log("Distancia:", data.distance);
       console.log("Información de transferencias:", data.transfer_info);
       console.log("Coordenadas de transferencias:", data.transfer_coords);
+      initializeTransferPoints(data.transfer_coords)
 
       // Mostrar el botón 'Iniciar Recorrido' solo si la ruta es válida
       const btnStartJourney = document.getElementById("btnStartJourney");
@@ -2122,6 +2123,8 @@ function updateUserProgress(userGPSCoord, markerOrigin = null) {
   // Actualizar/crear marcador de seguimiento
   updateUserFollowMarker(position.closestPoint.coordinate, heading || 0);
 
+  checkTransferProximity(userGPSCoord);
+
   // ✅ APLICAR MODO NAVEGACIÓN SI ESTÁ ACTIVADO
   if (navigationMode) {
     map.easeTo({
@@ -2268,7 +2271,6 @@ function onStartRouteButtonClick() {
 
 
   const testRoute = [
-
     [-75.55438934140159, 6.319801665881175],
     [-75.55534580389958, 6.316001342229484],
     [-75.55851194186361, 6.299961957796953],
@@ -2554,3 +2556,110 @@ function monitorRouteCompletion() {
 setInterval(monitorRouteCompletion, 500);
 
 console.log('✅ Monitor de finalización de ruta activado');
+
+// Notificaciones
+let transferPoints = []; // Array de coordenadas de transferencia
+let currentTransferAlert = {
+  alerted50m: false,
+  alerted10m: false
+};
+
+/**
+ * Inicializa el array de transferencias desde los datos de la ruta
+ * @param {Array} transferCoords - Array de coordenadas [[lng, lat], [lng, lat], ...]
+ */
+function initializeTransferPoints(transferCoords) {
+  transferPoints = [];
+  
+  if (!transferCoords || transferCoords.length === 0) {
+    console.log('ℹ️ No hay transferencias en esta ruta');
+    return;
+  }
+  
+  // Copiar las coordenadas al array
+  transferPoints = transferCoords.map(coord => ({
+    coords: coord
+  }));
+  
+  // Resetear alertas
+  currentTransferAlert = {
+    alerted50m: false,
+    alerted10m: false
+  };
+  
+  console.log(`✅ ${transferPoints.length} transferencias inicializadas`);
+}
+
+/**
+ * Verifica la proximidad del usuario a la siguiente transferencia
+ * @param {Array} userCoord - [lng, lat] posición actual del usuario
+ */
+function checkTransferProximity(userCoord) {
+  // Si no hay transferencias pendientes, no hacer nada
+  if (transferPoints.length === 0) return;
+  
+  // Obtener la primera transferencia (la siguiente en la ruta)
+  const nextTransfer = transferPoints[0];
+  
+  // Calcular distancia
+  const distance = getDistanceInMeters(userCoord, nextTransfer.coords);
+  
+  console.log(`📏 Distancia a próxima transferencia: ${distance.toFixed(2)}m`);
+  
+  // Alerta a 50 metros
+  if (distance <= 50 && !currentTransferAlert.alerted50m) {
+    showTransferAlert('⚠️ Prepárate, transferencia próxima en 50 metros', 'warning');
+    currentTransferAlert.alerted50m = true;
+    console.log('🔔 Alerta de 50m activada');
+  }
+  
+  // Alerta a 10 metros y eliminar transferencia
+  if (distance <= 10 && !currentTransferAlert.alerted10m) {
+    showTransferAlert('🚏 ¡Transferencia! Prepárate para descender', 'danger');
+    currentTransferAlert.alerted10m = true;
+    
+    // Eliminar esta transferencia del array
+    transferPoints.shift();
+    
+    // Resetear alertas para la siguiente transferencia
+    currentTransferAlert = {
+      alerted50m: false,
+      alerted10m: false
+    };
+    
+    console.log(`✅ Transferencia completada. Quedan ${transferPoints.length} transferencias`);
+  }
+}
+
+/**
+ * Muestra una alerta de transferencia en pantalla
+ * @param {string} message - Mensaje a mostrar
+ * @param {string} type - Tipo de alerta: 'warning' (50m) o 'danger' (10m)
+ */
+function showTransferAlert(message, type = 'warning') {
+  const alertBox = document.getElementById('alerta-validacion');
+  const alertMessage = document.getElementById('mensaje-alerta');
+  
+  if (!alertBox || !alertMessage) {
+    console.warn('⚠️ Elementos de alerta no encontrados en el DOM');
+    return;
+  }
+  
+  // Configurar mensaje
+  alertMessage.textContent = message;
+  
+  // Configurar estilo según tipo
+  const alertClass = type === 'danger' 
+    ? 'alert alert-danger alert-dismissible fade show position-absolute top-0 start-50 translate-middle-x mt-3'
+    : 'alert alert-warning alert-dismissible fade show position-absolute top-0 start-50 translate-middle-x mt-3';
+  
+  alertBox.className = alertClass;
+  alertBox.style.display = 'block';
+  
+  // Ocultar después de 6 segundos
+  setTimeout(() => {
+    alertBox.style.display = 'none';
+  }, 6000);
+  
+  console.log(`🔔 Alerta mostrada: ${message}`);
+}
