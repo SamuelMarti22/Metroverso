@@ -1576,7 +1576,7 @@ document.addEventListener('DOMContentLoaded', () => {
     sel.innerHTML = '';
     const opt = document.createElement('option');
     opt.value = id ?? '';
-    opt.textContent = label || '(sin nombre)';
+    opt.textContent = label || texts.words.noName;
     opt.dataset.lon = String(lon);
     opt.dataset.lat = String(lat);
     sel.appendChild(opt);
@@ -1616,7 +1616,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!items.length) { sugsEl.style.display = 'none'; return; }
 
     for (const it of items) {
-      const label = it.poi?.name || it.address?.freeformAddress || it.matchingName || '(sin nombre)';
+      const label = it.poi?.name || it.address?.freeformAddress || it.matchingName || texts.words.noName;
       const { lat, lon } = it.position; // TomTom entrega {lat, lon}
 
       const li = document.createElement('li');

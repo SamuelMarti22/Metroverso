@@ -180,3 +180,120 @@ msgstr "No se requieren transferencias"
 msgid "Direct trip on line {line}"
 msgstr "Viaje directo en la línea {line}"
 
+msgid "Dashboard"
+msgstr "Panel de Control"
+
+msgid "Most Used Stations"
+msgstr "Estaciones Más Utilizadas"
+
+msgid "Profile"
+msgstr "Perfil"
+
+msgid "Frequent"
+msgstr "Frecuente"
+
+msgid "Senior"
+msgstr "Adulto Mayor"
+
+msgid "Student"
+msgstr "Estudiante"
+
+msgid "PcD"
+msgstr "PcD"
+
+msgid "Occasional"
+msgstr "Ocasional"
+
+msgid "Filter by"
+msgstr "Filtrar por"
+
+msgid "Time"
+msgstr "Tiempo"
+
+msgid "Distance"
+msgstr "Distancia"
+
+msgid "Transfers"
+msgstr "Transferencias"
+
+msgid "Loading"
+msgstr "Cargando"
+
+msgid "My Profile"
+msgstr "Mi Perfil"
+
+msgid "Sign In"
+msgstr "Iniciar Sesión"
+
+msgid "Edit Profile"
+msgstr "Editar Perfil"
+
+msgid "Sign Out"
+msgstr "Cerrar Sesión"
+
+msgid "Edit Information"
+msgstr "Editar Información"
+
+msgid "Full Name"
+msgstr "Nombre Completo"
+
+msgid "Passenger Type"
+msgstr "Tipo de Pasajero"
+
+msgid "Save Changes"
+msgstr "Guardar Cambios"
+
+msgid "Cancel"
+msgstr "Cancelar"
+
+msgid "Welcome to Metroverso!"
+msgstr "¡Bienvenido a Metroverso!"
+
+msgid "Sign in to personalize your experience"
+msgstr "Inicia sesión para personalizar tu experiencia"
+
+msgid "Create Account"
+msgstr "Crear Cuenta"
+
+msgid "With an account you can:"
+msgstr "Con una cuenta puedes:"
+
+msgid "Save your favorite routes"
+msgstr "Guardar tus rutas favoritas"
+
+msgid "Customize your traveler profile"
+msgstr "Personalizar tu perfil de viajero"
+
+msgid "Access the dashboard"
+msgstr "Acceder al panel de control"
+
+msgid "No data available"
+msgstr "No hay datos disponibles"
+
+msgid "trips"
+msgstr "viajes"
+
+msgid "Most Used Routes"
+msgstr "Rutas Más Utilizadas"
+
+msgid "No route data available"
+msgstr "No hay datos de rutas disponibles"
+
+msgid "Most Recent Routes"
+msgstr "Rutas Más Recientes"
+
+msgid "No recent routes"
+msgstr "No hay rutas recientes"
+
+msgid "Error loading data"
+msgstr "Error al cargar datos"
+
+msgid "Profile updated successfully"
+msgstr "Perfil actualizado exitosamente"
+
+msgid "Error updating profile"
+msgstr "Error al actualizar el perfil"
+
+msgid "(no name)"
+msgstr "(sin nombre)"
+

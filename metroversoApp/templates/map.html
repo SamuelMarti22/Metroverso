@@ -34,9 +34,15 @@
           state: "{% trans 'Status' %}",
           open: "{% trans 'Open' %}",
           closed: "{% trans 'Closed' %}",
+          noName: "{% trans '(no name)' %}",
         },
         labels: {
           myLocation: "{% trans 'My location' %}",
+        },
+        criteria: {
+          tiempo: "{% trans 'Time' %}",
+          distancia: "{% trans 'Distance' %}",
+          transferencias: "{% trans 'Transfers' %}",
         },
         serviceHours: {
           title: "{% trans 'Service Hours' %}",
@@ -295,7 +301,7 @@
             class="offcanvas-title text-success fw-bold"
             id="offcanvasDashboardLabel"
           >
-            <i class="bi bi-star-fill me-2"></i> Dashboard
+            <i class="bi bi-star-fill me-2"></i> {% trans "Dashboard" %}
           </h5>
           <button
             type="button"
@@ -307,7 +313,7 @@
         <div class="offcanvas-body">
           <div id="dashboard-content">
             <div class="fw-bold mb-2 text-success">
-              Estaciones más frecuentadas
+              {% trans "Most Used Stations" %}
             </div>
             <div id="dashboard-stations"></div>
           </div>
@@ -366,22 +372,22 @@
 
             <!-- perfil type filter -->
             <div class="mb-3">
-              <label for="profileSelection" class="form-label text-muted small">Profile:</label>
+              <label for="profileSelection" class="form-label text-muted small">{% trans "Profile" %}:</label>
               <select id="profileSelection" class="form-select" aria-label="Select passenger type">
-                <option selected value="Frecuente">Frequent</option>
-                <option value="AdultoMayor">Senior</option>
-                <option value="Estudiantil">Student</option>
-                <option value="PcD">PcD</option>
-                <option value="Eventual">Occasional</option>
+                <option selected value="Frecuente">{% trans "Frequent" %}</option>
+                <option value="AdultoMayor">{% trans "Senior" %}</option>
+                <option value="Estudiantil">{% trans "Student" %}</option>
+                <option value="PcD">{% trans "PcD" %}</option>
+                <option value="Eventual">{% trans "Occasional" %}</option>
               </select>
             </div>
 
-            <label for="inputDestination" class="form-label text-muted small">Filtrar por:</label>
+            <label for="inputDestination" class="form-label text-muted small">{% trans "Filter by" %}:</label>
             <div style="display: flex; flex-direction: row; gap: 5px;">
               <select class="form-select" aria-label="Default select example" id="inputCriteria">
-                <option selected value="time">Tiempo</option>
-                <option value="distance_km">Distancia</option>
-                <option value="transfer">Transferencias</option>
+                <option selected value="time">{% trans "Time" %}</option>
+                <option value="distance_km">{% trans "Distance" %}</option>
+                <option value="transfer">{% trans "Transfers" %}</option>
               </select>
               <button
                 class="btn btn-primary w-100 fw-semibold"
@@ -430,8 +436,7 @@
           <div class="divRute">
             <div class="mb-3">
               <p>
-                {% blocktrans %}Search for a specific line and see its route
-                displayed on the map{% endblocktrans %}
+                {% blocktrans %}Search for a specific line and see its route displayed on the map{% endblocktrans %}
               </p>
               <label for="lineSelection">{% trans "Line" %}:</label>
               <select
@@ -480,7 +485,7 @@
             class="offcanvas-title text-success fw-bold"
             id="offcanvasMostUsedStationsLabel"
           >
-            Most Used Stations
+            {% trans "Most Used Stations" %}
           </h5>
           <button
             type="button"
@@ -494,7 +499,7 @@
             id="mostUsedStationsList"
             style="list-style: none; padding-left: 0; margin-bottom: 0"
           >
-            <li>Loading...</li>
+            <li>{% trans "Loading" %}...</li>
           </ul>
         </div>
       </div>
@@ -635,9 +640,9 @@
         >
           <i class="bi bi-person-fill me-2"></i> 
           {% if user_data.is_authenticated %}
-            Mi Perfil
+            {% trans "My Profile" %}
           {% else %}
-            Iniciar Sesión
+            {% trans "Sign In" %}
           {% endif %}
         </h5>
         <button
@@ -668,10 +673,10 @@
           
           <div class="d-grid gap-2">
             <button type="button" class="btn btn-outline-success" onclick="showProfileEditor()">
-              <i class="bi bi-person-gear me-2"></i>Editar Perfil
+              <i class="bi bi-person-gear me-2"></i>{% trans "Edit Profile" %}
             </button>
             <a href="/auth/logout/" class="btn btn-outline-danger">
-              <i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión
+              <i class="bi bi-box-arrow-right me-2"></i>{% trans "Sign Out" %}
             </a>
           </div>
           
@@ -679,29 +684,29 @@
           <div id="profileEditor" style="display: none;">
             <hr class="my-4">
             <h6 class="text-success mb-3">
-              <i class="bi bi-pencil-square me-2"></i>Editar Información
+              <i class="bi bi-pencil-square me-2"></i>{% trans "Edit Information" %}
             </h6>
             <form id="profileForm">
               {% csrf_token %}
               <div class="mb-3">
-                <label for="profileName" class="form-label small">Nombre completo</label>
+                <label for="profileName" class="form-label small">{% trans "Full Name" %}</label>
                 <input type="text" class="form-control form-control-sm" id="profileName" name="name">
               </div>
               <div class="mb-3">
-                <label for="profilePerfil" class="form-label small">Tipo de perfil</label>
+                <label for="profilePerfil" class="form-label small">{% trans "Passenger Type" %}</label>
                 <select class="form-select form-select-sm" id="profilePerfil" name="perfil">
-                  <option value="Frecuente">Frecuente</option>
-                  <option value="AdultoMayor">Adulto Mayor</option>
-                  <option value="Estudiantil">Estudiantil</option>
-                  <option value="PcD">PcD</option>
+                  <option value="Frecuente">{% trans "Frequent" %}</option>
+                  <option value="AdultoMayor">{% trans "Senior" %}</option>
+                  <option value="Estudiantil">{% trans "Student" %}</option>
+                  <option value="PcD">{% trans "PcD" %}</option>
                 </select>
               </div>
               <div class="d-grid gap-2">
                 <button type="submit" class="btn btn-success btn-sm">
-                  <i class="bi bi-check-circle me-2"></i>Guardar Cambios
+                  <i class="bi bi-check-circle me-2"></i>{% trans "Save Changes" %}
                 </button>
                 <button type="button" class="btn btn-outline-secondary btn-sm" onclick="hideProfileEditor()">
-                  <i class="bi bi-x-circle me-2"></i>Cancelar
+                  <i class="bi bi-x-circle me-2"></i>{% trans "Cancel" %}
                 </button>
               </div>
             </form>
@@ -713,16 +718,16 @@
                  style="width: 80px; height: 80px;">
               <i class="bi bi-person text-secondary" style="font-size: 2.5rem;"></i>
             </div>
-            <h6 class="mt-3 mb-1">¡Bienvenido a Metroverso!</h6>
-            <small class="text-muted">Inicia sesión para personalizar tu experiencia</small>
+            <h6 class="mt-3 mb-1">{% trans "Welcome to Metroverso!" %}</h6>
+            <small class="text-muted">{% trans "Sign in to personalize your experience" %}</small>
           </div>
           
           <div class="d-grid gap-2">
             <a href="/auth/login/" class="btn btn-success">
-              <i class="bi bi-box-arrow-in-right me-2"></i>Iniciar Sesión
+              <i class="bi bi-box-arrow-in-right me-2"></i>{% trans "Sign In" %}
             </a>
             <a href="/auth/register/" class="btn btn-outline-success">
-              <i class="bi bi-person-plus me-2"></i>Crear Cuenta
+              <i class="bi bi-person-plus me-2"></i>{% trans "Create Account" %}
             </a>
           </div>
           
@@ -730,12 +735,12 @@
           
           <div class="text-center">
             <small class="text-muted">
-              Con una cuenta puedes:
+              {% trans "With an account you can:" %}
             </small>
             <ul class="list-unstyled mt-2 small text-muted">
-              <li><i class="bi bi-check-circle text-success me-2"></i>Guardar tus rutas favoritas</li>
-              <li><i class="bi bi-check-circle text-success me-2"></i>Personalizar tu perfil de viajero</li>
-              <li><i class="bi bi-check-circle text-success me-2"></i>Acceder al dashboard</li>
+              <li><i class="bi bi-check-circle text-success me-2"></i>{% trans "Save your favorite routes" %}</li>
+              <li><i class="bi bi-check-circle text-success me-2"></i>{% trans "Customize your traveler profile" %}</li>
+              <li><i class="bi bi-check-circle text-success me-2"></i>{% trans "Access the dashboard" %}</li>
             </ul>
           </div>
         {% endif %}
@@ -925,35 +930,36 @@
               '<div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;">';
             if (stations.length === 0) {
               html +=
-                '<div style="color:#dc3545;">No hay datos disponibles.</div>';
+                '<div style="color:#dc3545;">{% trans "No data available" %}.</div>';
             } else {
               stations.forEach((station) => {
                 html += `<div style="background:#fff; border:1px solid #198754; border-radius:8px; padding:8px 10px; width:120px; min-width:120px; max-width:120px; text-align:center; margin-bottom:4px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
                         <span style="font-weight:bold;">${station.name}</span><br>
                         <span style="font-size:12px; color:#888;">${station.line} | ${station.type}</span><br>
-                        <span style="font-size:14px; color:#198754; font-weight:600; background:#e6f9ed; border-radius:5px; padding:2px 8px; margin-top:4px; display:inline-block;">${station.usage} viajes</span>
+                        <span style="font-size:14px; color:#198754; font-weight:600; background:#e6f9ed; border-radius:5px; padding:2px 8px; margin-top:4px; display:inline-block;">${station.usage} {% trans "trips" %}</span>
                     </div>`;
               });
             }
             html += "</div>";
             // DBR04: Top similar routes
             html +=
-              '<div class="mt-3 mb-1 fw-bold text-success" style="font-size:1rem; text-align:center;">Rutas más frecuentes</div>';
+              '<div class="mt-3 mb-1 fw-bold text-success" style="font-size:1rem; text-align:center;">{% trans "Most Used Routes" %}</div>';
             html +=
               '<div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;">';
             if (routes.length === 0) {
               html +=
-                '<div style="color:#dc3545;">No hay datos de rutas.</div>';
+                '<div style="color:#dc3545;">{% trans "No route data available" %}.</div>';
             } else {
               routes.forEach((route) => {
                 const ruteStr =
                   route.rute && route.rute.length
                     ? route.rute.join(" &rarr; ")
                     : "";
+                const criterionText = texts.criteria[route.criterion] || route.criterion;
                 html += `<div style="background:#fff; border:1px solid #198754; border-radius:8px; padding:8px 10px; width:260px; min-width:260px; max-width:260px; text-align:center; margin-bottom:4px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
                         <span style="font-weight:bold;">${route.start} → ${route.end}</span><br>
-                        <span style="font-size:12px; color:#888;">${route.criterion}</span><br>
-                        <span style="font-size:13px; color:#198754; font-weight:600; background:#e6f9ed; border-radius:5px; padding:2px 8px; margin-top:4px; display:inline-block;">${route.count} viajes</span>
+                        <span style="font-size:12px; color:#888;">${criterionText}</span><br>
+                        <span style="font-size:13px; color:#198754; font-weight:600; background:#e6f9ed; border-radius:5px; padding:2px 8px; margin-top:4px; display:inline-block;">${route.count} {% trans "trips" %}</span>
                         <span style="font-size:11px; color:#198754; margin-top:6px; word-break:normal; white-space:pre-line;">${ruteStr}</span>
                     </div>`;
               });
@@ -963,12 +969,12 @@
             // Display recent routes
             const recentRoutes = data.recent_routes || [];
             html +=
-              '<div class="mt-3 mb-1 fw-bold text-success" style="font-size:1rem; text-align:center;">Rutas más recientes</div>';
+              '<div class="mt-3 mb-1 fw-bold text-success" style="font-size:1rem; text-align:center;">{% trans "Most Recent Routes" %}</div>';
             html +=
               '<div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;">';
             if (recentRoutes.length === 0) {
               html +=
-                '<div style="color:#dc3545;">No hay rutas recientes.</div>';
+                '<div style="color:#dc3545;">{% trans "No recent routes" %}.</div>';
             } else {
               recentRoutes.forEach((route) => {
                 const ruteStr =
@@ -988,7 +994,7 @@
           })
           .catch(() => {
             document.getElementById("dashboard-stations").innerHTML =
-              '<div style="color:#dc3545;">Error al cargar datos.</div>';
+              '<div style="color:#dc3545;">{% trans "Error loading data" %}.</div>';
           });
       }
 
@@ -1040,7 +1046,7 @@
             const alertDiv = document.createElement('div');
             alertDiv.className = 'alert alert-success alert-dismissible fade show mt-3';
             alertDiv.innerHTML = `
-              <i class="bi bi-check-circle me-2"></i>${data.message}
+              <i class="bi bi-check-circle me-2"></i>{% trans "Profile updated successfully" %}.
               <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             `;
             document.getElementById('profileEditor').appendChild(alertDiv);
@@ -1056,7 +1062,7 @@
           const alertDiv = document.createElement('div');
           alertDiv.className = 'alert alert-danger alert-dismissible fade show mt-3';
           alertDiv.innerHTML = `
-            <i class="bi bi-exclamation-triangle me-2"></i>Error al actualizar el perfil
+            <i class="bi bi-exclamation-triangle me-2"></i>{% trans "Error updating profile" %}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
           `;
           document.getElementById('profileEditor').appendChild(alertDiv);
