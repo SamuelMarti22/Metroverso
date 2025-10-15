@@ -545,6 +545,11 @@ map.on("load", () => {
 
   // Restore page state if available
   restorePageState();
+  
+  // Inicializar markers de información de estaciones
+  setTimeout(() => {
+    createStationInfoLayerFromPoints();
+  }, 1000);
 });
 
 // Function to load and display service hours
@@ -2716,4 +2721,383 @@ function showTransferAlert(message, type = 'warning') {
   }, 6000);
 
   console.log(`🔔 Alerta mostrada: ${message}`);
+}
+
+// ==================== STATION INFO LAYERS (MAPBOX NATIVO) ====================
+
+// Función para agregar layer de información de estaciones
+window.addStationInfoLayer = async function() {
+  console.log('� INICIANDO addStationInfoLayer');
+  console.log('�🗺️ Agregando layer nativo de información de estaciones');
+  
+  if (!linesStations || !linesStations.features) {
+    console.warn('No hay datos de estaciones disponibles para el layer');
+    return;
+  }
+
+  try {
+    // Obtener lista de estaciones que tienen datos en la base de datos
+    const response = await fetch('/stations-with-data/');
+    const data = await response.json();
+    
+    if (data.error) {
+      console.error('Error obteniendo estaciones con datos:', data.error);
+      return;
+    }
+    
+    const stationsWithData = data.stations.map(s => s.id_station);
+    console.log(`📊 Estaciones con datos en BD: ${stationsWithData.length}`, stationsWithData);
+    
+    // Debug: ver qué propiedades tiene el GeoJSON
+    const firstFeature = linesStations.features[0];
+    console.log('🔍 Primera feature completa del GeoJSON:', firstFeature);
+    console.log('🔍 Propiedades de la primera feature:', firstFeature?.properties);
+    console.log('🔍 Todas las claves de properties:', Object.keys(firstFeature?.properties || {}));
+    console.log('🔍 IDs de BD que buscamos:', stationsWithData.slice(0, 5));
+    
+    // Filtrar el GeoJSON para incluir solo estaciones con datos
+    const filteredFeatures = linesStations.features.filter(feature => {
+      const hasMatch = stationsWithData.includes(feature.properties.id_station);
+      if (hasMatch) {
+        console.log(`✅ Match encontrado: ${feature.properties.id_station}`);
+      }
+      return hasMatch;
+    });
+    
+    console.log(`🎯 Estaciones filtradas para mostrar: ${filteredFeatures.length}`);
+    
+    if (filteredFeatures.length === 0) {
+      console.warn('No hay estaciones con datos para mostrar');
+      return;
+    }
+    
+    // Crear GeoJSON filtrado
+    const filteredGeoJSON = {
+      type: 'FeatureCollection',
+      features: filteredFeatures
+    };
+
+    // Agregar source de estaciones si no existe
+    if (!map.getSource('stations-info')) {
+      map.addSource('stations-info', {
+        type: 'geojson',
+        data: filteredGeoJSON
+      });
+      console.log('✅ Source stations-info agregado con estaciones filtradas');
+    }
+  } catch (error) {
+    console.error('Error filtrando estaciones:', error);
+    return;
+  }
+
+  // Agregar layer de círculos GRANDES Y VISIBLES para testing
+  if (!map.getLayer('stations-info-layer')) {
+    map.addLayer({
+      id: 'stations-info-layer',
+      type: 'circle',
+      source: 'stations-info',
+      paint: {
+        'circle-radius': 20,
+        'circle-color': '#ff0000',
+        'circle-stroke-width': 5,
+        'circle-stroke-color': '#ffff00',
+        'circle-opacity': 0.9
+      }
+    });
+    console.log('✅ Layer stations-info-layer agregado');
+  }
+
+  // Agregar evento de click al layer
+  map.on('click', 'stations-info-layer', async (e) => {
+    const stationId = e.features[0].properties.id_station;
+    const coordinates = e.features[0].geometry.coordinates.slice();
+    
+    console.log(`🔍 Click en estación ${stationId}`, coordinates);
+
+    try {
+      const response = await fetch(`/station/${stationId}/`);
+      const data = await response.json();
+      
+      let servicesHtml = '';
+      if (data.services && data.services.length > 0) {
+        servicesHtml = '<h6>🛠️ Servicios:</h6><ul>';
+        data.services.forEach(service => {
+          servicesHtml += `<li>${service.service_type}${service.hours ? ` (${service.hours})` : ''}</li>`;
+        });
+        servicesHtml += '</ul>';
+      }
+
+      let poisHtml = '';
+      if (data.points_of_interest && data.points_of_interest.length > 0) {
+        poisHtml = '<h6>🏢 Puntos de Interés:</h6><ul>';
+        data.points_of_interest.forEach(poi => {
+          poisHtml += `<li><strong>${poi.name}</strong> - ${poi.category}${poi.distance_from_station ? ` (${poi.distance_from_station})` : ''}</li>`;
+        });
+        poisHtml += '</ul>';
+      }
+
+      const content = `
+        <div style="max-width: 300px;">
+          <h5>📍 ${data.station_name}</h5>
+          <p><strong>Línea:</strong> ${data.station_line} | <strong>Tipo:</strong> ${data.station_type}</p>
+          ${servicesHtml}
+          ${poisHtml}
+          ${!servicesHtml && !poisHtml ? '<p>No hay información adicional disponible.</p>' : ''}
+        </div>
+      `;
+
+      new mapboxgl.Popup()
+        .setLngLat(coordinates)
+        .setHTML(content)
+        .addTo(map);
+
+    } catch (error) {
+      console.error('Error obteniendo información de estación:', error);
+      new mapboxgl.Popup()
+        .setLngLat(coordinates)
+        .setHTML('<div style="color: red;">Error al cargar información</div>')
+        .addTo(map);
+    }
+  });
+
+  // Cambiar cursor al pasar por encima
+  map.on('mouseenter', 'stations-info-layer', () => {
+    map.getCanvas().style.cursor = 'pointer';
+  });
+
+  map.on('mouseleave', 'stations-info-layer', () => {
+    map.getCanvas().style.cursor = '';
+  });
+
+  console.log('🎯 Layer de información de estaciones configurado completamente');
+}
+
+// Función para crear layer de información de estaciones
+window.createStationInfoLayerFromPoints = async function() {
+  if (!pointsStations || !Array.isArray(pointsStations)) {
+    return;
+  }
+
+  try {
+    // Obtener estaciones con datos
+    const response = await fetch('/stations-with-data/');
+    const data = await response.json();
+    
+    if (data.error) {
+      return;
+    }
+    
+    const stationsWithData = data.stations.map(s => s.id_station);
+    
+    // Filtrar estaciones con datos y limpiar propiedades
+    const filteredStations = pointsStations.filter(station => {
+      return stationsWithData.includes(station.properties.ID);
+    }).map(station => {
+      // Crear copia limpia solo con ID (sin name para evitar labels automáticas)
+      return {
+        type: 'Feature',
+        geometry: station.geometry,
+        properties: {
+          ID: station.properties.ID
+        }
+      };
+    });
+    
+    if (filteredStations.length === 0) {
+      return;
+    }
+    
+    // Crear GeoJSON con las estaciones filtradas
+    const stationsGeoJSON = {
+      type: 'FeatureCollection',
+      features: filteredStations
+    };
+
+    // Limpiar layers anteriores
+    if (map.getLayer('stations-info-points')) {
+      map.removeLayer('stations-info-points');
+    }
+    if (map.getSource('stations-info-source')) {
+      map.removeSource('stations-info-source');
+    }
+
+    // Agregar source
+    map.addSource('stations-info-source', {
+      type: 'geojson',
+      data: stationsGeoJSON
+    });
+
+    // Agregar layer de círculos muy discretos
+    map.addLayer({
+      id: 'stations-info-points',
+      type: 'circle',
+      source: 'stations-info-source',
+      layout: {
+        'visibility': 'visible'
+      },
+      paint: {
+        'circle-radius': 5,
+        'circle-color': '#20c997',
+        'circle-stroke-width': 1,
+        'circle-stroke-color': '#ffffff',
+        'circle-opacity': 0.7
+      }
+    });
+
+
+    // Evento de click para mostrar información
+    map.on('click', 'stations-info-points', async (e) => {
+      const stationId = e.features[0].properties.ID;
+      const coordinates = e.features[0].geometry.coordinates.slice();
+
+      try {
+        const response = await fetch(`/station/${stationId}/`);
+        const data = await response.json();
+        
+        let servicesHtml = '';
+        if (data.services && data.services.length > 0) {
+          servicesHtml = `
+            <div class="mb-3">
+              <div class="section-title services">
+                <i class="bi bi-gear-fill me-2"></i>
+                Servicios Disponibles
+              </div>
+              <div class="service-grid">
+          `;
+          data.services.forEach(service => {
+            const serviceIcon = getServiceIcon(service.service_type);
+            servicesHtml += `
+              <div class="service-item">
+                <i class="${serviceIcon}"></i>
+                ${getServiceName(service.service_type)}
+              </div>
+            `;
+          });
+          servicesHtml += '</div></div>';
+        }
+
+        let poisHtml = '';
+        if (data.points_of_interest && data.points_of_interest.length > 0) {
+          poisHtml = `
+            <div class="mb-2">
+              <div class="section-title pois">
+                <i class="bi bi-geo-alt-fill me-2"></i>
+                Puntos de Interés Cercanos
+              </div>
+          `;
+          data.points_of_interest.forEach(poi => {
+            const categoryIcon = getCategoryIcon(poi.category);
+            poisHtml += `
+              <div class="poi-item">
+                <i class="${categoryIcon}"></i>
+                <div class="poi-content">
+                  <div class="poi-name">${poi.name}</div>
+                  <div class="poi-distance">${poi.distance_from_station || 'Cerca de la estación'}</div>
+                </div>
+              </div>
+            `;
+          });
+          poisHtml += '</div>';
+        }
+
+        const content = `
+          <div>
+            <div class="station-header">
+              <h5>${data.station_name}</h5>
+              <small>Línea ${data.station_line} • ${data.station_type}</small>
+            </div>
+            <div class="station-body">
+              ${servicesHtml}
+              ${poisHtml}
+              ${!servicesHtml && !poisHtml ? '<div class="no-info">No hay información adicional disponible</div>' : ''}
+            </div>
+          </div>
+        `;
+
+        new mapboxgl.Popup({
+          offset: 15,
+          closeButton: true,
+          closeOnClick: false,
+          className: 'station-info-popup'
+        })
+          .setLngLat(coordinates)
+          .setHTML(content)
+          .addTo(map);
+
+      } catch (error) {
+        new mapboxgl.Popup()
+          .setLngLat(coordinates)
+          .setHTML('<div class="text-danger">Error al cargar información de la estación</div>')
+          .addTo(map);
+      }
+    });
+
+    // Cursor pointer
+    map.on('mouseenter', 'stations-info-points', () => {
+      map.getCanvas().style.cursor = 'pointer';
+    });
+
+    map.on('mouseleave', 'stations-info-points', () => {
+      map.getCanvas().style.cursor = '';
+    });
+
+  } catch (error) {
+    console.error('Error configurando layer de estaciones:', error);
+  }
+}
+
+// Funciones auxiliares para iconos
+function getServiceIcon(serviceType) {
+  const icons = {
+    'restroom': 'bi bi-water',
+    'wifi': 'bi bi-wifi',
+    'atm': 'bi bi-credit-card',
+    'ticket_office': 'bi bi-ticket',
+    'accessibility': 'bi bi-universal-access',
+    'commercial': 'bi bi-shop',
+    'parking': 'bi bi-car-front',
+    'security': 'bi bi-shield-check',
+    'elevator': 'bi bi-arrow-up-square',
+    'escalator': 'bi bi-arrow-up-right-square',
+    'phone': 'bi bi-telephone',
+    'lost_found': 'bi bi-search',
+    'information': 'bi bi-info-circle',
+    'first_aid': 'bi bi-heart-pulse'
+  };
+  return icons[serviceType] || 'bi bi-gear';
+}
+
+function getServiceName(serviceType) {
+  const names = {
+    'restroom': 'Baños',
+    'wifi': 'WiFi',
+    'atm': 'Cajero',
+    'ticket_office': 'Taquilla',
+    'accessibility': 'Accesibilidad',
+    'commercial': 'Comercial',
+    'parking': 'Parqueadero',
+    'security': 'Seguridad',
+    'elevator': 'Ascensor',
+    'escalator': 'Escalera',
+    'phone': 'Teléfono',
+    'lost_found': 'Objetos Perdidos',
+    'information': 'Información',
+    'first_aid': 'Primeros Auxilios'
+  };
+  return names[serviceType] || serviceType;
+}
+
+function getCategoryIcon(category) {
+  const icons = {
+    'restaurant': 'bi bi-cup-hot',
+    'shop': 'bi bi-bag',
+    'bank': 'bi bi-bank',
+    'pharmacy': 'bi bi-heart-pulse',
+    'hospital': 'bi bi-hospital',
+    'hotel': 'bi bi-building',
+    'gas_station': 'bi bi-fuel-pump',
+    'entertainment': 'bi bi-controller',
+    'other': 'bi bi-geo-alt'
+  };
+  return icons[category] || 'bi bi-geo-alt';
 }

@@ -455,3 +455,58 @@ def save_journey(request):
             'success': False,
             'message': f'Error al guardar el viaje: {str(e)}'
         }, status=500)
+
+def station_info(request, station_id):
+    """Obtiene información de servicios y puntos de interés de una estación"""
+    try:
+        from .models import StationService, PointOfInterest
+        station = Station.objects.get(id_station=station_id)
+        
+        # Obtener servicios de la estación
+        services = StationService.objects.filter(station=station, status='active').values(
+            'service_type', 'description', 'hours', 'floor'
+        )
+        
+        # Obtener puntos de interés cercanos
+        points_of_interest = PointOfInterest.objects.filter(station=station).values(
+            'name', 'description', 'category', 'address', 'distance_from_station'
+        )
+        
+        return JsonResponse({
+            'station_name': station.name,
+            'station_line': station.line,
+            'station_type': station.type,
+            'services': list(services),
+            'points_of_interest': list(points_of_interest)
+        })
+        
+    except Station.DoesNotExist:
+        return JsonResponse({'error': 'Estación no encontrada'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+def stations_with_data(request):
+    """Obtiene lista de estaciones que tienen servicios o puntos de interés"""
+    try:
+        from .models import StationService, PointOfInterest
+        from django.db.models import Q
+        
+        # Obtener estaciones que tienen servicios activos o puntos de interés
+        stations_with_services = StationService.objects.filter(status='active').values_list('station__id_station', flat=True)
+        stations_with_poi = PointOfInterest.objects.all().values_list('station__id_station', flat=True)
+        
+        # Combinar ambas listas y eliminar duplicados
+        station_ids = list(set(list(stations_with_services) + list(stations_with_poi)))
+        
+        # Obtener información completa de estas estaciones
+        stations = Station.objects.filter(id_station__in=station_ids).values(
+            'id_station', 'name', 'line', 'type'
+        )
+        
+        return JsonResponse({
+            'stations': list(stations),
+            'count': len(station_ids)
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
