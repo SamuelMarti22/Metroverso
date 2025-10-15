@@ -427,7 +427,7 @@ def save_journey(request):
             id_start=start_station,
             id_end=end_station,
             price=price,
-            criterion=criterion,
+            criterion=data.get('criterion', 'tiempo'),
             id_user=user,
             start_time=start_time,
             end_time=timezone.now()  # Se guarda al llegar a la última estación

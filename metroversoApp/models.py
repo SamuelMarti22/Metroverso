@@ -42,8 +42,9 @@ class Station(models.Model):
 
 class Route(models.Model):
     CRITERION_CHOICES = [
-        ("precio", "Precio"),
         ("tiempo", "Tiempo"),
+        ("distancia", "Distancia"),
+        ("transferencias", "Transferencias"),
     ]
     id_route = models.AutoField(primary_key=True)
     id_start = models.ForeignKey(Station, related_name='start_routes', on_delete=models.CASCADE)

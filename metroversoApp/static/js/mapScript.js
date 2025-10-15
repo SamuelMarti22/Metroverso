@@ -2488,8 +2488,8 @@ function initializeJourney() {
   // Map the criterion value to the DB format
   const criterionMap = {
     'time': 'tiempo',
-    'distance_km': 'precio',
-    'transfer': 'tiempo'
+    'distance_km': 'distancia',
+    'transfer': 'transferencias'
   };
   journeyCriterion = criterionMap[criterionValue] || 'tiempo';
 
