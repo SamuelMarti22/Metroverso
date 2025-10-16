@@ -307,6 +307,10 @@ Metroverso/
 
 This project is part of an academic initiative to improve public transportation accessibility in Medellín.
 
+## Note
+
+The route tracking feature is present as a simulation of the user's coordinates. In a real case, the function would be called to take the user's location and pass these coordinates as parameters to the tracking function. However, for testing purposes, we have this simulation. If you want to try it, you must enter a route from Aurora to La Floresta. 
+
 ---
 
 **Happy coding!**
