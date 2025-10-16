@@ -1,6 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import User as DjangoUser
 
+from django.utils import timezone
+from datetime import timedelta
+
 class User(models.Model):
 
     PERFIL_CHOICES = [
@@ -8,6 +11,7 @@ class User(models.Model):
         ("AdultoMayor", "Adulto Mayor"),
         ("Estudiantil", "Estudiantil"),
         ("PcD", "PcD"),
+        ("Eventual", "Al portador y eventual"),
     ]
     LENGUAJE_CHOICES = [
         ("Español", "Español"),
@@ -38,8 +42,9 @@ class Station(models.Model):
 
 class Route(models.Model):
     CRITERION_CHOICES = [
-        ("precio", "Precio"),
         ("tiempo", "Tiempo"),
+        ("distancia", "Distancia"),
+        ("transferencias", "Transferencias"),
     ]
     id_route = models.AutoField(primary_key=True)
     id_start = models.ForeignKey(Station, related_name='start_routes', on_delete=models.CASCADE)
@@ -47,6 +52,21 @@ class Route(models.Model):
     price = models.FloatField()
     criterion = models.CharField(max_length=20, choices=CRITERION_CHOICES)
     id_user = models.ForeignKey(User, on_delete=models.CASCADE)
+    start_time = models.DateTimeField(default=timezone.now)
+    end_time = models.DateTimeField(null=True, blank=True)
+    
+    def is_expired(self):
+        """Verifica si la ruta tiene más de un mes"""
+        return timezone.now() - self.start_time > timedelta(days=30)
+    
+    @classmethod
+    def delete_expired_routes(cls):
+        """Elimina rutas con más de un mes de antigüedad"""
+        expiration_date = timezone.now() - timedelta(days=30)
+        expired_routes = cls.objects.filter(start_time__lt=expiration_date)
+        count = expired_routes.count()
+        expired_routes.delete()
+        return count
 
 class Package(models.Model):
     PERFIL_CHOICES = [
@@ -57,10 +77,10 @@ class Package(models.Model):
         ("Eventual","Eventual"),
     ]
     id_package = models.IntegerField()
-    perfil = models.CharField(max_length=20, choices=PERFIL_CHOICES)
+    profile = models.CharField(max_length=20, choices=PERFIL_CHOICES)
     price = models.FloatField()
     class Meta:
-        unique_together = ('id_package', 'perfil')
+        unique_together = ('id_package', 'profile')
 
 
 

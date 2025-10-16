@@ -32,7 +32,16 @@ const UPDATE_INTERVAL = 1000; // Update interval in milliseconds
 const STATION_UPDATE_THRESHOLD = 10; // Update stations when user moves more than 10 meters
 let linesStations = null;
 
-// Carga el GeoJSON y lo guarda en la global
+// ==================== TRAVEL STORAGE SYSTEM ====================
+
+// Variables to track journey state
+let journeyStartTime = null;
+let journeyStartStation = null;
+let journeyEndStation = null;
+let journeyCriterion = 'tiempo';
+let lastRouteCompletedState = false; // To detect changes
+
+// Load the GeoJSON and store it globally
 async function loadLinesStations() {
   const cfg = window.APP_CONFIG || {};
   if (!cfg.geojsonUrl) {
@@ -127,10 +136,8 @@ function updateUserLocation(position) {
   userLocation = newUserLocation;
   lastUpdateTime = currentTime;
 
-  // Show the box if there is userLocation, hide if not
   setClosestStationsBoxVisible(true);
 
-  // Update closest stations only if user has moved significantly
   if (shouldUpdateStations) {
     closestStationsToUser = closestPoints(turf.point(userLocation), 2000);
     closestStations(turf.point(userLocation), 2000);
@@ -140,11 +147,11 @@ function updateUserLocation(position) {
     const btn1 = document.getElementById("btnClosestStation1");
     const btn2 = document.getElementById("btnClosestStation2");
     const btn3 = document.getElementById("btnClosestStation3");
-    btn1.innerHTML = `<i class="bi bi-geo-alt"></i> ${closestStationsToUser[0]?.properties.ID || ""
+    btn1.innerHTML = `<i class="bi bi-geo-alt"></i> ${closestStationsToUser[0]?.properties.name || ""
       }`;
-    btn2.innerHTML = `<i class="bi bi-geo-alt"></i> ${closestStationsToUser[1]?.properties.ID || ""
+    btn2.innerHTML = `<i class="bi bi-geo-alt"></i> ${closestStationsToUser[1]?.properties.name || ""
       }`;
-    btn3.innerHTML = `<i class="bi bi-geo-alt"></i> ${closestStationsToUser[2]?.properties.ID || ""
+    btn3.innerHTML = `<i class="bi bi-geo-alt"></i> ${closestStationsToUser[2]?.properties.name || ""
       }`;
   }
 
@@ -218,6 +225,12 @@ const setInRoute = (value) => {
   document.getElementById("estimatedTimeBox").style.display = value
     ? "block"
     : "none";
+  // Hide closest stations box while in route mode to avoid UI conflicts
+  try {
+    setClosestStationsBoxVisible(!value);
+  } catch (e) {
+    console.warn('[setInRoute] could not toggle closestStationsBox:', e.message);
+  }
 };
 
 // Function to get walking route
@@ -294,13 +307,12 @@ function walkingRouteToOrigin() {
             return;
           }
 
-          // asegurar que sea visible y fijo
+          // asegurar que sea visible; dejar la posicionamiento a CSS (.estimated-info-container)
           const cs = window.getComputedStyle(estimatedTimeBox);
-          if (cs.position === "static" || !cs.position) {
-            estimatedTimeBox.style.position = "fixed";
-          }
-          estimatedTimeBox.style.zIndex =
-            estimatedTimeBox.style.zIndex || "1060";
+          // No forzamos 'fixed' aquí porque el contenedor `.estimated-info-container`
+          // maneja el anclaje en la esquina superior derecha. Si el estilo computado
+          // es 'static' el CSS debería actualizarse en lugar de forzar inline styles.
+          estimatedTimeBox.style.zIndex = estimatedTimeBox.style.zIndex || "1060";
 
           // función para actualizar el valor mostrado (acepta segundos)
           function setEstimatedFromSeconds(sec) {
@@ -314,7 +326,6 @@ function walkingRouteToOrigin() {
                 estimatedTimeValue.textContent = "-- min";
               }
             }
-            estimatedTimeBox.style.display = "block";
           }
 
           // si estamos dentro de un .then(route) y existe `route`, actualiza con ello;
@@ -534,6 +545,11 @@ map.on("load", () => {
 
   // Restore page state if available
   restorePageState();
+  
+  // Inicializar markers de información de estaciones
+  setTimeout(() => {
+    createStationInfoLayerFromPoints();
+  }, 1000);
 });
 
 // Function to load and display service hours
@@ -695,27 +711,33 @@ const routeFindingFunction = (centerOnRoute = true) => {
 
   setInRoute(true); // Set route mode
 
-  fetch(`/view/callRute?inputStart=${startId}&inputDestination=${endId}`
-    + `&inputCriteria=${encodeURIComponent(inputCriteria)}` + `&nameStart=${encodeURIComponent(nameStart)}` + `&nameDestination=${encodeURIComponent(nameDestination)}`)
+  // get user profile
+  const profileSelectionEl = document.getElementById('profileSelection');
+  const profileSelection = profileSelectionEl ? profileSelectionEl.value : 'Frecuente';
+
+  fetch(`/view/callRute?inputStart=${startId}&inputDestination=${endId}` + `&inputCriteria=${encodeURIComponent(inputCriteria)}`
+  + `&nameStart=${encodeURIComponent(nameStart)}` + `&nameDestination=${encodeURIComponent(nameDestination)}` + `&profileSelection=${encodeURIComponent(profileSelection)}`)
     .then((res) => res.json())
     .then((data) => {
       console.log("Ruta:", data.rute);
       console.log("Distancia:", data.distance);
+      console.log("Precio:", data.price);
       console.log("Información de transferencias:", data.transfer_info);
+      console.log("Coordenadas de transferencias:", data.transfer_coords);
+      initializeTransferPoints(data.transfer_coords)
 
-      // Mostrar el botón 'Iniciar Recorrido' solo si la ruta es válida
+      // Show the 'Start Journey' button only if a route is found
       const btnStartJourney = document.getElementById("btnStartJourney");
       btnStartJourney.style.display = "block";
 
-      // Guardar los datos de la ruta para usarlos en el botón de iniciar recorrido
+      // Store the last route data globally for access in other functions
       window.lastRouteData = data;
 
       // Ocultar cualquier alerta previa
       const alertBox = document.getElementById("alerta-validacion");
       alertBox.style.display = "none";
 
-      // Mostrar el tiempo estimado en el contenedor
-      const estimatedTimeBox = document.getElementById("estimatedTimeBox");
+      // Update estimated time display in its own box
       const estimatedTimeValue = document.getElementById("estimatedTimeValue");
       if (typeof data.distance === "number" && data.distance > 0) {
         const totalMinutes = Math.round(data.distance);
@@ -729,8 +751,25 @@ const routeFindingFunction = (centerOnRoute = true) => {
       } else {
         estimatedTimeValue.textContent = `-- min`;
       }
-      estimatedTimeBox.style.display = "block";
-      // Lógica para el botón 'Iniciar Recorrido'
+      // Update price display in its own box
+      const estimatedPriceValue = document.getElementById("estimatedPriceValue");
+      const estimatedPriceBox = document.getElementById("estimatedPriceBox");
+      const estimatedTimeBoxEl = document.getElementById("estimatedTimeBox");
+      // Ensure time box is visible
+      if (estimatedTimeBoxEl) estimatedTimeBoxEl.style.display = "block";
+      if (estimatedPriceValue && estimatedPriceBox) {
+        if (data.price !== undefined && data.price !== null) {
+          const priceNum = Number(data.price) || 0;
+          estimatedPriceValue.textContent = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(priceNum);
+          estimatedPriceBox.classList.add('show-price');
+          estimatedPriceBox.style.display = 'block';
+        } else {
+          estimatedPriceValue.textContent = "--";
+          estimatedPriceBox.classList.remove('show-price');
+          estimatedPriceBox.style.display = 'none';
+        }
+      }
+      // Set up event listener for 'Start Journey' button
       document
         .getElementById("btnStartJourney")
         .addEventListener("click", function () {
@@ -750,14 +789,21 @@ const routeFindingFunction = (centerOnRoute = true) => {
             showAutoClosingAlert(alertBox, alertMessage, alertMessageText);
             return;
           }
-          // Si puede realizar el viaje, no mostrar nada
 
-          // Mostrar el tiempo estimado en el contenedor
+          // If can make the trip, do not show anything
+          if(!initializeJourney()){
+            alert("Error initializing journey.");
+            return;
+          }
+
+          onStartRouteButtonClick();
+
+          // Show estimated time box
           const estimatedTimeBox = document.getElementById("estimatedTimeBox");
           const estimatedTimeValue =
             document.getElementById("estimatedTimeValue");
           if (data.duration) {
-            // Redondear minutos
+            // Round minutes
             const minutes = Math.round(data.duration / 60);
             estimatedTimeValue.textContent = `${minutes} min`;
             estimatedTimeBox.style.display = "block";
@@ -768,7 +814,7 @@ const routeFindingFunction = (centerOnRoute = true) => {
       // Display the route on the map
       if (data.rute && data.rute_coords) {
         addNodesRouteToMap(data.rute, data.rute_coords);
-        onStartRouteButtonClick();
+        
       }
 
       // Update service hours display with new data
@@ -1021,58 +1067,70 @@ function paintLineSegment(
 }
 
 function showLines(selectedLines) {
-  setInRoute(false); // Set inRoute to false
-  if (map.getSource("lineasCompletas")) {
-    map.getSource("lineasCompletas").setData(selectedLines);
-    return;
-  }
-  map.addSource("lineasCompletas", {
-    type: "geojson",
-    data: selectedLines,
-  });
-  map.addLayer({
-    id: "lineas-layer",
-    type: "line",
-    source: "lineasCompletas",
-    layout: {
-      "line-join": "round",
-      "line-cap": "round",
-    },
-    paint: {
-      "line-color": [
+  setInRoute(false);
 
-        "match",
-        ["get", "linea"],
-        "A",
-        "#005d9a",
-        "B",
-        "#e88530",
-        "O",
-        "#e3807b",
-        "Z",
-        "#e0007a",
-        "2",
-        "#66a7ab",
-        "1",
-        "#017077",
-        "K",
-        "#bacc44",
-        "P",
-        "#e10521",
-        "L",
-        "#8b622a",
-        "J",
-        "#f5c439",
-        "H",
-        "#6a206b",
-        "T",
-        "#008f37",
-        /* default */
-        "#000000",
-      ],
-      "line-width": 3,
-    },
-  });
+  const bbox = (window.turf && window.turf.bbox) || null;
+  const center = (window.turf && window.turf.center) || null;
+
+  const sourceId = "lineasCompletas";
+  const layerId  = "lineas-layer";
+
+  // 1) Crear/actualizar source + layer
+  if (map.getSource(sourceId)) {
+    map.getSource(sourceId).setData(selectedLines);
+  } else {
+    map.addSource(sourceId, { type: "geojson", data: selectedLines });
+    map.addLayer({
+      id: layerId,
+      type: "line",
+      source: sourceId,
+      layout: { "line-join": "round", "line-cap": "round" },
+      paint: {
+        "line-color": [
+          "match", ["get", "linea"],
+          "A", "#005d9a",
+          "B", "#e88530",
+          "O", "#e3807b",
+          "Z", "#e0007a",
+          "2", "#66a7ab",
+          "1", "#017077",
+          "K", "#bacc44",
+          "P", "#e10521",
+          "L", "#8b622a",
+          "J", "#f5c439",
+          "H", "#6a206b",
+          "T", "#008f37",
+          /* default */ "#000000",
+        ],
+        "line-width": 3,
+      },
+    });
+  }
+
+  // 2) Ajustar la vista al contenido (zoom out)
+  try {
+    if (!bbox) throw new Error("turf.bbox no disponible");
+    const [minX, minY, maxX, maxY] = bbox(selectedLines);
+
+    // Si hay un rectángulo válido, ajusta bounds
+    if (
+      Number.isFinite(minX) && Number.isFinite(minY) &&
+      Number.isFinite(maxX) && Number.isFinite(maxY) &&
+      (minX !== maxX || minY !== maxY)
+    ) {
+      map.fitBounds([[minX, minY], [maxX, maxY]], {
+        padding: 80,              // o {top:40,right:40,bottom:40,left:300} si tienes sidebar
+        duration: 800,
+        maxZoom: 14               // evita acercarte demasiado
+      });
+    } else if (center) {
+      // Fallback: si es un punto o bbox degenerado
+      const c = center(selectedLines).geometry.coordinates;
+      map.flyTo({ center: c, zoom: 12, duration: 600 });
+    }
+  } catch (e) {
+    console.warn("No pude ajustar bounds:", e);
+  }
 }
 
 document.getElementById("btnShowLines").addEventListener("click", () => {
@@ -1450,6 +1508,7 @@ function savePageState() {
     markerOrigin: markerOrigin ? markerOrigin.getLngLat() : null,
     markerDestiny: markerDestiny ? markerDestiny.getLngLat() : null,
     userLocation: userLocation,
+    profileSelection: (document.getElementById('profileSelection') ? document.getElementById('profileSelection').value : null),
   };
   localStorage.setItem("metroversoMapState", JSON.stringify(state));
 }
@@ -1465,6 +1524,9 @@ async function restorePageState() {
 
   if (state.inputDestination)
     document.getElementById("inputDestination").value = state.inputDestination;
+
+  if (state.profileSelection && document.getElementById('profileSelection'))
+    document.getElementById('profileSelection').value = state.profileSelection;
 
   if (state.routeStarted) routeFindingFunction(false);
   else if (state.selectedLines) {
@@ -1519,7 +1581,7 @@ document.addEventListener('DOMContentLoaded', () => {
     sel.innerHTML = '';
     const opt = document.createElement('option');
     opt.value = id ?? '';
-    opt.textContent = label || '(sin nombre)';
+    opt.textContent = label || texts.words.noName;
     opt.dataset.lon = String(lon);
     opt.dataset.lat = String(lat);
     sel.appendChild(opt);
@@ -1559,7 +1621,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!items.length) { sugsEl.style.display = 'none'; return; }
 
     for (const it of items) {
-      const label = it.poi?.name || it.address?.freeformAddress || it.matchingName || '(sin nombre)';
+      const label = it.poi?.name || it.address?.freeformAddress || it.matchingName || texts.words.noName;
       const { lat, lon } = it.position; // TomTom entrega {lat, lon}
 
       const li = document.createElement('li');
@@ -2109,6 +2171,8 @@ function updateUserProgress(userGPSCoord, markerOrigin = null) {
   // Actualizar/crear marcador de seguimiento
   updateUserFollowMarker(position.closestPoint.coordinate, heading || 0);
 
+  checkTransferProximity(userGPSCoord);
+
   // ✅ APLICAR MODO NAVEGACIÓN SI ESTÁ ACTIVADO
   if (navigationMode) {
     map.easeTo({
@@ -2237,30 +2301,39 @@ function onStartRouteButtonClick() {
   createRecenterButton();
   startNavigationMode();
 
+  // Inicializar los datos del viaje para guardarlos al finalizar
+  initializeJourney();
 
-
-  // const testRoute = [
-  //   // [-75.61420338, 6.281093175],  // Punto 1
-  //   [-75.61401716, 6.275360769],  // Punto 2
-  //   [-75.61370257, 6.26567653],  // Punto 3
-  //   [-75.6136642, 6.256780931],  // Punto 4 
-  //   [-75.6136642, 6.256780931], // Punto 5
-  //   [-75.6136642, 6.256780931], // Punto 5
-  //   [-75.60374625, 6.25808821],
-  //   [-75.5977437, 6.258709043],
-  // ];
 
 
   const testRoute = [
-
-    [-75.55373230475944, 6.329958711908574],
-    [-75.55534580389958, 6.316001342229484],
-    [-75.55851194186361, 6.299961957796953],
-    [-75.56470061709405, 6.290310300270889],
-    [-75.56938422818597, 6.278324369727542],
-    [-75.5657915298572, 6.269405972933399],
-    [-75.56327830924161, 6.2640097938723756],
+    // [-75.61420338, 6.281093175],  // Punto 1
+    [-75.61401716, 6.275360769],  // Punto 2
+    [-75.61370257, 6.26567653],  // Punto 3
+    [-75.6136642, 6.256780931],  // Punto 4 
+    [-75.6136642, 6.256780931], // Punto 5
+    [-75.6136642, 6.256780931], // Punto 5
+    [-75.60374625, 6.25808821],
+    [-75.5977437, 6.258709043],
+    [ -75.56967864286219,6.247175927579917],
+    [-75.57014923566216, 6.246098926651181]
+    [-75.57043010796497,6.245463747245475],
+    [-75.5691065931842,6.24858643686346],
+    [-75.56918460560735,6.248433855368293],
+    [-75.56934537680426, 6.248083436588248 ],
+    [-75.56947112836812,6.2477782199831],
   ];
+
+
+  // const testRoute = [
+  //   [-75.55438934140159, 6.319801665881175],
+  //   [-75.55534580389958, 6.316001342229484],
+  //   [-75.55851194186361, 6.299961957796953],
+  //   [-75.56470061709405, 6.290310300270889],
+  //   [-75.56938422818597, 6.278324369727542],
+  //   [-75.5657915298572, 6.269405972933399],
+  //   [-75.56327830924161, 6.2640097938723756],
+  // ];
 
   // Iniciar simulación (cada 2 segundos por defecto)
   simulateUserMovement(testRoute, 3000, 2000);
@@ -2395,4 +2468,636 @@ function onRouteCompleted() {
 
   // Detener simulación si está activa
   stopSimulation();
+}
+
+/**
+ * Initialize the trip by saving the start time and stations
+ */
+function initializeJourney() {
+  const routeData = window.lastRouteData;
+
+  if (!routeData || !routeData.rute || routeData.rute.length < 2) {
+    console.error('❌ No hay datos de ruta válidos');
+    return false;
+  }
+
+  // Save trip data
+  journeyStartTime = new Date().toISOString();
+  journeyStartStation = routeData.rute[0]; // first station
+  journeyEndStation = routeData.rute[routeData.rute.length - 1]; // last station
+
+  // Get the selected criterion
+  const criterionElement = document.getElementById('inputCriteria');
+  const criterionValue = criterionElement ? criterionElement.value : 'time';
+
+  // Map the criterion value to the DB format
+  const criterionMap = {
+    'time': 'tiempo',
+    'distance_km': 'distancia',
+    'transfer': 'transferencias'
+  };
+  journeyCriterion = criterionMap[criterionValue] || 'tiempo';
+
+  console.log('✅ Viaje inicializado:', {
+    startTime: journeyStartTime,
+    startStation: journeyStartStation,
+    endStation: journeyEndStation,
+    criterion: journeyCriterion
+  });
+
+  // Reset monitoring state
+  lastRouteCompletedState = false;
+
+  return true;
+}
+
+/**
+ * Saves the completed journey to the server
+ */
+async function saveCompletedJourney() {
+  if (!journeyStartTime || !journeyStartStation || !journeyEndStation) {
+    console.error('❌ Faltan datos del viaje para guardar');
+    return false;
+  }
+
+  console.log('💾 Guardando viaje completado...');
+
+  try {
+    const response = await fetch('/save-journey/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        start_station: journeyStartStation,
+        end_station: journeyEndStation,
+        start_time: journeyStartTime,
+        criterion: journeyCriterion,
+        // Enviar el precio calculado mostrado en la UI cuando esté disponible
+        price: (window.lastRouteData && window.lastRouteData.price !== undefined) ? Number(window.lastRouteData.price) : null,
+        // Enviar el perfil seleccionado por el usuario (si existe)
+        perfil: (document.getElementById('profileSelection') ? document.getElementById('profileSelection').value : null)
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      console.log('✅ Viaje guardado exitosamente:', data);
+
+      // Show notification to user
+      const alertBox = document.getElementById('alerta-validacion');
+      const alertMessage = document.getElementById('mensaje-alerta');
+
+      alertMessage.textContent = `🎉 ¡Viaje completado! Duración: ${data.duration_minutes.toFixed(1)} minutos`;
+      alertBox.className = 'alert alert-success alert-dismissible fade show position-absolute top-0 start-50 translate-middle-x mt-3';
+      alertBox.style.display = 'block';
+
+      setTimeout(() => {
+        alertBox.style.display = 'none';
+      }, 5000);
+
+      // Reset journey variables
+      resetJourneyVariables();
+
+      return true;
+    } else {
+      console.error('❌ Error al guardar viaje:', data.message);
+      alert('Error al guardar el viaje: ' + data.message);
+      return false;
+    }
+  } catch (error) {
+    console.error('❌ Error en la petición:', error);
+    alert('Error de conexión al guardar el viaje');
+    return false;
+  }
+}
+
+/**
+ * Resets the journey variables after saving
+ */
+function resetJourneyVariables() {
+  journeyStartTime = null;
+  journeyStartStation = null;
+  journeyEndStation = null;
+  journeyCriterion = 'tiempo';
+  routeActive = false;
+
+  // Hide recenter button
+  if (recenterButton) {
+    recenterButton.style.display = 'none';
+  }
+
+  console.log('🧹 Variables del viaje limpiadas');
+}
+
+/**
+ * 🔥 MONITOR THAT DETECTS WHEN routeCompleted CHANGES TO TRUE
+ * Runs every 500ms to check the status
+ */
+function monitorRouteCompletion() {
+  // Only monitor if the journey was initialized
+  if (!journeyStartTime) return;
+
+  // Save the trip
+  if (routeCompleted === true && lastRouteCompletedState === false) {
+    console.log(' Detectado: routeCompleted cambió a TRUE');
+
+    // Save the trip
+    saveCompletedJourney();
+
+    // Update state
+    lastRouteCompletedState = true;
+  }
+}
+
+// 🔄 Start the monitor (runs every 500ms)
+setInterval(monitorRouteCompletion, 500);
+
+console.log('✅ Monitor de finalización de ruta activado');
+
+// Notificaciones
+let transferPoints = []; // Array de coordenadas de transferencia
+let currentTransferAlert = {
+  alerted50m: false,
+  alerted10m: false
+};
+
+/**
+ * Inicializa el array de transferencias desde los datos de la ruta
+ * @param {Array} transferCoords - Array de coordenadas [[lng, lat], [lng, lat], ...]
+ */
+function initializeTransferPoints(transferCoords) {
+  transferPoints = [];
+
+  if (!transferCoords || transferCoords.length === 0) {
+    console.log('ℹ️ No hay transferencias en esta ruta');
+    return;
+  }
+
+  // Copiar las coordenadas al array
+  transferPoints = transferCoords.map(coord => ({
+    coords: coord
+  }));
+
+  // Resetear alertas
+  currentTransferAlert = {
+    alerted50m: false,
+    alerted10m: false
+  };
+
+  console.log(`✅ ${transferPoints.length} transferencias inicializadas`);
+}
+
+/**
+ * Verifica la proximidad del usuario a la siguiente transferencia
+ * @param {Array} userCoord - [lng, lat] posición actual del usuario
+ */
+function checkTransferProximity(userCoord) {
+  // Si no hay transferencias pendientes, no hacer nada
+  if (transferPoints.length === 0) return;
+
+  // Obtener la primera transferencia (la siguiente en la ruta)
+  const nextTransfer = transferPoints[0];
+
+  // Calcular distancia
+  const distance = getDistanceInMeters(userCoord, nextTransfer.coords);
+
+  console.log(`📏 Distancia a próxima transferencia: ${distance.toFixed(2)}m`);
+
+  // Alerta a 50 metros
+  if (distance <= 50 && !currentTransferAlert.alerted50m) {
+    showTransferAlert('⚠️ Prepárate, transferencia próxima en 50 metros', 'warning');
+    currentTransferAlert.alerted50m = true;
+    console.log('🔔 Alerta de 50m activada');
+  }
+
+  // Alerta a 10 metros y eliminar transferencia
+  if (distance <= 10 && !currentTransferAlert.alerted10m) {
+    showTransferAlert('🚏 ¡Transferencia! Prepárate para descender', 'danger');
+    currentTransferAlert.alerted10m = true;
+
+    // Eliminar esta transferencia del array
+    transferPoints.shift();
+
+    // Resetear alertas para la siguiente transferencia
+    currentTransferAlert = {
+      alerted50m: false,
+      alerted10m: false
+    };
+
+    console.log(`✅ Transferencia completada. Quedan ${transferPoints.length} transferencias`);
+  }
+}
+
+/**
+ * Muestra una alerta de transferencia en pantalla
+ * @param {string} message - Mensaje a mostrar
+ * @param {string} type - Tipo de alerta: 'warning' (50m) o 'danger' (10m)
+ */
+function showTransferAlert(message, type = 'warning') {
+  const alertBox = document.getElementById('alerta-validacion');
+  const alertMessage = document.getElementById('mensaje-alerta');
+
+  if (!alertBox || !alertMessage) {
+    console.warn('⚠️ Elementos de alerta no encontrados en el DOM');
+    return;
+  }
+
+  // Configurar mensaje
+  alertMessage.textContent = message;
+
+  // Configurar estilo según tipo
+  const alertClass = type === 'danger'
+    ? 'alert alert-danger alert-dismissible fade show position-absolute top-0 start-50 translate-middle-x mt-3'
+    : 'alert alert-warning alert-dismissible fade show position-absolute top-0 start-50 translate-middle-x mt-3';
+
+  alertBox.className = alertClass;
+  alertBox.style.display = 'block';
+
+  // Ocultar después de 6 segundos
+  setTimeout(() => {
+    alertBox.style.display = 'none';
+  }, 6000);
+
+  console.log(`🔔 Alerta mostrada: ${message}`);
+}
+
+// ==================== STATION INFO LAYERS (MAPBOX NATIVO) ====================
+
+// Función para agregar layer de información de estaciones
+window.addStationInfoLayer = async function() {
+  console.log('� INICIANDO addStationInfoLayer');
+  console.log('�🗺️ Agregando layer nativo de información de estaciones');
+  
+  if (!linesStations || !linesStations.features) {
+    console.warn('No hay datos de estaciones disponibles para el layer');
+    return;
+  }
+
+  try {
+    // Obtener lista de estaciones que tienen datos en la base de datos
+    const response = await fetch('/stations-with-data/');
+    const data = await response.json();
+    
+    if (data.error) {
+      console.error('Error obteniendo estaciones con datos:', data.error);
+      return;
+    }
+    
+    const stationsWithData = data.stations.map(s => s.id_station);
+    console.log(`📊 Estaciones con datos en BD: ${stationsWithData.length}`, stationsWithData);
+    
+    // Debug: ver qué propiedades tiene el GeoJSON
+    const firstFeature = linesStations.features[0];
+    console.log('🔍 Primera feature completa del GeoJSON:', firstFeature);
+    console.log('🔍 Propiedades de la primera feature:', firstFeature?.properties);
+    console.log('🔍 Todas las claves de properties:', Object.keys(firstFeature?.properties || {}));
+    console.log('🔍 IDs de BD que buscamos:', stationsWithData.slice(0, 5));
+    
+    // Filtrar el GeoJSON para incluir solo estaciones con datos
+    const filteredFeatures = linesStations.features.filter(feature => {
+      const hasMatch = stationsWithData.includes(feature.properties.id_station);
+      if (hasMatch) {
+        console.log(`✅ Match encontrado: ${feature.properties.id_station}`);
+      }
+      return hasMatch;
+    });
+    
+    console.log(`🎯 Estaciones filtradas para mostrar: ${filteredFeatures.length}`);
+    
+    if (filteredFeatures.length === 0) {
+      console.warn('No hay estaciones con datos para mostrar');
+      return;
+    }
+    
+    // Crear GeoJSON filtrado
+    const filteredGeoJSON = {
+      type: 'FeatureCollection',
+      features: filteredFeatures
+    };
+
+    // Agregar source de estaciones si no existe
+    if (!map.getSource('stations-info')) {
+      map.addSource('stations-info', {
+        type: 'geojson',
+        data: filteredGeoJSON
+      });
+      console.log('✅ Source stations-info agregado con estaciones filtradas');
+    }
+  } catch (error) {
+    console.error('Error filtrando estaciones:', error);
+    return;
+  }
+
+  // Agregar layer de círculos GRANDES Y VISIBLES para testing
+  if (!map.getLayer('stations-info-layer')) {
+    map.addLayer({
+      id: 'stations-info-layer',
+      type: 'circle',
+      source: 'stations-info',
+      paint: {
+        'circle-radius': 20,
+        'circle-color': '#ff0000',
+        'circle-stroke-width': 5,
+        'circle-stroke-color': '#ffff00',
+        'circle-opacity': 0.9
+      }
+    });
+    console.log('✅ Layer stations-info-layer agregado');
+  }
+
+  // Agregar evento de click al layer
+  map.on('click', 'stations-info-layer', async (e) => {
+    const stationId = e.features[0].properties.id_station;
+    const coordinates = e.features[0].geometry.coordinates.slice();
+    
+    console.log(`🔍 Click en estación ${stationId}`, coordinates);
+
+    try {
+      const response = await fetch(`/station/${stationId}/`);
+      const data = await response.json();
+      
+      let servicesHtml = '';
+      if (data.services && data.services.length > 0) {
+        servicesHtml = '<h6>🛠️ Servicios:</h6><ul>';
+        data.services.forEach(service => {
+          servicesHtml += `<li>${service.service_type}${service.hours ? ` (${service.hours})` : ''}</li>`;
+        });
+        servicesHtml += '</ul>';
+      }
+
+      let poisHtml = '';
+      if (data.points_of_interest && data.points_of_interest.length > 0) {
+        poisHtml = '<h6>🏢 Puntos de Interés:</h6><ul>';
+        data.points_of_interest.forEach(poi => {
+          poisHtml += `<li><strong>${poi.name}</strong> - ${poi.category}${poi.distance_from_station ? ` (${poi.distance_from_station})` : ''}</li>`;
+        });
+        poisHtml += '</ul>';
+      }
+
+      const content = `
+        <div style="max-width: 300px;">
+          <h5>📍 ${data.station_name}</h5>
+          <p><strong>Línea:</strong> ${data.station_line} | <strong>Tipo:</strong> ${data.station_type}</p>
+          ${servicesHtml}
+          ${poisHtml}
+          ${!servicesHtml && !poisHtml ? '<p>No hay información adicional disponible.</p>' : ''}
+        </div>
+      `;
+
+      new mapboxgl.Popup()
+        .setLngLat(coordinates)
+        .setHTML(content)
+        .addTo(map);
+
+    } catch (error) {
+      console.error('Error obteniendo información de estación:', error);
+      new mapboxgl.Popup()
+        .setLngLat(coordinates)
+        .setHTML('<div style="color: red;">Error al cargar información</div>')
+        .addTo(map);
+    }
+  });
+
+  // Cambiar cursor al pasar por encima
+  map.on('mouseenter', 'stations-info-layer', () => {
+    map.getCanvas().style.cursor = 'pointer';
+  });
+
+  map.on('mouseleave', 'stations-info-layer', () => {
+    map.getCanvas().style.cursor = '';
+  });
+
+  console.log('🎯 Layer de información de estaciones configurado completamente');
+}
+
+// Función para crear layer de información de estaciones
+window.createStationInfoLayerFromPoints = async function() {
+  if (!pointsStations || !Array.isArray(pointsStations)) {
+    return;
+  }
+
+  try {
+    // Obtener estaciones con datos
+    const response = await fetch('/stations-with-data/');
+    const data = await response.json();
+    
+    if (data.error) {
+      return;
+    }
+    
+    const stationsWithData = data.stations.map(s => s.id_station);
+    
+    // Filtrar estaciones con datos y limpiar propiedades
+    const filteredStations = pointsStations.filter(station => {
+      return stationsWithData.includes(station.properties.ID);
+    }).map(station => {
+      // Crear copia limpia solo con ID (sin name para evitar labels automáticas)
+      return {
+        type: 'Feature',
+        geometry: station.geometry,
+        properties: {
+          ID: station.properties.ID
+        }
+      };
+    });
+    
+    if (filteredStations.length === 0) {
+      return;
+    }
+    
+    // Crear GeoJSON con las estaciones filtradas
+    const stationsGeoJSON = {
+      type: 'FeatureCollection',
+      features: filteredStations
+    };
+
+    // Limpiar layers anteriores
+    if (map.getLayer('stations-info-points')) {
+      map.removeLayer('stations-info-points');
+    }
+    if (map.getSource('stations-info-source')) {
+      map.removeSource('stations-info-source');
+    }
+
+    // Agregar source
+    map.addSource('stations-info-source', {
+      type: 'geojson',
+      data: stationsGeoJSON
+    });
+
+    // Agregar layer de círculos muy discretos
+    map.addLayer({
+      id: 'stations-info-points',
+      type: 'circle',
+      source: 'stations-info-source',
+      layout: {
+        'visibility': 'visible'
+      },
+      paint: {
+        'circle-radius': 5,
+        'circle-color': '#20c997',
+        'circle-stroke-width': 1,
+        'circle-stroke-color': '#ffffff',
+        'circle-opacity': 0.7
+      }
+    });
+
+
+    // Evento de click para mostrar información
+    map.on('click', 'stations-info-points', async (e) => {
+      const stationId = e.features[0].properties.ID;
+      const coordinates = e.features[0].geometry.coordinates.slice();
+
+      try {
+        const response = await fetch(`/station/${stationId}/`);
+        const data = await response.json();
+        
+        let servicesHtml = '';
+        if (data.services && data.services.length > 0) {
+          servicesHtml = `
+            <div class="mb-3">
+              <div class="section-title services">
+                <i class="bi bi-gear-fill me-2"></i>
+                Servicios Disponibles
+              </div>
+              <div class="service-grid">
+          `;
+          data.services.forEach(service => {
+            const serviceIcon = getServiceIcon(service.service_type);
+            servicesHtml += `
+              <div class="service-item">
+                <i class="${serviceIcon}"></i>
+                ${getServiceName(service.service_type)}
+              </div>
+            `;
+          });
+          servicesHtml += '</div></div>';
+        }
+
+        let poisHtml = '';
+        if (data.points_of_interest && data.points_of_interest.length > 0) {
+          poisHtml = `
+            <div class="mb-2">
+              <div class="section-title pois">
+                <i class="bi bi-geo-alt-fill me-2"></i>
+                Puntos de Interés Cercanos
+              </div>
+          `;
+          data.points_of_interest.forEach(poi => {
+            const categoryIcon = getCategoryIcon(poi.category);
+            poisHtml += `
+              <div class="poi-item">
+                <i class="${categoryIcon}"></i>
+                <div class="poi-content">
+                  <div class="poi-name">${poi.name}</div>
+                  <div class="poi-distance">${poi.distance_from_station || 'Cerca de la estación'}</div>
+                </div>
+              </div>
+            `;
+          });
+          poisHtml += '</div>';
+        }
+
+        const content = `
+          <div>
+            <div class="station-header">
+              <h5>${data.station_name}</h5>
+              <small>Línea ${data.station_line} • ${data.station_type}</small>
+            </div>
+            <div class="station-body">
+              ${servicesHtml}
+              ${poisHtml}
+              ${!servicesHtml && !poisHtml ? '<div class="no-info">No hay información adicional disponible</div>' : ''}
+            </div>
+          </div>
+        `;
+
+        new mapboxgl.Popup({
+          offset: 15,
+          closeButton: true,
+          closeOnClick: false,
+          className: 'station-info-popup'
+        })
+          .setLngLat(coordinates)
+          .setHTML(content)
+          .addTo(map);
+
+      } catch (error) {
+        new mapboxgl.Popup()
+          .setLngLat(coordinates)
+          .setHTML('<div class="text-danger">Error al cargar información de la estación</div>')
+          .addTo(map);
+      }
+    });
+
+    // Cursor pointer
+    map.on('mouseenter', 'stations-info-points', () => {
+      map.getCanvas().style.cursor = 'pointer';
+    });
+
+    map.on('mouseleave', 'stations-info-points', () => {
+      map.getCanvas().style.cursor = '';
+    });
+
+  } catch (error) {
+    console.error('Error configurando layer de estaciones:', error);
+  }
+}
+
+// Funciones auxiliares para iconos
+function getServiceIcon(serviceType) {
+  const icons = {
+    'restroom': 'bi bi-water',
+    'wifi': 'bi bi-wifi',
+    'atm': 'bi bi-credit-card',
+    'ticket_office': 'bi bi-ticket',
+    'accessibility': 'bi bi-universal-access',
+    'commercial': 'bi bi-shop',
+    'parking': 'bi bi-car-front',
+    'security': 'bi bi-shield-check',
+    'elevator': 'bi bi-arrow-up-square',
+    'escalator': 'bi bi-arrow-up-right-square',
+    'phone': 'bi bi-telephone',
+    'lost_found': 'bi bi-search',
+    'information': 'bi bi-info-circle',
+    'first_aid': 'bi bi-heart-pulse'
+  };
+  return icons[serviceType] || 'bi bi-gear';
+}
+
+function getServiceName(serviceType) {
+  const names = {
+    'restroom': 'Baños',
+    'wifi': 'WiFi',
+    'atm': 'Cajero',
+    'ticket_office': 'Taquilla',
+    'accessibility': 'Accesibilidad',
+    'commercial': 'Comercial',
+    'parking': 'Parqueadero',
+    'security': 'Seguridad',
+    'elevator': 'Ascensor',
+    'escalator': 'Escalera',
+    'phone': 'Teléfono',
+    'lost_found': 'Objetos Perdidos',
+    'information': 'Información',
+    'first_aid': 'Primeros Auxilios'
+  };
+  return names[serviceType] || serviceType;
+}
+
+function getCategoryIcon(category) {
+  const icons = {
+    'restaurant': 'bi bi-cup-hot',
+    'shop': 'bi bi-bag',
+    'bank': 'bi bi-bank',
+    'pharmacy': 'bi bi-heart-pulse',
+    'hospital': 'bi bi-hospital',
+    'hotel': 'bi bi-building',
+    'gas_station': 'bi bi-fuel-pump',
+    'entertainment': 'bi bi-controller',
+    'other': 'bi bi-geo-alt'
+  };
+  return icons[category] || 'bi bi-geo-alt';
 }

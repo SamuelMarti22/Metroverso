@@ -12,9 +12,33 @@ from .assets import stationGraphs
 from .assets import functions
 from .models import Route, Station, User
 
+from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
+from datetime import datetime
+import json
+
 def map(request):
     language_code = translation.get_language()
-    return render(request, 'map.html', {'LANGUAGE_CODE': language_code})
+    
+    # Get user information for profile display
+    user_data = {
+        'is_authenticated': request.user.is_authenticated,
+        'username': request.user.username if request.user.is_authenticated else None,
+        'metro_profile': None
+    }
+    
+    # Get Metro profile if user is authenticated
+    if request.user.is_authenticated:
+        try:
+            user_data['metro_profile'] = request.user.metro_profile
+        except:
+            user_data['metro_profile'] = None
+    
+    return render(request, 'map.html', {
+        'LANGUAGE_CODE': language_code,
+        'user_data': user_data
+    })
 
 def getServiceHours(request):
     # Get current service hours
@@ -30,45 +54,51 @@ def getServiceHours(request):
 #     print("Línea seleccionada:", linea)
 
 def callRute(request):
-    start = request.GET.get('inputStart')  # Default to 'A01' if not provided
-    destination = request.GET.get('inputDestination')  # Default to 'A20' if not provided
+    start = request.GET.get('inputStart')
+    destination = request.GET.get('inputDestination')
     criteria = request.GET.get('inputCriteria')
     nameStart = request.GET.get('nameStart')
     nameDestination = request.GET.get('nameDestination')
     print(nameStart, nameDestination)
+ 
+    # Read passenger profile from request
+    profile = request.GET.get('profileSelection', 'Frecuente')
+    print(criteria)
     # Call the rute function from utils
-    rute, distance, transfer_info, can_make_trip, service_hours, uses_arvi_station, rute_coords = functions.calculeRute(start, destination, criteria)
+    rute, distance, transfer_info, can_make_trip, service_hours, uses_arvi_station, rute_coords, transfer_coords, price_packages, rute_price = functions.calculeRute(start, destination, criteria, profile)
 
-    try:
-        start_station = Station.objects.get(id_station=start)
-        end_station = Station.objects.get(id_station=destination)
-    except Station.DoesNotExist:
-        start_station = None
-        end_station = None
+    # ❌ Ya no guardar automáticamente
+    # try:
+    #     start_station = Station.objects.get(id_station=start)
+    #     end_station = Station.objects.get(id_station=destination)
+    # except Station.DoesNotExist:
+    #     start_station = None
+    #     end_station = None
 
-    # Always use the default user (pk=1) for saving routes
-    try:
-        user = User.objects.get(pk=1)
-    except User.DoesNotExist:
-        user = None
-
-    if start_station and end_station and user:
-        Route.objects.create(
-            id_start=start_station,
-            id_end=end_station,
-            price=0.0,
-            criterion="tiempo",
-            id_user=user
-        )
+    # try:
+    #     user = User.objects.get(pk=1)
+    # except User.DoesNotExist:
+    #     user = None
+    # if start_station and end_station and user:
+    #     Route.objects.create(
+    #         id_start=start_station,
+    #         id_end=end_station,
+    #         price=0.0,
+    #         criterion="tiempo",
+    #         id_user=user
+    #     )
 
     return JsonResponse({ 
         'rute': rute,
         'distance': distance,
+        'price': rute_price,
+        'price_packages': price_packages,
         'transfer_info': transfer_info,
         'can_make_trip': can_make_trip,
         'service_hours': service_hours,
         'uses_arvi_station': uses_arvi_station,
-        'rute_coords': rute_coords
+        'rute_coords': rute_coords,
+        'transfer_coords': transfer_coords
     })
 
 def dashboard(request):
@@ -106,7 +136,9 @@ def dashboard(request):
         try:
             start = Station.objects.get(pk=group['id_start'])
             end = Station.objects.get(pk=group['id_end'])
-            rute, _, _, _, _, _, _ = calculeRute(start.id_station, end.id_station)
+
+            rute, _, _, _, _, _, _, _, _, _ = calculeRute(start.id_station, end.id_station, 'time')
+
             rute_names = []
             for station_id in rute:
                 try:
@@ -123,7 +155,32 @@ def dashboard(request):
             })
         except Station.DoesNotExist:
             continue
-    return JsonResponse({'top_stations': result_stations, 'top_routes': result_routes})
+
+    # Get the three most recent routes for the logged-in user
+    recent_routes = []
+    if request.user.is_authenticated:
+        try:
+            user_profile = request.user.metro_profile
+            routes = Route.objects.filter(id_user=user_profile).order_by('-start_time')[:3]
+            for route in routes:
+                rute, _, _, _, _, _, _, _, _, _ = calculeRute(route.id_start.id_station, route.id_end.id_station, 'time')
+                rute_names = []
+                for station_id in rute:
+                    try:
+                        station_obj = Station.objects.get(pk=station_id)
+                        rute_names.append(station_obj.name)
+                    except Station.DoesNotExist:
+                        rute_names.append(station_id)
+                recent_routes.append({
+                    'start': route.id_start.name,
+                    'end': route.id_end.name,
+                    'date': route.start_time.strftime('%Y-%m-%d %H:%M'),
+                    'rute': rute_names
+                })
+        except User.DoesNotExist:
+            pass
+
+    return JsonResponse({'top_stations': result_stations, 'top_routes': result_routes, 'recent_routes': recent_routes})
 
 
 # ==================== SISTEMA DE AUTENTICACIÓN ====================
@@ -244,3 +301,212 @@ def profile_view(request):
         'lenguaje_choices': User.LENGUAJE_CHOICES
     }
     return render(request, 'auth/profile.html', context)
+
+def profile_data_view(request):
+    """Vista AJAX para obtener datos del perfil para el offcanvas"""
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'No autenticado'}, status=401)
+    
+    try:
+        metro_profile = request.user.metro_profile
+    except User.DoesNotExist:
+        # Si no tiene perfil Metro, crear uno básico
+        metro_profile = User.objects.create(
+            django_user=request.user,
+            name=request.user.username,
+            perfil='Frecuente',
+            lenguaje='Español'
+        )
+    
+    if request.method == 'POST':
+        # Actualizar perfil desde el offcanvas
+        metro_profile.name = request.POST.get('name', metro_profile.name)
+        metro_profile.perfil = request.POST.get('perfil', metro_profile.perfil)
+        metro_profile.lenguaje = request.POST.get('lenguaje', metro_profile.lenguaje)
+        metro_profile.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Perfil actualizado exitosamente'
+        })
+    
+    # GET - Devolver datos del perfil
+    return JsonResponse({
+        'user': {
+            'username': request.user.username,
+            'email': request.user.email,
+            'first_name': request.user.first_name,
+            'last_name': request.user.last_name,
+        },
+        'metro_profile': {
+            'name': metro_profile.name,
+            'perfil': metro_profile.perfil,
+            'lenguaje': metro_profile.lenguaje,
+        },
+        'perfil_choices': User.PERFIL_CHOICES,
+        'lenguaje_choices': User.LENGUAJE_CHOICES
+    })
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def save_journey(request):
+    """
+    Guarda el viaje cuando el usuario llega a la estación final.
+    Recibe: start_station, end_station, start_time, user_id (opcional)
+    """
+    try:
+        data = json.loads(request.body)
+        
+        # Obtener datos del request
+        start_station_id = data.get('start_station')
+        end_station_id = data.get('end_station')
+        start_time_str = data.get('start_time')
+        criterion = data.get('criterion', 'tiempo')  # Por defecto 'tiempo'
+        
+        # Validar que existan las estaciones
+        try:
+            start_station = Station.objects.get(id_station=start_station_id)
+            end_station = Station.objects.get(id_station=end_station_id)
+        except Station.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'message': f'Estación no encontrada: {start_station_id} o {end_station_id}'
+            }, status=404)
+        
+        # Obtener usuario (usar el autenticado o el usuario por defecto pk=1)
+        if request.user.is_authenticated:
+            try:
+                user = request.user.metro_profile
+            except User.DoesNotExist:
+                # Si el usuario autenticado no tiene perfil metro, usar el default
+                user = User.objects.get(pk=1)
+        else:
+            # Usuario no autenticado, usar el default
+            user = User.objects.get(pk=1)
+        
+        # Convertir start_time de ISO string a datetime
+        if start_time_str:
+            try:
+                start_time = datetime.fromisoformat(start_time_str.replace('Z', '+00:00'))
+            except (ValueError, AttributeError):
+                start_time = timezone.now()
+        else:
+            start_time = timezone.now()
+        
+        # Calcular el precio y paquetes usando la función existente
+        rute, distance, transfer_info, _, _, _, _, _, price_packages, price_calc = functions.calculeRute(
+            start_station_id, 
+            end_station_id,
+            criterion
+        )
+
+        # Allow client to override price/profile by sending them in the request body
+        client_price = data.get('price', None)
+        client_perfil = data.get('perfil', None)
+
+        # If the client provided a numeric price, prefer it; otherwise fall back to calculated price
+        try:
+            price = float(client_price) if client_price is not None else (float(price_calc) if price_calc is not None else 0.0)
+        except Exception:
+            price = float(price_calc) if price_calc is not None else 0.0
+
+        # If a perfil was sent, try to use it when calculating package prices (best-effort)
+        if client_perfil:
+            # Attempt to compute total from packages using the provided perfil
+            try:
+                from .assets.functions import get_price_from_packages
+                computed_from_packages = get_price_from_packages(price_packages, client_perfil)
+                # If computed value is greater than 0, prefer it unless client explicitly sent a price
+                if computed_from_packages and client_price is None:
+                    price = float(computed_from_packages)
+            except Exception:
+                pass
+        
+        # Crear el registro de ruta
+        route = Route.objects.create(
+            id_start=start_station,
+            id_end=end_station,
+            price=price,
+            criterion=data.get('criterion', 'tiempo'),
+            id_user=user,
+            start_time=start_time,
+            end_time=timezone.now()  # Se guarda al llegar a la última estación
+        )
+        
+        # Calcular duración del viaje
+        duration_minutes = (route.end_time - route.start_time).total_seconds() / 60
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Viaje guardado exitosamente',
+            'route_id': route.id_route,
+            'duration_minutes': round(duration_minutes, 2),
+            'start_time': route.start_time.strftime('%H:%M:%S'),
+            'end_time': route.end_time.strftime('%H:%M:%S')
+        })
+        
+    except User.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'message': 'Usuario no encontrado. Asegúrate de que existe un usuario con pk=1'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Error al guardar el viaje: {str(e)}'
+        }, status=500)
+
+def station_info(request, station_id):
+    """Obtiene información de servicios y puntos de interés de una estación"""
+    try:
+        from .models import StationService, PointOfInterest
+        station = Station.objects.get(id_station=station_id)
+        
+        # Obtener servicios de la estación
+        services = StationService.objects.filter(station=station, status='active').values(
+            'service_type', 'description', 'hours', 'floor'
+        )
+        
+        # Obtener puntos de interés cercanos
+        points_of_interest = PointOfInterest.objects.filter(station=station).values(
+            'name', 'description', 'category', 'address', 'distance_from_station'
+        )
+        
+        return JsonResponse({
+            'station_name': station.name,
+            'station_line': station.line,
+            'station_type': station.type,
+            'services': list(services),
+            'points_of_interest': list(points_of_interest)
+        })
+        
+    except Station.DoesNotExist:
+        return JsonResponse({'error': 'Estación no encontrada'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+def stations_with_data(request):
+    """Obtiene lista de estaciones que tienen servicios o puntos de interés"""
+    try:
+        from .models import StationService, PointOfInterest
+        from django.db.models import Q
+        
+        # Obtener estaciones que tienen servicios activos o puntos de interés
+        stations_with_services = StationService.objects.filter(status='active').values_list('station__id_station', flat=True)
+        stations_with_poi = PointOfInterest.objects.all().values_list('station__id_station', flat=True)
+        
+        # Combinar ambas listas y eliminar duplicados
+        station_ids = list(set(list(stations_with_services) + list(stations_with_poi)))
+        
+        # Obtener información completa de estas estaciones
+        stations = Station.objects.filter(id_station__in=station_ids).values(
+            'id_station', 'name', 'line', 'type'
+        )
+        
+        return JsonResponse({
+            'stations': list(stations),
+            'count': len(station_ids)
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

@@ -34,9 +34,15 @@
           state: "{% trans 'Status' %}",
           open: "{% trans 'Open' %}",
           closed: "{% trans 'Closed' %}",
+          noName: "{% trans '(no name)' %}",
         },
         labels: {
           myLocation: "{% trans 'My location' %}",
+        },
+        criteria: {
+          tiempo: "{% trans 'Time' %}",
+          distancia: "{% trans 'Distance' %}",
+          transferencias: "{% trans 'Transfers' %}",
         },
         serviceHours: {
           title: "{% trans 'Service Hours' %}",
@@ -233,29 +239,50 @@
         </svg>
       </div>
 
-      <!-- Idiomas icon -->
-      <div
-        class="subCategory d-flex justify-content-center align-items-center"
+      <div 
+        class="profileIcon d-flex justify-content-center align-items-center"
         type="button"
         data-bs-toggle="offcanvas"
-        data-bs-target="#offcanvasLanguages"
-        aria-controls="offcanvasLanguages"
-        title="Idiomas"
-      ></div>
-
-      <div class="profileIcon d-flex justify-content-center align-items-center">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="20"
-          height="20"
-          fill="white"
-          class="bi bi-person-fill"
-          viewBox="0 0 16 16"
-        >
-          <path
-            d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6"
-          />
-        </svg>
+        data-bs-target="#profileOffcanvas"
+        aria-controls="profileOffcanvas"
+        style="cursor: pointer;"
+      >
+        {% if user_data.is_authenticated %}
+          <!-- Usuario autenticado - icono con indicador -->
+          <div class="position-relative">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              fill="white"
+              class="bi bi-person-fill"
+              viewBox="0 0 16 16"
+            >
+              <path
+                d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6"
+              />
+            </svg>
+            <!-- Indicador de usuario logueado -->
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill" 
+                  style="background-color: #20c997; font-size: 6px; padding: 2px;">
+              ●
+            </span>
+          </div>
+        {% else %}
+          <!-- Usuario no autenticado - icono normal -->
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            fill="white"
+            class="bi bi-person"
+            viewBox="0 0 16 16"
+          >
+            <path
+              d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4"
+            />
+          </svg>
+        {% endif %}
       </div>
     </div>
 
@@ -274,7 +301,7 @@
             class="offcanvas-title text-success fw-bold"
             id="offcanvasDashboardLabel"
           >
-            <i class="bi bi-star-fill me-2"></i> Dashboard
+            <i class="bi bi-star-fill me-2"></i> {% trans "Dashboard" %}
           </h5>
           <button
             type="button"
@@ -286,7 +313,7 @@
         <div class="offcanvas-body">
           <div id="dashboard-content">
             <div class="fw-bold mb-2 text-success">
-              Estaciones más frecuentadas
+              {% trans "Most Used Stations" %}
             </div>
             <div id="dashboard-stations"></div>
           </div>
@@ -343,12 +370,24 @@
             <select id="selectStart" class="form-select visually-hidden"></select>
             <select id="selectDestination" class="form-select visually-hidden"></select>
 
-            <label for="inputDestination" class="form-label text-muted small">Filtrar por:</label>
+            <!-- perfil type filter -->
+            <div class="mb-3">
+              <label for="profileSelection" class="form-label text-muted small">{% trans "Profile" %}:</label>
+              <select id="profileSelection" class="form-select" aria-label="Select passenger type">
+                <option selected value="Frecuente">{% trans "Frequent" %}</option>
+                <option value="AdultoMayor">{% trans "Senior" %}</option>
+                <option value="Estudiantil">{% trans "Student" %}</option>
+                <option value="PcD">{% trans "PcD" %}</option>
+                <option value="Eventual">{% trans "Occasional" %}</option>
+              </select>
+            </div>
+
+            <label for="inputDestination" class="form-label text-muted small">{% trans "Filter by" %}:</label>
             <div style="display: flex; flex-direction: row; gap: 5px;">
               <select class="form-select" aria-label="Default select example" id="inputCriteria">
-                <option selected value="time">Tiempo</option>
-                <option value="distance_km">Distancia</option>
-                <option value="transfer">Transferencias</option>
+                <option selected value="time">{% trans "Time" %}</option>
+                <option value="distance_km">{% trans "Distance" %}</option>
+                <option value="transfer">{% trans "Transfers" %}</option>
               </select>
               <button
                 class="btn btn-primary w-100 fw-semibold"
@@ -397,8 +436,7 @@
           <div class="divRute">
             <div class="mb-3">
               <p>
-                {% blocktrans %}Search for a specific line and see its route
-                displayed on the map{% endblocktrans %}
+                {% blocktrans %}Search for a specific line and see its route displayed on the map{% endblocktrans %}
               </p>
               <label for="lineSelection">{% trans "Line" %}:</label>
               <select
@@ -447,7 +485,7 @@
             class="offcanvas-title text-success fw-bold"
             id="offcanvasMostUsedStationsLabel"
           >
-            Most Used Stations
+            {% trans "Most Used Stations" %}
           </h5>
           <button
             type="button"
@@ -461,7 +499,7 @@
             id="mostUsedStationsList"
             style="list-style: none; padding-left: 0; margin-bottom: 0"
           >
-            <li>Loading...</li>
+            <li>{% trans "Loading" %}...</li>
           </ul>
         </div>
       </div>
@@ -585,9 +623,134 @@
       </div>
     </div>
 
+    <!-- Profile Offcanvas -->
+    <div class="offcanvasContainer">
+      <div
+        class="offcanvas offcanvas-start"
+        data-bs-scroll="true"
+        data-bs-backdrop="false"
+        tabindex="-1"
+        id="profileOffcanvas"
+        aria-labelledby="profileOffcanvasLabel"
+      >
+      <div class="offcanvas-header border-bottom">
+        <h5
+          class="offcanvas-title text-success fw-bold"
+          id="profileOffcanvasLabel"
+        >
+          <i class="bi bi-person-fill me-2"></i> 
+          {% if user_data.is_authenticated %}
+            {% trans "My Profile" %}
+          {% else %}
+            {% trans "Sign In" %}
+          {% endif %}
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="offcanvas"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="offcanvas-body">
+        {% if user_data.is_authenticated %}
+          <!-- Usuario autenticado -->
+          <div class="text-center mb-4">
+            <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex justify-content-center align-items-center" 
+                 style="width: 80px; height: 80px;">
+              <i class="bi bi-person-fill text-success" style="font-size: 2.5rem;"></i>
+            </div>
+            <h6 class="mt-3 mb-1 fw-bold">{{ user_data.username }}</h6>
+            {% if user_data.metro_profile %}
+              <small class="text-muted">{{ user_data.metro_profile.name }}</small>
+              <div class="mt-2">
+                <span class="badge bg-success bg-opacity-10 text-success">
+                  {{ user_data.metro_profile.perfil }}
+                </span>
+              </div>
+            {% endif %}
+          </div>
+          
+          <div class="d-grid gap-2">
+            <button type="button" class="btn btn-outline-success" onclick="showProfileEditor()">
+              <i class="bi bi-person-gear me-2"></i>{% trans "Edit Profile" %}
+            </button>
+            <a href="/auth/logout/" class="btn btn-outline-danger">
+              <i class="bi bi-box-arrow-right me-2"></i>{% trans "Sign Out" %}
+            </a>
+          </div>
+          
+          <!-- Profile Editor (hidden by default) -->
+          <div id="profileEditor" style="display: none;">
+            <hr class="my-4">
+            <h6 class="text-success mb-3">
+              <i class="bi bi-pencil-square me-2"></i>{% trans "Edit Information" %}
+            </h6>
+            <form id="profileForm">
+              {% csrf_token %}
+              <div class="mb-3">
+                <label for="profileName" class="form-label small">{% trans "Full Name" %}</label>
+                <input type="text" class="form-control form-control-sm" id="profileName" name="name">
+              </div>
+              <div class="mb-3">
+                <label for="profilePerfil" class="form-label small">{% trans "Passenger Type" %}</label>
+                <select class="form-select form-select-sm" id="profilePerfil" name="perfil">
+                  <option value="Frecuente">{% trans "Frequent" %}</option>
+                  <option value="AdultoMayor">{% trans "Senior" %}</option>
+                  <option value="Estudiantil">{% trans "Student" %}</option>
+                  <option value="PcD">{% trans "PcD" %}</option>
+                </select>
+              </div>
+              <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-success btn-sm">
+                  <i class="bi bi-check-circle me-2"></i>{% trans "Save Changes" %}
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="hideProfileEditor()">
+                  <i class="bi bi-x-circle me-2"></i>{% trans "Cancel" %}
+                </button>
+              </div>
+            </form>
+          </div>
+        {% else %}
+          <!-- Usuario no autenticado -->
+          <div class="text-center mb-4">
+            <div class="bg-secondary bg-opacity-10 rounded-circle d-inline-flex justify-content-center align-items-center" 
+                 style="width: 80px; height: 80px;">
+              <i class="bi bi-person text-secondary" style="font-size: 2.5rem;"></i>
+            </div>
+            <h6 class="mt-3 mb-1">{% trans "Welcome to Metroverso!" %}</h6>
+            <small class="text-muted">{% trans "Sign in to personalize your experience" %}</small>
+          </div>
+          
+          <div class="d-grid gap-2">
+            <a href="/auth/login/" class="btn btn-success">
+              <i class="bi bi-box-arrow-in-right me-2"></i>{% trans "Sign In" %}
+            </a>
+            <a href="/auth/register/" class="btn btn-outline-success">
+              <i class="bi bi-person-plus me-2"></i>{% trans "Create Account" %}
+            </a>
+          </div>
+          
+          <hr class="my-4">
+          
+          <div class="text-center">
+            <small class="text-muted">
+              {% trans "With an account you can:" %}
+            </small>
+            <ul class="list-unstyled mt-2 small text-muted">
+              <li><i class="bi bi-check-circle text-success me-2"></i>{% trans "Save your favorite routes" %}</li>
+              <li><i class="bi bi-check-circle text-success me-2"></i>{% trans "Customize your traveler profile" %}</li>
+              <li><i class="bi bi-check-circle text-success me-2"></i>{% trans "Access the dashboard" %}</li>
+            </ul>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+    </div>
+
     <!-- Location Controls Container -->
     <div class="location-controls">
-      <!-- Origin Location Button -->
+      <!-- Origin Location Button
       <div
         class="userLocation1"
         id="btnUserLocationOrigin"
@@ -608,9 +771,9 @@
             d="M6.25 11.745v-1.418l1.204 1.375.261.524a.8.8 0 0 1-.12.231l-2.5 3.25a.75.75 0 1 1-1.19-.914zm4.22-4.215-.494-.494.205-1.843.006-.067 1.124 1.124h1.44a.75.75 0 0 1 0 1.5H11a.75.75 0 0 1-.531-.22Z"
           />
         </svg>
-      </div>
+      </div> -->
 
-      <!-- Destination Location Button -->
+      <!-- Destination Location Button
       <div
         class="userLocation2"
         id="btnUserLocationDestiny"
@@ -628,7 +791,7 @@
             d="M8 3a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3M6 6.75v8.5a.75.75 0 0 0 1.5 0V10.5a.5.5 0 0 1 1 0v4.75a.75.75 0 0 0 1.5 0v-8.5a.25.25 0 1 1 .5 0v2.5a.75.75 0 0 0 1.5 0V6.5a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v2.75a.75.75 0 0 0 1.5 0v-2.5a.25.25 0 0 1 .5 0"
           />
         </svg>
-      </div>
+      </div> -->
 
       <!-- Current Location Button -->
       <div class="userLocation" title="{% trans 'My location' %}">
@@ -687,7 +850,8 @@
       </div>
     </div>
 
-    <div id="estimatedTimeBox">
+  <div class="estimated-info-container">
+  <div id="estimatedTimeBox">
       <div style="font-size: 1rem; font-weight: 400">
         {% trans "Estimated Time" %}
       </div>
@@ -712,7 +876,22 @@
           <polyline points="12 6 12 12 16 14" />
         </svg>
       </div>
-    </div>
+  </div>
+
+  <div id="estimatedPriceBox">
+  <div style="font-size: 1rem; font-weight: 400">
+    {% trans "Estimated Price" %}
+  </div>
+  <div
+    id="estimatedPriceValue"
+    style="font-size: 1.5rem; font-weight: 700; margin-top: 4px"
+  >
+    -- {% trans "COP" %}
+  </div>
+  <div style="position: absolute; right: 24px; top: 16px">
+  </div>
+  </div>
+  </div>
 
     <script src="{% static 'js/mapScript.js' %}"></script>
     <script src="{% static 'js/dictionary.js' %}"></script>
@@ -751,52 +930,144 @@
               '<div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;">';
             if (stations.length === 0) {
               html +=
-                '<div style="color:#dc3545;">No hay datos disponibles.</div>';
+                '<div style="color:#dc3545;">{% trans "No data available" %}.</div>';
             } else {
               stations.forEach((station) => {
                 html += `<div style="background:#fff; border:1px solid #198754; border-radius:8px; padding:8px 10px; width:120px; min-width:120px; max-width:120px; text-align:center; margin-bottom:4px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
                         <span style="font-weight:bold;">${station.name}</span><br>
                         <span style="font-size:12px; color:#888;">${station.line} | ${station.type}</span><br>
-                        <span style="font-size:14px; color:#198754; font-weight:600; background:#e6f9ed; border-radius:5px; padding:2px 8px; margin-top:4px; display:inline-block;">${station.usage} viajes</span>
+                        <span style="font-size:14px; color:#198754; font-weight:600; background:#e6f9ed; border-radius:5px; padding:2px 8px; margin-top:4px; display:inline-block;">${station.usage} {% trans "trips" %}</span>
                     </div>`;
               });
             }
             html += "</div>";
             // DBR04: Top similar routes
             html +=
-              '<div class="mt-3 mb-1 fw-bold text-success" style="font-size:1rem; text-align:center;">Rutas más frecuentes</div>';
+              '<div class="mt-3 mb-1 fw-bold text-success" style="font-size:1rem; text-align:center;">{% trans "Most Used Routes" %}</div>';
             html +=
               '<div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;">';
             if (routes.length === 0) {
               html +=
-                '<div style="color:#dc3545;">No hay datos de rutas.</div>';
+                '<div style="color:#dc3545;">{% trans "No route data available" %}.</div>';
             } else {
               routes.forEach((route) => {
                 const ruteStr =
                   route.rute && route.rute.length
                     ? route.rute.join(" &rarr; ")
                     : "";
+                const criterionText = texts.criteria[route.criterion] || route.criterion;
                 html += `<div style="background:#fff; border:1px solid #198754; border-radius:8px; padding:8px 10px; width:260px; min-width:260px; max-width:260px; text-align:center; margin-bottom:4px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
                         <span style="font-weight:bold;">${route.start} → ${route.end}</span><br>
-                        <span style="font-size:12px; color:#888;">${route.criterion}</span><br>
-                        <span style="font-size:13px; color:#198754; font-weight:600; background:#e6f9ed; border-radius:5px; padding:2px 8px; margin-top:4px; display:inline-block;">${route.count} viajes</span>
+                        <span style="font-size:12px; color:#888;">${criterionText}</span><br>
+                        <span style="font-size:13px; color:#198754; font-weight:600; background:#e6f9ed; border-radius:5px; padding:2px 8px; margin-top:4px; display:inline-block;">${route.count} {% trans "trips" %}</span>
                         <span style="font-size:11px; color:#198754; margin-top:6px; word-break:normal; white-space:pre-line;">${ruteStr}</span>
                     </div>`;
               });
             }
             html += "</div>";
+
+            // Display recent routes
+            const recentRoutes = data.recent_routes || [];
+            html +=
+              '<div class="mt-3 mb-1 fw-bold text-success" style="font-size:1rem; text-align:center;">{% trans "Most Recent Routes" %}</div>';
+            html +=
+              '<div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;">';
+            if (recentRoutes.length === 0) {
+              html +=
+                '<div style="color:#dc3545;">{% trans "No recent routes" %}.</div>';
+            } else {
+              recentRoutes.forEach((route) => {
+                const ruteStr =
+                  route.rute && route.rute.length
+                    ? route.rute.join(" &rarr; ")
+                    : "";
+                html += `<div style="background:#fff; border:1px solid #198754; border-radius:8px; padding:8px 10px; width:260px; min-width:260px; max-width:260px; text-align:center; margin-bottom:4px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                        <span style="font-weight:bold;">${route.start} → ${route.end}</span><br>
+                        <span style="font-size:12px; color:#888;">${route.date}</span><br>
+                        <span style="font-size:11px; color:#198754; margin-top:6px; word-break:normal; white-space:pre-line;">${ruteStr}</span>
+                    </div>`;
+              });
+            }
+            html += "</div>";
+            
             document.getElementById("dashboard-stations").innerHTML = html;
           })
           .catch(() => {
             document.getElementById("dashboard-stations").innerHTML =
-              '<div style="color:#dc3545;">Error al cargar datos.</div>';
+              '<div style="color:#dc3545;">{% trans "Error loading data" %}.</div>';
           });
       }
 
       document
         .querySelector('[data-bs-target="#offcanvasDashboard"]')
         .addEventListener("click", fetchDashboard);
+
+      // Profile management functions
+      function showProfileEditor() {
+        document.getElementById('profileEditor').style.display = 'block';
+        loadProfileData();
+      }
+
+      function hideProfileEditor() {
+        document.getElementById('profileEditor').style.display = 'none';
+      }
+
+      function loadProfileData() {
+        fetch('/auth/profile-data/')
+          .then(response => response.json())
+          .then(data => {
+            if (data.metro_profile) {
+              document.getElementById('profileName').value = data.metro_profile.name || '';
+              document.getElementById('profilePerfil').value = data.metro_profile.perfil || 'Frecuente';
+            }
+          })
+          .catch(error => {
+            console.error('Error loading profile data:', error);
+          });
+      }
+
+      // Handle profile form submission
+      document.getElementById('profileForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        
+        fetch('/auth/profile-data/', {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            // Show success message
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success alert-dismissible fade show mt-3';
+            alertDiv.innerHTML = `
+              <i class="bi bi-check-circle me-2"></i>{% trans "Profile updated successfully" %}.
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.getElementById('profileEditor').appendChild(alertDiv);
+            
+            // Update profile display
+            setTimeout(() => {
+              location.reload(); // Reload to show updated profile data
+            }, 1500);
+          }
+        })
+        .catch(error => {
+          console.error('Error updating profile:', error);
+          const alertDiv = document.createElement('div');
+          alertDiv.className = 'alert alert-danger alert-dismissible fade show mt-3';
+          alertDiv.innerHTML = `
+            <i class="bi bi-exclamation-triangle me-2"></i>{% trans "Error updating profile" %}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          `;
+          document.getElementById('profileEditor').appendChild(alertDiv);
+        });
+      });
     </script>
   </body>
 </html>
-

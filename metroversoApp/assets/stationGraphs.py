@@ -2353,7 +2353,7 @@ def _service_window(start_time: datetime.datetime):
         close_time = start_time.replace(hour=22, minute=0, second=0, microsecond=0)
     else:  # Monday to Saturday
         open_time  = start_time.replace(hour=4,  minute=30, second=0, microsecond=0)
-        close_time = start_time.replace(hour=23, minute=0, second=0, microsecond=0)
+        close_time = start_time.replace(hour=23, minute=00, second=0, microsecond=0)
     return open_time, close_time
 
 def _arvi_service_window(start_time: datetime.datetime):
@@ -2376,11 +2376,11 @@ def _now():
 
 def _route_includes_arvi(route):
     """
-    Returns True if the route includes the Arvi station (L02).
+    Returns True if the route includes the Arvi station (L01).
     """
     if not route:
         return False
-    return 'L02' in route
+    return 'L01' in route
 
 
 def get_current_service_hours():

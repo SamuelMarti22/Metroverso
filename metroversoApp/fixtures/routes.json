@@ -6,8 +6,10 @@
       "id_start": "A01",
       "id_end": "A10",
       "price": 1200.0,
-      "criterion": "precio",
-      "id_user": 1
+      "criterion": "Transferencias",
+      "id_user": 1,
+      "start_time": "2025-01-10T08:15:30Z",
+      "end_time": "2025-01-10T08:38:45Z"
     }
   },
   {
@@ -17,8 +19,10 @@
       "id_start": "B02",
       "id_end": "B05",
       "price": 1500.0,
-      "criterion": "tiempo",
-      "id_user": 2
+      "criterion": "Tiempo",
+      "id_user": 2,
+      "start_time": "2025-01-10T09:20:15Z",
+      "end_time": "2025-01-10T09:42:30Z"
     }
   },
   {
@@ -28,8 +32,10 @@
       "id_start": "M00",
       "id_end": "M10",
       "price": 1100.0,
-      "criterion": "precio",
-      "id_user": 3
+      "criterion": "Transferencias",
+      "id_user": 3,
+      "start_time": "2025-01-10T10:05:00Z",
+      "end_time": "2025-01-10T10:28:15Z"
     }
   },
   {
@@ -39,8 +45,62 @@
       "id_start": "O04",
       "id_end": "O13",
       "price": 1300.0,
-      "criterion": "tiempo",
-      "id_user": 4
+      "criterion": "Tiempo",
+      "id_user": 4,
+      "start_time": "2025-01-10T11:30:45Z",
+      "end_time": "2025-01-10T11:55:20Z"
+    }
+  },
+  {
+    "model": "metroversoApp.route",
+    "pk": 5,
+    "fields": {
+      "id_start": "A03",
+      "id_end": "A15",
+      "price": 1400.0,
+      "criterion": "Tiempo",
+      "id_user": 1,
+      "start_time": "2025-01-10T14:10:00Z",
+      "end_time": "2025-01-10T14:45:30Z"
+    }
+  },
+  {
+    "model": "metroversoApp.route",
+    "pk": 6,
+    "fields": {
+      "id_start": "B01",
+      "id_end": "B06",
+      "price": 1600.0,
+      "criterion": "Transferencias",
+      "id_user": 2,
+      "start_time": "2025-01-10T15:25:10Z",
+      "end_time": "2025-01-10T15:58:40Z"
+    }
+  },
+  {
+    "model": "metroversoApp.route",
+    "pk": 7,
+    "fields": {
+      "id_start": "K01",
+      "id_end": "K02",
+      "price": 1000.0,
+      "criterion": "Tiempo",
+      "id_user": 3,
+      "start_time": "2025-01-10T16:40:20Z",
+      "end_time": "2025-01-10T16:55:35Z"
+    }
+  },
+  {
+    "model": "metroversoApp.route",
+    "pk": 8,
+    "fields": {
+      "id_start": "P01",
+      "id_end": "P03",
+      "price": 1150.0,
+      "criterion": "Transferencias",
+      "id_user": 4,
+      "start_time": "2025-01-10T17:15:50Z",
+      "end_time": "2025-01-10T17:32:10Z"
     }
   }
 ]

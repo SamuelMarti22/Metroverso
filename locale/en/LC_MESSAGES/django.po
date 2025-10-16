@@ -179,3 +179,120 @@ msgstr "No transfers are required"
 
 msgid "Direct trip on line {line}"
 msgstr "Direct trip on line {line}"
+
+msgid "Dashboard"
+msgstr "Dashboard"
+
+msgid "Most Used Stations"
+msgstr "Most Used Stations"
+
+msgid "Profile"
+msgstr "Profile"
+
+msgid "Frequent"
+msgstr "Frequent"
+
+msgid "Senior"
+msgstr "Senior"
+
+msgid "Student"
+msgstr "Student"
+
+msgid "PcD"
+msgstr "PcD"
+
+msgid "Occasional"
+msgstr "Occasional"
+
+msgid "Filter by"
+msgstr "Filter by"
+
+msgid "Time"
+msgstr "Time"
+
+msgid "Distance"
+msgstr "Distance"
+
+msgid "Transfers"
+msgstr "Transfers"
+
+msgid "Loading"
+msgstr "Loading"
+
+msgid "My Profile"
+msgstr "My Profile"
+
+msgid "Sign In"
+msgstr "Sign In"
+
+msgid "Edit Profile"
+msgstr "Edit Profile"
+
+msgid "Sign Out"
+msgstr "Sign Out"
+
+msgid "Edit Information"
+msgstr "Edit Information"
+
+msgid "Full Name"
+msgstr "Full Name"
+
+msgid "Passenger Type"
+msgstr "Passenger Type"
+
+msgid "Save Changes"
+msgstr "Save Changes"
+
+msgid "Cancel"
+msgstr "Cancel"
+
+msgid "Welcome to Metroverso!"
+msgstr "Welcome to Metroverso!"
+
+msgid "Sign in to personalize your experience"
+msgstr "Sign in to personalize your experience"
+
+msgid "Create Account"
+msgstr "Create Account"
+
+msgid "With an account you can:"
+msgstr "With an account you can:"
+
+msgid "Save your favorite routes"
+msgstr "Save your favorite routes"
+
+msgid "Customize your traveler profile"
+msgstr "Customize your traveler profile"
+
+msgid "Access the dashboard"
+msgstr "Access the dashboard"
+
+msgid "No data available"
+msgstr "No data available"
+
+msgid "trips"
+msgstr "trips"
+
+msgid "Most Used Routes"
+msgstr "Most Used Routes"
+
+msgid "No route data available"
+msgstr "No route data available"
+
+msgid "Most Recent Routes"
+msgstr "Most Recent Routes"
+
+msgid "No recent routes"
+msgstr "No recent routes"
+
+msgid "Error loading data"
+msgstr "Error loading data"
+
+msgid "Profile updated successfully"
+msgstr "Profile updated successfully"
+
+msgid "Error updating profile"
+msgstr "Error updating profile"
+
+msgid "(no name)"
+msgstr "(no name)"
