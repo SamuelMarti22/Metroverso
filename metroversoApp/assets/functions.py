@@ -186,7 +186,7 @@ def get_package_price(package, profile):
 
     from metroversoApp.models import Package
 
-    qs = Package.objects.filter(id_package=pkg_int, perfil__iexact=profile_norm).values_list('price', flat=True)
+    qs = Package.objects.filter(id_package=pkg_int, profile__iexact=profile_norm).values_list('price', flat=True)
     if qs:
         return qs[0]
 
