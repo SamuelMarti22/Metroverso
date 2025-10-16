@@ -77,10 +77,10 @@ class Package(models.Model):
         ("Eventual","Eventual"),
     ]
     id_package = models.IntegerField()
-    perfil = models.CharField(max_length=20, choices=PERFIL_CHOICES)
+    profile = models.CharField(max_length=20, choices=PERFIL_CHOICES)
     price = models.FloatField()
     class Meta:
-        unique_together = ('id_package', 'perfil')
+        unique_together = ('id_package', 'profile')
 
 
 
