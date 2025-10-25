@@ -769,7 +769,8 @@ const routeFindingFunction = (centerOnRoute = true) => {
           estimatedPriceBox.style.display = 'none';
         }
       }
-      // Set up event listener for 'Start Journey' button
+
+      // Set up event listen er for 'Start Journey' button
       document
         .getElementById("btnStartJourney")
         .addEventListener("click", function () {
@@ -815,6 +816,13 @@ const routeFindingFunction = (centerOnRoute = true) => {
       if (data.rute && data.rute_coords) {
         addNodesRouteToMap(data.rute, data.rute_coords);
         
+      }
+
+      if(userFollowMarker){
+         userFollowMarker.remove();
+         userFollowMarker = null;
+         console.log("marcados eliminado")
+        stopSimulation()
       }
 
       // Update service hours display with new data
@@ -1540,11 +1548,15 @@ async function restorePageState() {
     document.getElementById("lineSelection").value = state.selectedLines;
   }
 
+  
+
   if (state.markerOrigin)
     pickStartingPoint([state.markerOrigin.lng, state.markerOrigin.lat]);
 
   if (state.markerDestiny)
     pickDestinationPoint([state.markerDestiny.lng, state.markerDestiny.lat]);
+
+
 
   localStorage.removeItem("metroversoMapState");
 }
@@ -1994,6 +2006,7 @@ function calculateMarkerHeading(position) {
  */
 function updateUserFollowMarker(coordinate, heading = 0) {
   if (!userFollowMarker) {
+  
     // Crear el marcador por primera vez SIN rotación
     userFollowMarker = NavMarker({
       fill: "#06b6d4",
@@ -2304,8 +2317,6 @@ function onStartRouteButtonClick() {
   // Inicializar los datos del viaje para guardarlos al finalizar
   initializeJourney();
 
-
-
   const testRoute = [
     // [-75.61420338, 6.281093175],  // Punto 1
     [-75.61401716, 6.275360769],  // Punto 2
@@ -2340,6 +2351,7 @@ function onStartRouteButtonClick() {
 
   console.log('🚀 Ruta iniciada con simulación');
 }
+
 function createRecenterButton() {
   if (recenterButton) return; // Ya existe
 
@@ -2391,6 +2403,7 @@ function hideRecenterButton() {
 
 // Variable global para el simulador
 let simulationInterval = null;
+let simulationInitialTimeout = null; 
 let simulationIndex = 0;
 
 /**
@@ -2399,53 +2412,84 @@ let simulationIndex = 0;
  * @param {number} intervalMs - Tiempo entre cada actualización en milisegundos (default: 2000ms = 2seg)
  */
 function simulateUserMovement(coordsArray, intervalMs = 2000, initialDelay = 3000) {
-  if (simulationInterval) {
-    clearInterval(simulationInterval);
-    simulationInterval = null;
-  }
+  // limpiar simulaciones previas
+  if (simulationInterval) { clearInterval(simulationInterval); simulationInterval = null; }
+  if (simulationInitialTimeout) { clearTimeout(simulationInitialTimeout); simulationInitialTimeout = null; }
 
   simulationIndex = 0;
   console.log(`⏳ La simulación comenzará en ${initialDelay / 1000} segundos...`);
 
-  // ✅ DELAY ANTES DE EMPEZAR
-  setTimeout(() => {
+  // ✅ guarda el timeout para poder cancelarlo
+  simulationInitialTimeout = setTimeout(() => {
+    simulationInitialTimeout = null; // ya se ejecutó
     console.log(`🎮 Iniciando simulación con ${coordsArray.length} puntos`);
 
-    // Primera coordenada
     if (coordsArray.length > 0) {
       updateUserProgress(coordsArray[0]);
     }
 
-    // Resto de coordenadas
     simulationInterval = setInterval(() => {
       simulationIndex++;
-
       if (simulationIndex >= coordsArray.length) {
         console.log('✓ Simulación completada');
         clearInterval(simulationInterval);
         simulationInterval = null;
         return;
       }
-
-      const currentCoord = coordsArray[simulationIndex];
-      console.log(`📍 Simulación paso ${simulationIndex}/${coordsArray.length}`);
-
-      updateUserProgress(currentCoord);
+      updateUserProgress(coordsArray[simulationIndex]);
     }, intervalMs);
-
   }, initialDelay);
 }
+
 
 /**
  * Detiene la simulación en curso
  */
-function stopSimulation() {
+function stopSimulation({ clearMarker = true, clearRoute = false, stopCamera = true } = {}) {
+  // timers
   if (simulationInterval) {
     clearInterval(simulationInterval);
     simulationInterval = null;
-    console.log('⏹️ Simulación detenida');
   }
+  if (simulationInitialTimeout) {
+    clearTimeout(simulationInitialTimeout);
+    simulationInitialTimeout = null;
+  }
+
+  // cámara (si estabas en easeTo/flyTo)
+  if (stopCamera && typeof map?.stop === 'function') {
+    map.stop();
+  }
+
+  // estado general
+  routeActive = false;
+  simulationIndex = 0;
+
+  // UI / modos
+  if (typeof stopNavigationMode === 'function') stopNavigationMode();
+  hideRecenterButton?.();
+
+  // marker
+  if (clearMarker) {
+    userFollowMarker?.remove();
+    userFollowMarker = null;
+  }
+
+  // limpiar ruta pintada (si se pide reinicio “completo”)
+  if (clearRoute) {
+    for (const seg of paintedSegments) {
+      try {
+        if (map.getLayer(seg.layerId)) map.removeLayer(seg.layerId);
+        if (map.getSource(seg.sourceId)) map.removeSource(seg.sourceId);
+      } catch (e) { /* ignore si ya no existen */ }
+      seg.isActive = false;
+    }
+    clearPaintedSegments();
+  }
+
+  console.log('⏹️ Simulación detenida (limpieza completa opcional)');
 }
+
 
 function checkRouteCompletion() {
   // Contar segmentos activos
