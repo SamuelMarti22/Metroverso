@@ -1318,6 +1318,7 @@ let mapContainer = document.getElementById("map");
 
 const pickStartingPoint = (originPoint, heading = 0) => {
   closestStationsToOrigin = closestPoints(turf.point(originPoint), 4000);
+   markerOrigin?.addTo?.(map); 
 
   if (markerOrigin) {
     markerOrigin
@@ -2006,7 +2007,9 @@ function calculateMarkerHeading(position) {
  */
 function updateUserFollowMarker(coordinate, heading = 0) {
   if (!userFollowMarker) {
-  
+    markerOrigin?.remove();
+    ["routeToOrigin","routeToOrigin-label"].forEach(id=>{ map.getLayer(id)&&map.removeLayer(id); map.getSource(id)&&map.removeSource(id); });
+
     // Crear el marcador por primera vez SIN rotación
     userFollowMarker = NavMarker({
       fill: "#06b6d4",
