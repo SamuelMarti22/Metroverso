@@ -859,6 +859,33 @@ document
   .getElementById("btnSearchRute")
   .addEventListener("click", routeFindingFunction);
 
+// Función para renderizar la cadena de ruta sin duplicados consecutivos
+window.renderRouteChain = function(route, transferInfo) {
+  if (!route || route.length === 0) return '';
+  
+  // Obtener nombres de estaciones
+  const stationNames = route.map(stationId => window.getStationName(stationId));
+  
+  // Filtrar duplicados consecutivos
+  const filteredNames = [];
+  for (let i = 0; i < stationNames.length; i++) {
+    if (i === 0 || stationNames[i] !== stationNames[i - 1]) {
+      filteredNames.push({
+        name: stationNames[i],
+        id: route[i],
+        isTransfer: transferInfo.transfer_stations && transferInfo.transfer_stations.includes(route[i])
+      });
+    }
+  }
+  
+  // Construir HTML con colores
+  return filteredNames.map((station, index) => {
+    const className = station.isTransfer ? 'text-danger fw-bold' : 'text-success';
+    const separator = index < filteredNames.length - 1 ? ' → ' : '';
+    return `<span class="${className}">${station.name}</span>${separator}`;
+  }).join('');
+}
+
 function displayTransferInfo(transferInfo, route) {
   let infoContainer = document.getElementById("routeInfo");
   if (!infoContainer) {
