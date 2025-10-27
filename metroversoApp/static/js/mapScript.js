@@ -2419,10 +2419,10 @@ function createRecenterButton() {
   button.title = 'Volver a modo navegación';
   button.style.cssText = `
     position: absolute;
-    bottom: 100px;
-    right: 10px;
-    width: 50px;
-    height: 50px;
+    bottom: 130px;
+    right: 15px;
+    width: 45px;
+    height: 45px;
     border-radius: 50%;
     background: white;
     border: 2px solid #06b6d4;
