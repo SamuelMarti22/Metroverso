@@ -122,9 +122,11 @@ def detect_transfers(route):
     
     for i in range(1, len(route)):
         station_line = get_line_from_station(route[i])
-        if station_line != current_line:
-            # Transfer detected at the previous station
-            transfers.append(route[i-1])
+        edge = G.get_edge_data(route[i-1], route[i])
+        
+        # Solo es transferencia si hay un edge marcado como transfer
+        if edge and edge.get('transfer') == 1:
+            transfers.append(route[i-1])  # La estación donde ocurre el transbordo
             current_line = station_line
     
     return transfers
@@ -143,29 +145,38 @@ def analyze_route_transfers(route):
     
     transfers = detect_transfers(route)
     line_segments = []
-    current_segment = [route[0]]
-    current_line = get_line_from_station(route[0])
+    current_segment = []
     
-    for i in range(1, len(route)):
-        station_line = get_line_from_station(route[i])
-        if station_line == current_line:
-            current_segment.append(route[i])
-        else:
-            # Line change
-            line_segments.append({
-                'line': current_line,
-                'stations': current_segment.copy()
-            })
-            current_segment = [route[i-1], route[i]]  # Include transfer station
-            current_line = station_line
-    
-    # Add last segment
+    if route:
+        current_segment.append(route[0])
+        current_line = get_line_from_station(route[0])
+        
+        for i in range(1, len(route)):
+            station_line = get_line_from_station(route[i])
+            edge = G.get_edge_data(route[i-1], route[i])
+            
+            # Una transferencia marca el fin de un segmento
+            if edge and edge.get('transfer') == 1:
+                # Incluir la estación de transferencia en el segmento actual
+                current_segment.append(route[i])
+                line_segments.append({
+                    'line': current_line,
+                    'stations': current_segment.copy()
+                })
+                # Iniciar nuevo segmento con la estación de transferencia
+                current_segment = [route[i]]
+                current_line = station_line
+            else:
+                # Mismo segmento, agregar estación
+                current_segment.append(route[i])
+
+    # Agregar el último segmento
     if current_segment:
         line_segments.append({
             'line': current_line,
             'stations': current_segment
         })
-    
+
     return {
         'requires_transfer': len(transfers) > 0,
         'transfer_count': len(transfers),

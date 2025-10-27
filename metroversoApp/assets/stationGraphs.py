@@ -199,6 +199,7 @@ for i in range(0, 20):  # De X00 a X20
     add_edge_time(G, linea2, origen, destino, line_key="X")
 
 add_transfer(G,"X07","A13")
+add_transfer(G,"M07", "X07")
 
 lineaB = {
     "B00": [-75.56967864286219, 6.247175927579917], #San Antonio
@@ -248,6 +249,7 @@ for i in range(0, 8):  # De T00 a T08
     add_edge_time(G, lineaT, origen, destino, line_key="T")
 
 add_transfer(G,"T00", "A10")
+add_transfer(G,"B00", "T00")
 
 lineaZ = {
     "Z00": [-75.54900339, 6.241387875], # Miraflores
@@ -361,6 +363,7 @@ for i in range(0, 3):  # De P00 a P03
     add_edge_time(G, lineaP, origen, destino, line_key="P")
 
 add_transfer(G,"P00","A03")
+add_transfer(G, "P00", "K00")
 
 lineaK = {
     "K00": [-75.55851194186361, 6.299961957796953],  # Acevedo
@@ -382,6 +385,7 @@ for i in range(0, 3):  # De K00 a K03
     add_edge_time(G, lineaK, origen, destino, line_key="K")
 
 add_transfer(G,"K00", "A03")
+add_transfer(G, "K00", "P00")
 add_transfer(G,"K03", "L00")
 
 # # Alimentadores:
