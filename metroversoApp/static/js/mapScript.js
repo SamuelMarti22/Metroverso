@@ -381,6 +381,7 @@ function walkingRouteToOrigin() {
 
 // Function to get walking route to destination
 function walkingRouteToDestination() {
+  console.log(markerDestiny);
   const lastPoint = closestStationsToDestination[0];
   if (markerDestiny) {
     walkingRoute(lastPoint.geometry.coordinates, [
@@ -679,11 +680,19 @@ const routeFindingFunction = (centerOnRoute = true) => {
   selectStart = getSelectedFrom('selectStart');
   selectDestination = getSelectedFrom('selectDestination');
 
+  if (destinationMarker!=null){
+    console.log("seleccionado por el marcador");
+     inputDestination = destinationMarker.properties.ID;
+     nameDestination = "Seleccionado desde marcador";
+  }
+  else{
+     inputDestination = selectDestination.id;
+     nameDestination = selectDestination.label;
+  }
+
   const inputStart = selectStart.id;
-  const inputDestination = selectDestination.id;
   const inputCriteria = document.getElementById("inputCriteria").value;
   const nameStart = selectStart.label;
-  const nameDestination = selectDestination.label;
 
   const alertBox = document.getElementById("alerta-validacion");
   const alertMessage = document.getElementById("mensaje-alerta");
@@ -1308,13 +1317,13 @@ let mapContainer = document.getElementById("map");
 //     console.log("🟢 Modo selección activado (Origen): haz clic en el mapa");
 //   });
 
-// document
-//   .getElementById("btnUserLocationDestiny")
-//   .addEventListener("click", () => {
-//     selecting = 2;
-//     map.getCanvas().classList.add("crosshair");
-//     console.log("🟢 Modo selección activado (Destino): haz clic en el mapa");
-//   });
+document
+  .getElementById("btnUserLocationDestiny")
+  .addEventListener("click", () => {
+    selecting = 2;
+    map.getCanvas().classList.add("crosshair");
+    console.log("🟢 Modo selección activado (Destino): haz clic en el mapa");
+  });
 
 const pickStartingPoint = (originPoint, heading = 0) => {
   closestStationsToOrigin = closestPoints(turf.point(originPoint), 4000);
@@ -1359,15 +1368,33 @@ const drawWalkingRoutes = () => {
   }
 };
 
+destinationMarker = null;
+
+const pickDestinationPointMarker = (destinyPoint) => {
+  closestStationsToDestination = closestPoints(turf.point(destinyPoint), 4000);
+  destinationMarker = closestStationsToDestination[0];
+  document.getElementById("inputDestination").value = "Seleccionado con marcador"
+  clearRouteVisualization();
+
+  console.log("selecciono destino desde el marcador estacion",destinationMarker.properties.ID)
+  if (markerDestiny) {
+    markerDestiny.setLngLat(destinyPoint);
+  } else {
+    markerDestiny = new mapboxgl.Marker({ color: "red" })
+      .setLngLat(destinyPoint)
+      .addTo(map);
+  }
+  drawWalkingRoutes();
+};
+
 // If a user clicks the map
-// map.on("click", (e) => {
-//   if (selecting === 0) return; // not selecting
-//   selecting === 1
-//     ? pickStartingPoint([e.lngLat.lng, e.lngLat.lat])
-//     : pickDestinationPoint([e.lngLat.lng, e.lngLat.lat]);
-//   selecting = 0;
-//   map.getCanvas().classList.remove("crosshair");
-// });
+map.on("click", (e) => {
+  if (selecting === 0) return; // not selecting
+  selecting === 1
+    pickDestinationPointMarker([e.lngLat.lng, e.lngLat.lat]);
+  selecting = 0;
+  map.getCanvas().classList.remove("crosshair");
+});
 
 // Variables to store the id and selected location
 let selectedStationId = null;
@@ -1569,6 +1596,13 @@ function changeLanguage(lang) {
   document.getElementById("language-form").submit();
 }
 
+  function getNearestStationId(lon, lat, featureCollection) {
+    const target = turf.point([lon, lat]);
+    const nearest = turf.nearestPoint(target, featureCollection);
+    return nearest?.properties?.ID ?? null;
+  }
+
+
 // Setup typeahead (autocomplete) for start and destination inputs
 document.addEventListener('DOMContentLoaded', () => {
   // --- Config ---
@@ -1579,12 +1613,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const key = JSON.stringify([lon, lat]);
     const coord = (typeof coordenadas === 'object') ? coordenadas[key] : null;
     return coord ? [coord[0], coord[1]] : [lon, lat];
-  }
-
-  function getNearestStationId(lon, lat, featureCollection) {
-    const target = turf.point([lon, lat]);
-    const nearest = turf.nearestPoint(target, featureCollection);
-    return nearest?.properties?.ID ?? null;
   }
 
   // Guarda el resultado en el select indicado (value=ID, text=label, data-lon/lat)
