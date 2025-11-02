@@ -1386,6 +1386,7 @@ const pickDestinationPoint = (destinyPoint) => {
       .addTo(map);
   }
   drawWalkingRoutes();
+  destinationMarker = null;
 };
 
 const drawWalkingRoutes = () => {
