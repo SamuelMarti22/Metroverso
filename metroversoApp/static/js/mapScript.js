@@ -868,50 +868,22 @@ document
   .getElementById("btnSearchRute")
   .addEventListener("click", routeFindingFunction);
 
-// Función para renderizar la cadena de ruta sin duplicados consecutivos
-window.renderRouteChain = function(route, transferInfo) {
-  if (!route || route.length === 0) return '';
-  
-  // Obtener nombres de estaciones
-  const stationNames = route.map(stationId => window.getStationName(stationId));
-  
-  // Filtrar duplicados consecutivos
-  const filteredNames = [];
-  for (let i = 0; i < stationNames.length; i++) {
-    if (i === 0 || stationNames[i] !== stationNames[i - 1]) {
-      filteredNames.push({
-        name: stationNames[i],
-        id: route[i],
-        isTransfer: transferInfo.transfer_stations && transferInfo.transfer_stations.includes(route[i])
-      });
-    }
-  }
-  
-  // Construir HTML con colores
-  return filteredNames.map((station, index) => {
-    const className = station.isTransfer ? 'text-danger fw-bold' : 'text-success';
-    const separator = index < filteredNames.length - 1 ? ' → ' : '';
-    return `<span class="${className}">${station.name}</span>${separator}`;
-  }).join('');
-}
-
 function displayTransferInfo(transferInfo, route) {
   let infoContainer = document.getElementById("routeInfo");
   if (!infoContainer) {
     infoContainer = document.createElement("div");
     infoContainer.id = "routeInfo";
-    infoContainer.style.marginTop = "10px";
-    infoContainer.style.padding = "10px";
-    infoContainer.style.backgroundColor = "#f8f9fa";
-    infoContainer.style.borderRadius = "5px";
+    infoContainer.style.marginTop = "16px";
+    infoContainer.style.padding = "0";
     document.querySelector(".divRute").appendChild(infoContainer);
   }
 
-  let html = `<h6>${texts.routeInformation.title}</h6>`;
-  html +=
-    `<p class="route-chain"><strong>${texts.routeInformation.fullRoute}:</strong> ` +
-    window.renderRouteChain(route, transferInfo) +
-    "</p>";
+  let html = `
+    <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 16px; border-radius: 12px; margin-bottom: 12px;">
+      <h6 class="text-success fw-bold mb-2" style="font-size: 1.1rem;">
+        <i class="bi bi-info-circle me-2"></i>${texts.routeInformation.title}
+      </h6>
+  `;
 
   if (transferInfo.requires_transfer) {
     const transferCount = transferInfo.transfer_count;
@@ -920,21 +892,24 @@ function displayTransferInfo(transferInfo, route) {
       : texts.routeInformation.transferTextSingular;
     const transfersRequiredText = transferText.replace('{n}', transferCount);
 
-    html += `<p><strong>${transfersRequiredText}</strong></p>`;
-    html += `<p><strong>${texts.routeInformation.transferStationsTitle}:</strong></p>`;
-    html += `<ul>`;
-    transferInfo.transfer_stations.forEach((station) => {
-      const stationName = window.getStationName(station);
-      // Traducción para "Transferencia en: ..."
-      html += `<li>${texts.routeInformation.transferAt.replace('{station}', `<strong>${stationName}</strong>`)}</li>`;
-    });
-    html += `</ul>`;
+    html += `
+      <div style="background: white; padding: 10px; border-radius: 8px; border-left: 4px solid #ffc107; margin-bottom: 8px;">
+        <strong style="color: #856404;">⚠️ ${transfersRequiredText}</strong>
+      </div>
+    `;
   } else {
-    // Traducción para "No se requieren transferencias"
-    html += `<p><strong>${texts.routeInformation.noTransfersRequired}</strong></p>`;
-    // Traducción para "Viaje directo en la línea ..."
-    html += `<p>${texts.routeInformation.directTrip.replace('{line}', transferInfo.line_segments[0]?.line)}</p>`;
+    html += `
+      <div style="background: white; padding: 10px; border-radius: 8px; border-left: 4px solid #20c997; margin-bottom: 8px;">
+        <strong style="color: #20c997;">✓ ${texts.routeInformation.noTransfersRequired}</strong><br>
+        <small style="color: #6c757d;">${texts.routeInformation.directTrip.replace('{line}', transferInfo.line_segments[0]?.line)}</small>
+      </div>
+    `;
   }
+  
+  html += `</div>`;
+  
+  // Route cards visualization
+  html += window.renderRouteChain(route, transferInfo);
 
   // How to make transfers
   if (transferInfo.requires_transfer) {
@@ -952,7 +927,6 @@ function displayTransferInfo(transferInfo, route) {
       const transferStationName = window.getStationName(transferStation);
       const nextStationName = window.getStationName(nextStation);
 
-      // Traducción para la instrucción de transbordo
       transferHints.push(
         texts.routeInformation.transferHint
           .replace('{station}', `<strong>${transferStationName}</strong>`)
@@ -962,10 +936,17 @@ function displayTransferInfo(transferInfo, route) {
     }
 
     html += `
-      <hr class="my-2">
-      <h6 class="mb-2 text-success fw-bold">${texts.routeInformation.transferFollowTitle}</h6>
-      <div class="small">
-      ${transferHints.map((h) => `<div>• ${h}</div>`).join("")}
+      <div style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); padding: 16px; border-radius: 12px; margin-top: 16px; border: 1px solid #ffc107;">
+        <h6 class="mb-3 fw-bold" style="color: #856404;">
+          <i class="bi bi-arrow-left-right me-2"></i>${texts.routeInformation.transferFollowTitle}
+        </h6>
+        <div class="small" style="color: #664d03;">
+          ${transferHints.map((h, idx) => `
+            <div style="background: white; padding: 10px; border-radius: 8px; margin-bottom: 8px; border-left: 3px solid #ffc107;">
+              <strong style="color: #856404;">${idx + 1}.</strong> ${h}
+            </div>
+          `).join("")}
+        </div>
       </div>
     `;
   }

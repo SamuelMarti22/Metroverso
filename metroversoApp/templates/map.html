@@ -107,6 +107,40 @@
       rel="stylesheet"
     />
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+      /* Estilos personalizados para tooltips de la sidebar */
+      .tooltip.sidebar-tooltip .tooltip-inner {
+        background-color: #20c997;
+        color: white;
+        font-size: 0.95rem;
+        font-weight: 500;
+        padding: 8px 14px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(32, 201, 151, 0.3);
+      }
+      
+      .tooltip.sidebar-tooltip .tooltip-arrow::before {
+        border-right-color: #20c997;
+      }
+    </style>
+    <script>
+    // Inicializa todos los tooltips de la página
+    document.addEventListener('DOMContentLoaded', () => {
+      // Inicializar tooltips en elementos de la sidebar
+      const sidebarButtons = document.querySelectorAll('.sidebar [title]');
+      sidebarButtons.forEach(el => {
+        new bootstrap.Tooltip(el, {
+          placement: 'right',
+          trigger: 'hover',
+          customClass: 'sidebar-tooltip'
+        });
+      });
+      
+      // Inicializar otros tooltips estándar
+      const otherTooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]:not(.sidebar [title])');
+      otherTooltips.forEach(el => new bootstrap.Tooltip(el));
+    });
+    </script>
   </head>
 
   <body>
@@ -141,6 +175,7 @@
         data-bs-toggle="offcanvas"
         data-bs-target="#offcanvasScrolling"
         aria-controls="offcanvasScrolling"
+        title="{% trans 'Route Planner' %}"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -162,6 +197,7 @@
         data-bs-toggle="offcanvas"
         data-bs-target="#offcanvasLines"
         aria-controls="offcanvasLines"
+        title="{% trans 'Metro Lines' %}"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -184,7 +220,7 @@
         data-bs-toggle="offcanvas"
         data-bs-target="#offcanvasDashboard"
         aria-controls="offcanvasDashboard"
-        title="Dashboard"
+        title="{% trans 'Dashboard' %}"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -200,7 +236,10 @@
         </svg>
       </div>
 
-      <div class="subCategory d-flex justify-content-center align-items-center">
+      <div 
+        class="subCategory d-flex justify-content-center align-items-center"
+        title="{% trans 'Explore' %}"
+      >
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="18"
@@ -221,6 +260,7 @@
         data-bs-toggle="offcanvas"
         data-bs-target="#languageOffcanvas"
         aria-controls="languageOffcanvas"
+        title="{% trans 'Language' %}"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -246,6 +286,7 @@
         data-bs-target="#profileOffcanvas"
         aria-controls="profileOffcanvas"
         style="cursor: pointer;"
+        title="{% trans 'Profile' %}"
       >
         {% if user_data.is_authenticated %}
           <!-- Usuario autenticado - icono con indicador -->
