@@ -546,7 +546,7 @@ map.on("load", () => {
 
   // Restore page state if available
   restorePageState();
-  
+
   // Inicializar markers de información de estaciones
   setTimeout(() => {
     createStationInfoLayerFromPoints();
@@ -653,6 +653,7 @@ function displayArviServiceHours(serviceHours) {
   }
 }
 
+let userMarkerActive = false;
 // Function to go to user location
 document.querySelector(".userLocation").addEventListener("click", function () {
   if (userMarker) {
@@ -661,6 +662,12 @@ document.querySelector(".userLocation").addEventListener("click", function () {
       zoom: 15,
       essential: true,
     });
+
+    userMarkerActive = true;
+    const { lng, lat } = userMarker.getLngLat();
+    pickStartingPoint([lng, lat]);
+    document.getElementById("inputStart").value = "Mi ubicación"
+
   } else {
     alert("Could not find location.");
   }
@@ -680,19 +687,29 @@ const routeFindingFunction = (centerOnRoute = true) => {
   selectStart = getSelectedFrom('selectStart');
   selectDestination = getSelectedFrom('selectDestination');
 
-  if (destinationMarker!=null){
+  if (destinationMarker != null) {
     console.log("seleccionado por el marcador");
-     inputDestination = destinationMarker.properties.ID;
-     nameDestination = "Seleccionado desde marcador";
+    inputDestination = destinationMarker.properties.ID;
+    nameDestination = "Seleccionado desde marcador";
   }
-  else{
-     inputDestination = selectDestination.id;
-     nameDestination = selectDestination.label;
+  else {
+    inputDestination = selectDestination.id;
+    nameDestination = selectDestination.label;
   }
 
-  const inputStart = selectStart.id;
+  if (userMarkerActive == true) {
+    console.log("seleccionado por el boton de userLocation");
+    const { lng, lat } = userMarker.getLngLat();
+    inputStart = getNearestStationId(lng, lat, featureCollection);
+    nameStart = "Seleccionado por el marcador de ubicación";
+    console.log("Estación más cercana al usuario:", inputStart);
+  }
+  else {
+    console.log("seleccionado por el select");
+    inputStart = selectStart.id;
+    nameStart = selectStart.label;
+  }
   const inputCriteria = document.getElementById("inputCriteria").value;
-  const nameStart = selectStart.label;
 
   const alertBox = document.getElementById("alerta-validacion");
   const alertMessage = document.getElementById("mensaje-alerta");
@@ -725,7 +742,7 @@ const routeFindingFunction = (centerOnRoute = true) => {
   const profileSelection = profileSelectionEl ? profileSelectionEl.value : 'Frecuente';
 
   fetch(`/view/callRute?inputStart=${startId}&inputDestination=${endId}` + `&inputCriteria=${encodeURIComponent(inputCriteria)}`
-  + `&nameStart=${encodeURIComponent(nameStart)}` + `&nameDestination=${encodeURIComponent(nameDestination)}` + `&profileSelection=${encodeURIComponent(profileSelection)}`)
+    + `&nameStart=${encodeURIComponent(nameStart)}` + `&nameDestination=${encodeURIComponent(nameDestination)}` + `&profileSelection=${encodeURIComponent(profileSelection)}`)
     .then((res) => res.json())
     .then((data) => {
       console.log("Ruta:", data.rute);
@@ -801,7 +818,7 @@ const routeFindingFunction = (centerOnRoute = true) => {
           }
 
           // If can make the trip, do not show anything
-          if(!initializeJourney()){
+          if (!initializeJourney()) {
             alert("Error initializing journey.");
             return;
           }
@@ -824,13 +841,13 @@ const routeFindingFunction = (centerOnRoute = true) => {
       // Display the route on the map
       if (data.rute && data.rute_coords) {
         addNodesRouteToMap(data.rute, data.rute_coords);
-        
+
       }
 
-      if(userFollowMarker){
-         userFollowMarker.remove();
-         userFollowMarker = null;
-         console.log("marcados eliminado")
+      if (userFollowMarker) {
+        userFollowMarker.remove();
+        userFollowMarker = null;
+        console.log("marcados eliminado")
         stopSimulation()
       }
 
@@ -869,12 +886,12 @@ document
   .addEventListener("click", routeFindingFunction);
 
 // Función para renderizar la cadena de ruta sin duplicados consecutivos
-window.renderRouteChain = function(route, transferInfo) {
+window.renderRouteChain = function (route, transferInfo) {
   if (!route || route.length === 0) return '';
-  
+
   // Obtener nombres de estaciones
   const stationNames = route.map(stationId => window.getStationName(stationId));
-  
+
   // Filtrar duplicados consecutivos
   const filteredNames = [];
   for (let i = 0; i < stationNames.length; i++) {
@@ -886,7 +903,7 @@ window.renderRouteChain = function(route, transferInfo) {
       });
     }
   }
-  
+
   // Construir HTML con colores
   return filteredNames.map((station, index) => {
     const className = station.isTransfer ? 'text-danger fw-bold' : 'text-success';
@@ -1117,7 +1134,7 @@ function showLines(selectedLines) {
   const center = (window.turf && window.turf.center) || null;
 
   const sourceId = "lineasCompletas";
-  const layerId  = "lineas-layer";
+  const layerId = "lineas-layer";
 
   // 1) Crear/actualizar source + layer
   if (map.getSource(sourceId)) {
@@ -1352,29 +1369,51 @@ document
     console.log("🟢 Modo selección activado (Destino): haz clic en el mapa");
   });
 
+
 const pickStartingPoint = (originPoint, heading = 0) => {
-  closestStationsToOrigin = closestPoints(turf.point(originPoint), 4000);
-   markerOrigin?.addTo?.(map); 
+  closestStationsToOrigin = closestPoints(turf.point(originPoint), 100000);
 
-  if (markerOrigin) {
-    markerOrigin
-      .setLngLat(originPoint)
-      .setRotation?.(heading);
+  const wantKind = userMarkerActive ? 'invisible' : 'nav';
+  const haveKind = markerOrigin?._kind;
+
+  if (!markerOrigin || haveKind !== wantKind) {
+    // (re)crear marcador según la flag
+    markerOrigin?.remove?.();
+
+    if (wantKind === 'invisible') {
+      // marcador HTML completamente invisible (0x0)
+      const el = document.createElement('div');
+      el.style.width = '0px';
+      el.style.height = '0px';
+      el.style.pointerEvents = 'none';
+      markerOrigin = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
+        .setLngLat(originPoint)
+        .setRotation?.(heading)
+        .addTo(map);
+    } else {
+      // tu NavMarker visible
+      markerOrigin = NavMarker({
+        fill: "#3b82f6",
+        stroke: "#ffffff",
+        halo: "rgba(59,130,246,.18)",
+        size: 36,
+        heading
+      })
+        .setLngLat(originPoint)
+        .setRotation?.(heading)
+        .addTo(map);
+    }
+
+    markerOrigin._kind = wantKind; // recordamos el tipo actual
   } else {
-
-    markerOrigin = NavMarker({
-      fill: "#3b82f6",                 // azul del triángulo
-      stroke: "#ffffff",               // borde blanco
-      halo: "rgba(59,130,246,.18)",    // halo azul claro
-      size: 36,
-      heading
-    })
-      .setLngLat(originPoint)
-      .addTo(map);
+    // mismo tipo: solo actualizar posición/rotación
+    markerOrigin.setLngLat(originPoint).setRotation?.(heading).addTo?.(map);
   }
 
-  drawWalkingRoutes();
+  clearRouteVisualization?.();
+  drawWalkingRoutes?.();
 };
+
 
 const pickDestinationPoint = (destinyPoint) => {
   closestStationsToDestination = closestPoints(turf.point(destinyPoint), 4000);
@@ -1386,6 +1425,7 @@ const pickDestinationPoint = (destinyPoint) => {
       .addTo(map);
   }
   drawWalkingRoutes();
+  clearRouteVisualization();
   destinationMarker = null;
 };
 
@@ -1404,7 +1444,7 @@ const pickDestinationPointMarker = (destinyPoint) => {
   document.getElementById("inputDestination").value = "Seleccionado con marcador"
   clearRouteVisualization();
 
-  console.log("selecciono destino desde el marcador estacion",destinationMarker.properties.ID)
+  console.log("selecciono destino desde el marcador estacion", destinationMarker.properties.ID)
   if (markerDestiny) {
     markerDestiny.setLngLat(destinyPoint);
   } else {
@@ -1419,7 +1459,7 @@ const pickDestinationPointMarker = (destinyPoint) => {
 map.on("click", (e) => {
   if (selecting === 0) return; // not selecting
   selecting === 1
-    pickDestinationPointMarker([e.lngLat.lng, e.lngLat.lat]);
+  pickDestinationPointMarker([e.lngLat.lng, e.lngLat.lat]);
   selecting = 0;
   map.getCanvas().classList.remove("crosshair");
 });
@@ -1604,7 +1644,7 @@ async function restorePageState() {
     document.getElementById("lineSelection").value = state.selectedLines;
   }
 
-  
+
 
   if (state.markerOrigin)
     pickStartingPoint([state.markerOrigin.lng, state.markerOrigin.lat]);
@@ -1624,11 +1664,11 @@ function changeLanguage(lang) {
   document.getElementById("language-form").submit();
 }
 
-  function getNearestStationId(lon, lat, featureCollection) {
-    const target = turf.point([lon, lat]);
-    const nearest = turf.nearestPoint(target, featureCollection);
-    return nearest?.properties?.ID ?? null;
-  }
+function getNearestStationId(lon, lat, featureCollection) {
+  const target = turf.point([lon, lat]);
+  const nearest = turf.nearestPoint(target, featureCollection);
+  return nearest?.properties?.ID ?? null;
+}
 
 
 // Setup typeahead (autocomplete) for start and destination inputs
@@ -1777,6 +1817,7 @@ document.addEventListener('DOMContentLoaded', () => {
     onChoose: ({ lon, lat }) => {
       // Llama tu función de inicio con [lon, lat]
       if (typeof pickStartingPoint === 'function') {
+        userMarkerActive = false;
         pickStartingPoint([lon, lat]);
       } else {
         console.warn('pickStartingPoint no está definida');
@@ -2064,7 +2105,7 @@ function calculateMarkerHeading(position) {
 function updateUserFollowMarker(coordinate, heading = 0) {
   if (!userFollowMarker) {
     markerOrigin?.remove();
-    ["routeToOrigin","routeToOrigin-label"].forEach(id=>{ map.getLayer(id)&&map.removeLayer(id); map.getSource(id)&&map.removeSource(id); });
+    ["routeToOrigin", "routeToOrigin-label"].forEach(id => { map.getLayer(id) && map.removeLayer(id); map.getSource(id) && map.removeSource(id); });
 
     // Crear el marcador por primera vez SIN rotación
     userFollowMarker = NavMarker({
@@ -2385,13 +2426,13 @@ function onStartRouteButtonClick() {
     [-75.6136642, 6.256780931], // Punto 5
     [-75.60374625, 6.25808821],
     [-75.5977437, 6.258709043],
-    [ -75.56967864286219,6.247175927579917],
+    [-75.56967864286219, 6.247175927579917],
     [-75.57014923566216, 6.246098926651181]
-    [-75.57043010796497,6.245463747245475],
-    [-75.5691065931842,6.24858643686346],
-    [-75.56918460560735,6.248433855368293],
-    [-75.56934537680426, 6.248083436588248 ],
-    [-75.56947112836812,6.2477782199831],
+    [-75.57043010796497, 6.245463747245475],
+    [-75.5691065931842, 6.24858643686346],
+    [-75.56918460560735, 6.248433855368293],
+    [-75.56934537680426, 6.248083436588248],
+    [-75.56947112836812, 6.2477782199831],
   ];
 
 
@@ -2462,7 +2503,7 @@ function hideRecenterButton() {
 
 // Variable global para el simulador
 let simulationInterval = null;
-let simulationInitialTimeout = null; 
+let simulationInitialTimeout = null;
 let simulationIndex = 0;
 
 /**
@@ -2829,10 +2870,10 @@ function showTransferAlert(message, type = 'warning') {
 // ==================== STATION INFO LAYERS (MAPBOX NATIVO) ====================
 
 // Función para agregar layer de información de estaciones
-window.addStationInfoLayer = async function() {
+window.addStationInfoLayer = async function () {
   console.log('� INICIANDO addStationInfoLayer');
   console.log('�🗺️ Agregando layer nativo de información de estaciones');
-  
+
   if (!linesStations || !linesStations.features) {
     console.warn('No hay datos de estaciones disponibles para el layer');
     return;
@@ -2842,22 +2883,22 @@ window.addStationInfoLayer = async function() {
     // Obtener lista de estaciones que tienen datos en la base de datos
     const response = await fetch('/stations-with-data/');
     const data = await response.json();
-    
+
     if (data.error) {
       console.error('Error obteniendo estaciones con datos:', data.error);
       return;
     }
-    
+
     const stationsWithData = data.stations.map(s => s.id_station);
     console.log(`📊 Estaciones con datos en BD: ${stationsWithData.length}`, stationsWithData);
-    
+
     // Debug: ver qué propiedades tiene el GeoJSON
     const firstFeature = linesStations.features[0];
     console.log('🔍 Primera feature completa del GeoJSON:', firstFeature);
     console.log('🔍 Propiedades de la primera feature:', firstFeature?.properties);
     console.log('🔍 Todas las claves de properties:', Object.keys(firstFeature?.properties || {}));
     console.log('🔍 IDs de BD que buscamos:', stationsWithData.slice(0, 5));
-    
+
     // Filtrar el GeoJSON para incluir solo estaciones con datos
     const filteredFeatures = linesStations.features.filter(feature => {
       const hasMatch = stationsWithData.includes(feature.properties.id_station);
@@ -2866,14 +2907,14 @@ window.addStationInfoLayer = async function() {
       }
       return hasMatch;
     });
-    
+
     console.log(`🎯 Estaciones filtradas para mostrar: ${filteredFeatures.length}`);
-    
+
     if (filteredFeatures.length === 0) {
       console.warn('No hay estaciones con datos para mostrar');
       return;
     }
-    
+
     // Crear GeoJSON filtrado
     const filteredGeoJSON = {
       type: 'FeatureCollection',
@@ -2914,13 +2955,13 @@ window.addStationInfoLayer = async function() {
   map.on('click', 'stations-info-layer', async (e) => {
     const stationId = e.features[0].properties.id_station;
     const coordinates = e.features[0].geometry.coordinates.slice();
-    
+
     console.log(`🔍 Click en estación ${stationId}`, coordinates);
 
     try {
       const response = await fetch(`/station/${stationId}/`);
       const data = await response.json();
-      
+
       let servicesHtml = '';
       if (data.services && data.services.length > 0) {
         servicesHtml = '<h6>🛠️ Servicios:</h6><ul>';
@@ -2976,7 +3017,7 @@ window.addStationInfoLayer = async function() {
 }
 
 // Función para crear layer de información de estaciones
-window.createStationInfoLayerFromPoints = async function() {
+window.createStationInfoLayerFromPoints = async function () {
   if (!pointsStations || !Array.isArray(pointsStations)) {
     return;
   }
@@ -2985,13 +3026,13 @@ window.createStationInfoLayerFromPoints = async function() {
     // Obtener estaciones con datos
     const response = await fetch('/stations-with-data/');
     const data = await response.json();
-    
+
     if (data.error) {
       return;
     }
-    
+
     const stationsWithData = data.stations.map(s => s.id_station);
-    
+
     // Filtrar estaciones con datos y limpiar propiedades
     const filteredStations = pointsStations.filter(station => {
       return stationsWithData.includes(station.properties.ID);
@@ -3005,11 +3046,11 @@ window.createStationInfoLayerFromPoints = async function() {
         }
       };
     });
-    
+
     if (filteredStations.length === 0) {
       return;
     }
-    
+
     // Crear GeoJSON con las estaciones filtradas
     const stationsGeoJSON = {
       type: 'FeatureCollection',
@@ -3056,7 +3097,7 @@ window.createStationInfoLayerFromPoints = async function() {
       try {
         const response = await fetch(`/station/${stationId}/`);
         const data = await response.json();
-        
+
         let servicesHtml = '';
         if (data.services && data.services.length > 0) {
           servicesHtml = `
