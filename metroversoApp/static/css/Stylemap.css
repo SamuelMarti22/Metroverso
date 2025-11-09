@@ -329,6 +329,118 @@ body {
     margin: 0 .25rem;
 }
 
+/* ==================== ROUTE CARDS STYLES ==================== */
+.route-cards-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-top: 16px;
+    position: relative;
+}
+
+.route-station-card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.route-station-card:hover {
+    box-shadow: 0 4px 12px rgba(32, 201, 151, 0.15);
+    transform: translateX(4px);
+    border-color: #20c997;
+}
+
+.route-station-card.first-station {
+    background: linear-gradient(135deg, #e8f8f5 0%, #ffffff 100%);
+    border-color: #20c997;
+    border-width: 2px;
+}
+
+.route-station-card.last-station {
+    background: linear-gradient(135deg, #fff5e6 0%, #ffffff 100%);
+    border-color: #ffa500;
+    border-width: 2px;
+}
+
+.route-station-card.transfer-station {
+    background: linear-gradient(135deg, #fff0f0 0%, #ffffff 100%);
+    border-color: #ea0f0f;
+    border-left-width: 4px;
+}
+
+.station-card-icon {
+    font-size: 28px;
+    min-width: 40px;
+    text-align: center;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.station-card-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.station-card-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2d3436;
+    line-height: 1.2;
+}
+
+.station-card-line {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    width: fit-content;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.station-card-connector {
+    position: absolute;
+    left: 35px;
+    bottom: -8px;
+    width: 3px;
+    height: 8px;
+    background: linear-gradient(to bottom, #20c997, #e9ecef);
+    z-index: 1;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+    .route-station-card {
+        padding: 10px 12px;
+    }
+    
+    .station-card-icon {
+        font-size: 24px;
+        min-width: 35px;
+    }
+    
+    .station-card-name {
+        font-size: 0.9rem;
+    }
+    
+    .station-card-line {
+        font-size: 0.7rem;
+        padding: 3px 8px;
+    }
+}
+
 /* Alert styles */
 #alerta-validacion {
     z-index: 9999 !important;

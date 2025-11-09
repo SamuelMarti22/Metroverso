@@ -186,18 +186,51 @@ window.renderRouteChain = function(route, transferInfo){
       }
     }
 
-    // Generates the spans with station names instead of IDs
-    var parts = [];
+    // Color mapping for metro lines
+    const lineColors = {
+      'A': '#005d9a', 'B': '#e88530', 'O': '#e3807b', 
+      'Z': '#e0007a', 'X': '#66a7ab', 'M': '#017077',
+      'K': '#bacc44', 'P': '#e10521', 'L': '#8b622a',
+      'J': '#f5c439', 'H': '#6a206b', 'T': '#008f37',
+      '1': '#005d9a', '2': '#e88530'
+    };
+
+    // Generates the card HTML for each station
+    var cards = [];
     for (var j = 0; j < route.length; j++) {
-      var st = String(route[j] || "");
-      var stationName = getStationName(st);
-      var isTransfer = !!transferSet[st];
-      var cls = isTransfer ? "station transfer" : "station";
-      parts.push('<span class="' + cls + '">' + stationName + '</span>');
+      var stationId = String(route[j] || "");
+      var stationName = getStationName(stationId);
+      var isTransfer = !!transferSet[stationId];
+      var line = stationId.charAt(0); // Extract line from station ID
+      var lineColor = lineColors[line] || '#20c997';
+      
+      // Determine if it's the first or last station
+      var isFirst = j === 0;
+      var isLast = j === route.length - 1;
+      
+      var cardClass = 'route-station-card';
+      if (isFirst) cardClass += ' first-station';
+      if (isLast) cardClass += ' last-station';
+      if (isTransfer) cardClass += ' transfer-station';
+      
+      var icon = isFirst ? '🚶' : (isLast ? '🏁' : (isTransfer ? '🔄' : '🚇'));
+      
+      cards.push(`
+        <div class="${cardClass}">
+          <div class="station-card-icon">${icon}</div>
+          <div class="station-card-content">
+            <div class="station-card-name">${stationName}</div>
+            <div class="station-card-line" style="background-color: ${lineColor}">
+              Línea ${line}
+            </div>
+          </div>
+          ${!isLast ? '<div class="station-card-connector"></div>' : ''}
+        </div>
+      `);
     }
 
-    // Unites with the separator
-    return parts.join('<span class="sep"> → </span>');
+    // Return cards wrapped in a container
+    return '<div class="route-cards-container">' + cards.join('') + '</div>';
   } catch (e) {
     console.error("renderRouteChain ERROR:", e, { route, transferInfo });
     // Fallback: if at least something is visible
