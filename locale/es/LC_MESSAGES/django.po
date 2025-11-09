@@ -216,6 +216,27 @@ msgstr "Distancia"
 msgid "Transfers"
 msgstr "Transferencias"
 
+msgid "Price"
+msgstr "Precio"
+
+msgid "Route Planner"
+msgstr "Planificador de Rutas"
+
+msgid "Metro Lines"
+msgstr "Líneas del Metro"
+
+msgid "Explore"
+msgstr "Explorar"
+
+msgid "Language"
+msgstr "Idioma"
+
+msgid "Estimated Price"
+msgstr "Precio Estimado"
+
+msgid "COP"
+msgstr "COP"
+
 msgid "Loading"
 msgstr "Cargando"
 
