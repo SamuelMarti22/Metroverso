@@ -799,3 +799,161 @@ body {
     border: 1px solid rgba(32, 201, 151, 0.1);
 }
 
+/* ==================== SHEPHERD.JS TUTORIAL STYLES ==================== */
+.shepherd-modal-overlay-container {
+    background: rgba(0, 0, 0, 0.5) !important;
+}
+
+.shepherd-element {
+    z-index: 9999 !important;
+}
+
+.shepherd-theme-custom {
+    border-radius: 16px !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2) !important;
+    border: 2px solid #20c997 !important;
+    max-width: 420px !important;
+}
+
+.shepherd-theme-custom .shepherd-content {
+    padding: 24px !important;
+    font-family: inherit !important;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%) !important;
+    border-radius: 14px !important;
+}
+
+.shepherd-theme-custom .shepherd-header {
+    padding-bottom: 12px !important;
+    border-bottom: 2px solid #e9ecef !important;
+    margin-bottom: 16px !important;
+}
+
+.shepherd-theme-custom .shepherd-title {
+    font-size: 1.3rem !important;
+    font-weight: 700 !important;
+    color: #20c997 !important;
+    margin: 0 !important;
+}
+
+.shepherd-theme-custom .shepherd-text {
+    font-size: 1rem !important;
+    line-height: 1.6 !important;
+    color: #2d3436 !important;
+}
+
+.shepherd-theme-custom .shepherd-text h4 {
+    color: #20c997 !important;
+    margin-bottom: 12px !important;
+    font-weight: 600 !important;
+}
+
+.shepherd-theme-custom .shepherd-text strong {
+    color: #17a085 !important;
+    font-weight: 600 !important;
+}
+
+.shepherd-theme-custom .shepherd-footer {
+    padding-top: 16px !important;
+    margin-top: 16px !important;
+    border-top: 1px solid #e9ecef !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+}
+
+.shepherd-theme-custom .shepherd-button {
+    background: #20c997 !important;
+    color: white !important;
+    border: none !important;
+    padding: 10px 20px !important;
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;
+    transition: all 0.3s ease !important;
+    cursor: pointer !important;
+    box-shadow: 0 2px 8px rgba(32, 201, 151, 0.3) !important;
+}
+
+.shepherd-theme-custom .shepherd-button:hover {
+    background: #17a085 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(32, 201, 151, 0.4) !important;
+}
+
+.shepherd-theme-custom .shepherd-button-secondary {
+    background: #6c757d !important;
+    box-shadow: 0 2px 8px rgba(108, 117, 125, 0.3) !important;
+}
+
+.shepherd-theme-custom .shepherd-button-secondary:hover {
+    background: #5a6268 !important;
+}
+
+.shepherd-theme-custom .shepherd-cancel-icon {
+    color: #6c757d !important;
+    font-size: 24px !important;
+    font-weight: 300 !important;
+    transition: all 0.2s ease !important;
+}
+
+.shepherd-theme-custom .shepherd-cancel-icon:hover {
+    color: #20c997 !important;
+    transform: scale(1.1) !important;
+}
+
+.shepherd-theme-custom .shepherd-arrow:before {
+    background: white !important;
+}
+
+/* Progress indicator */
+.shepherd-progress {
+    font-size: 0.85rem !important;
+    color: #6c757d !important;
+    font-weight: 500 !important;
+}
+
+/* Botón de ayuda flotante */
+.tutorial-help-button {
+    position: fixed;
+    bottom: 15px;
+    left: 70px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #20c997 0%, #17a085 100%);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 16px rgba(32, 201, 151, 0.4);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    transition: all 0.3s ease;
+    z-index: 999;
+}
+
+.tutorial-help-button:hover {
+    transform: scale(1.1) translateY(-3px);
+    box-shadow: 0 6px 20px rgba(32, 201, 151, 0.5);
+}
+
+.tutorial-help-button:active {
+    transform: scale(0.95);
+}
+
+@media (max-width: 768px) {
+    .shepherd-theme-custom {
+        max-width: 90% !important;
+        margin: 0 auto !important;
+    }
+    
+    .tutorial-help-button {
+        bottom: 70px;
+        right: 15px;
+        width: 48px;
+        height: 48px;
+        font-size: 20px;
+    }
+}
+

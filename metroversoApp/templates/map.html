@@ -18,6 +18,10 @@
     <!--Turf import-->
     <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
 
+    <!--Shepherd.js - Tutorial interactivo-->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shepherd.js@11.2.0/dist/css/shepherd.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/shepherd.js@11.2.0/dist/js/shepherd.min.js"></script>
+
     <!--JS/js-->
     <script>
       // Configuration for the application
@@ -936,6 +940,7 @@
 
     <script src="{% static 'js/mapScript.js' %}"></script>
     <script src="{% static 'js/dictionary.js' %}"></script>
+    <script src="{% static 'js/tutorial.js' %}"></script>
     <script>
       async function fetchMostUsedStations() {
         try {

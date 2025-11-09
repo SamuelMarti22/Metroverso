@@ -199,7 +199,24 @@ for i in range(0, 20):  # De X00 a X20
     add_edge_time(G, linea2, origen, destino, line_key="X")
 
 add_transfer(G,"X07","A13")
-add_transfer(G,"M07", "X07")
+
+# Transferencias de peso 0 entre líneas M (1) y X (2) - Estaciones compartidas al inicio
+add_transfer(G, "M00", "X00", walkTime=0)  # UDM
+add_transfer(G, "M01", "X01", walkTime=0)  # Los Alpes
+add_transfer(G, "M02", "X02", walkTime=0)  # La Palma
+add_transfer(G, "M03", "X03", walkTime=0)  # Parque Belén
+add_transfer(G, "M04", "X04", walkTime=0)  # Rosales
+add_transfer(G, "M05", "X05", walkTime=0)  # Fátima
+add_transfer(G, "M06", "X06", walkTime=0)  # Nutibara
+add_transfer(G, "M07", "X07", walkTime=0)  # Industriales
+
+# Transferencias de peso 0 entre líneas M (1) y X (2) - Estaciones compartidas al final
+add_transfer(G, "M14", "X15", walkTime=0)  # Palos Verdes
+add_transfer(G, "M15", "X16", walkTime=0)  # Gardel
+add_transfer(G, "M16", "X17", walkTime=0)  # Manrique
+add_transfer(G, "M17", "X18", walkTime=0)  # Las Esmeraldas
+add_transfer(G, "M18", "X19", walkTime=0)  # Berlín
+add_transfer(G, "M19", "X20", walkTime=0)  # Parque Aranjuez
 
 lineaB = {
     "B00": [-75.56967864286219, 6.247175927579917], #San Antonio
