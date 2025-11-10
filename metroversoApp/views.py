@@ -554,10 +554,56 @@ def blog_view(request):
     })
 
 @login_required
+@require_http_methods(["POST"])
 def delete_blog_post(request, post_id):
     """Vista para eliminar una publicación del blog"""
+    try:
+        post = get_object_or_404(BlogPost, id=post_id)
+        print(f"Intentando eliminar post {post_id} por usuario {request.user}")
+        
+        if request.user == post.author:
+            print(f"Usuario autorizado, eliminando post {post_id}")
+            post.delete()
+            return JsonResponse({'success': True, 'message': 'Post eliminado correctamente'})
+        else:
+            print(f"Usuario no autorizado: {request.user} != {post.author}")
+            return JsonResponse({
+                'error': 'No autorizado',
+                'message': 'No tienes permiso para eliminar esta publicación'
+            }, status=403)
+    except Exception as e:
+        print(f"Error al eliminar post: {str(e)}")
+        return JsonResponse({
+            'error': 'Error interno',
+            'message': str(e)
+        }, status=500)
+
+@login_required
+def edit_blog_post(request, post_id):
+    """Vista para editar una publicación del blog"""
     post = get_object_or_404(BlogPost, id=post_id)
-    if request.user == post.author:
-        post.delete()
-        return JsonResponse({'success': True})
-    return JsonResponse({'error': 'No autorizado'}, status=403)
+    if request.user != post.author:
+        return JsonResponse({'error': 'No autorizado'}, status=403)
+    
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        content = request.POST.get('content')
+        route_id = request.POST.get('route_id')
+
+        if title and content:
+            post.title = title
+            post.content = content
+            post.post_type = 'route' if route_id else 'comment'
+            
+            # Actualizar ruta compartida si es necesario
+            if route_id:
+                try:
+                    route = Route.objects.get(id_route=route_id)
+                    post.shared_route = route
+                except Route.DoesNotExist:
+                    pass
+            
+            post.save()
+            return JsonResponse({'success': True})
+    
+    return JsonResponse({'error': 'Datos inválidos'}, status=400)

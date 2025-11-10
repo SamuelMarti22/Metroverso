@@ -10,6 +10,7 @@
     <link href="{% static 'css/blog.css' %}" rel="stylesheet">
 </head>
 <body>
+    {% csrf_token %}
     <div class="blog-container">
         <div class="header-section">
             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -68,9 +69,9 @@
                     <div class="route-preview">
                         <strong>🗺️ Ruta Compartida</strong>
                         <p>📍 {{ post.shared_route.id_start.name }} → {{ post.shared_route.id_end.name }}</p>
-                        <a href="{% url 'map' %}?route={{ post.shared_route.id_route }}" class="btn btn-view-route">
+                        <button class="btn btn-view-route view-route" data-route-id="{{ post.shared_route.id_route }}">
                             Ver en el Mapa
-                        </a>
+                        </button>
                     </div>
                     {% endif %}
                 </div>
@@ -137,83 +138,217 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        document.querySelector('select[name="post_type"]').addEventListener('change', function() {
-            const routeSelector = document.getElementById('routeSelector');
-            routeSelector.style.display = this.value === 'route' ? 'block' : 'none';
-        });
-
-        // Manejador para editar posts
-        document.querySelectorAll('.edit-post').forEach(button => {
-            button.addEventListener('click', function() {
-                const postId = this.dataset.postId;
-                const title = this.dataset.postTitle;
-                const content = this.dataset.postContent;
-                const postType = this.dataset.postType;
-                const routeId = this.dataset.routeId;
-                
-                const form = document.getElementById('editPostForm');
-                form.querySelector('[name="post_id"]').value = postId;
-                form.querySelector('[name="title"]').value = title;
-                form.querySelector('[name="content"]').value = content;
-                
-                const routeSelector = document.getElementById('editRouteSelector');
-                if (postType === 'route') {
-                    routeSelector.style.display = 'block';
-                    if (routeId) {
-                        routeSelector.querySelector('select').value = routeId;
+        document.addEventListener('DOMContentLoaded', function() {
+            // Configurar el selector de tipo de post
+            const postTypeSelect = document.querySelector('select[name="post_type"]');
+            if (postTypeSelect) {
+                postTypeSelect.addEventListener('change', function() {
+                    const routeSelector = document.getElementById('routeSelector');
+                    if (routeSelector) {
+                        routeSelector.style.display = this.value === 'route' ? 'block' : 'none';
                     }
-                } else {
-                    routeSelector.style.display = 'none';
-                }
-            });
-        });
-
-        // Manejador para el formulario de edición
-        document.getElementById('editPostForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const postId = this.querySelector('[name="post_id"]').value;
-            const formData = new FormData(this);
-
-            try {
-                const response = await fetch(`/blog/edit/${postId}/`, {
-                    method: 'POST',
-                    body: formData
                 });
-                if (response.ok) {
-                    window.location.reload();
-                }
-            } catch (error) {
-                console.error('Error:', error);
             }
-        });
 
-        // Manejador para eliminar posts
-        document.querySelectorAll('.delete-post').forEach(button => {
-            button.addEventListener('click', async function() {
-                if (confirm('¿Estás seguro de que quieres eliminar esta publicación?')) {
-                    const postId = this.dataset.postId;
-                    try {
-                        const response = await fetch(`/blog/delete/${postId}/`, {
+            // Configurar botones de eliminación
+            const deleteButtons = document.querySelectorAll('.delete-post');
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const postId = this.getAttribute('data-post-id');
+                    if (!postId) return;
+
+                    // Crear modal de confirmación personalizado
+                    const modalHtml = `
+                        <div class="modal fade" id="confirmDeleteModal" tabindex="-1">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Confirmar eliminación</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p>¿Estás seguro de que quieres eliminar esta publicación?</p>
+                                        <p class="text-muted">Esta acción no se puede deshacer.</p>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                        <button type="button" class="btn btn-danger" id="confirmDelete">Eliminar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    // Añadir modal al DOM
+                    document.body.insertAdjacentHTML('beforeend', modalHtml);
+                    const modal = new bootstrap.Modal(document.getElementById('confirmDeleteModal'));
+                    
+                    // Mostrar modal
+                    modal.show();
+
+                    // Manejar confirmación
+                    document.getElementById('confirmDelete').addEventListener('click', function() {
+                        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                        
+                        fetch(`/blog/delete/${postId}/`, {
                             method: 'POST',
                             headers: {
-                                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                            }
-                        });
-                        if (response.ok) {
-                            this.closest('.blog-post').remove();
-                        }
-                    } catch (error) {
-                        console.error('Error:', error);
-                    }
-                }
-            });
-        });
+                                'X-CSRFToken': csrftoken,
+                                'Content-Type': 'application/x-www-form-urlencoded'
+                            },
+                            credentials: 'same-origin'
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            modal.hide();
+                            if (data.success) {
+                                // Mostrar mensaje de éxito
+                                const toastHtml = `
+                                    <div class="position-fixed top-0 end-0 p-3" style="z-index: 1070">
+                                        <div class="toast align-items-center text-white bg-success border-0" role="alert">
+                                            <div class="d-flex">
+                                                <div class="toast-body">
+                                                    Publicación eliminada correctamente
+                                                </div>
+                                                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                                document.body.insertAdjacentHTML('beforeend', toastHtml);
+                                const toastElement = document.querySelector('.toast');
+                                const toast = new bootstrap.Toast(toastElement);
+                                toast.show();
 
-        // Manejador para ver rutas
-        document.querySelectorAll('.view-route').forEach(button => {
-            button.addEventListener('click', function() {
-                const routeId = this.dataset.routeId;
-                window.location.href = `/?route=${routeId}`;
+                                // Recargar después de un breve delay
+                                setTimeout(() => window.location.reload(), 1000);
+                            }
+                        })
+                        .catch(() => {
+                            modal.hide();
+                            // Mostrar mensaje de error
+                            const toastHtml = `
+                                <div class="position-fixed top-0 end-0 p-3" style="z-index: 1070">
+                                    <div class="toast align-items-center text-white bg-danger border-0" role="alert">
+                                        <div class="d-flex">
+                                            <div class="toast-body">
+                                                Error al eliminar la publicación
+                                            </div>
+                                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                            document.body.insertAdjacentHTML('beforeend', toastHtml);
+                            const toastElement = document.querySelector('.toast');
+                            const toast = new bootstrap.Toast(toastElement);
+                            toast.show();
+                        });
+                    });
+
+                    // Limpiar el modal cuando se cierre
+                    document.getElementById('confirmDeleteModal').addEventListener('hidden.bs.modal', function() {
+                        this.remove();
+                    });
+                });
+            });
+
+            // Configurar botones de edición
+            const editButtons = document.querySelectorAll('.edit-post');
+            editButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const postId = this.dataset.postId;
+                    const title = this.dataset.postTitle;
+                    const content = this.dataset.postContent;
+                    const postType = this.dataset.postType;
+                    const routeId = this.dataset.routeId;
+                    
+                    const form = document.getElementById('editPostForm');
+                    if (form) {
+                        form.querySelector('[name="post_id"]').value = postId;
+                        form.querySelector('[name="title"]').value = title;
+                        form.querySelector('[name="content"]').value = content;
+                        form.querySelector('[name="post_type"]').value = postType;
+                        
+                        const routeSelector = document.getElementById('editRouteSelector');
+                        if (routeSelector) {
+                            routeSelector.style.display = postType === 'route' ? 'block' : 'none';
+                            if (routeId && postType === 'route') {
+                                const routeSelect = routeSelector.querySelector('select');
+                                if (routeSelect) routeSelect.value = routeId;
+                            }
+                        }
+                    }
+                });
+            });
+
+            // Configurar formulario de edición
+            const editForm = document.getElementById('editPostForm');
+            if (editForm) {
+                editForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const postId = this.querySelector('[name="post_id"]').value;
+                    const formData = new FormData(this);
+
+                    fetch(`/blog/edit/${postId}/`, {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const toastHtml = `
+                                <div class="position-fixed top-0 end-0 p-3" style="z-index: 1070">
+                                    <div class="toast align-items-center text-white bg-success border-0" role="alert">
+                                        <div class="d-flex">
+                                            <div class="toast-body">
+                                                Publicación actualizada correctamente
+                                            </div>
+                                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                            document.body.insertAdjacentHTML('beforeend', toastHtml);
+                            const toastElement = document.querySelector('.toast');
+                            const toast = new bootstrap.Toast(toastElement);
+                            toast.show();
+                            setTimeout(() => window.location.reload(), 1000);
+                        }
+                    })
+                    .catch(() => {
+                        const toastHtml = `
+                            <div class="position-fixed top-0 end-0 p-3" style="z-index: 1070">
+                                <div class="toast align-items-center text-white bg-danger border-0" role="alert">
+                                    <div class="d-flex">
+                                        <div class="toast-body">
+                                            Error al actualizar la publicación
+                                        </div>
+                                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        document.body.insertAdjacentHTML('beforeend', toastHtml);
+                        const toastElement = document.querySelector('.toast');
+                        const toast = new bootstrap.Toast(toastElement);
+                        toast.show();
+                    });
+                });
+            }
+
+            // Configurar botones de vista de ruta
+            const viewRouteButtons = document.querySelectorAll('.view-route');
+            viewRouteButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const routeId = this.dataset.routeId;
+                    if (routeId) {
+                        window.location.href = `/?route=${routeId}`;
+                    }
+                });
             });
         });
     </script>
@@ -229,6 +364,7 @@
                 <div class="modal-body">
                     <form id="editPostForm" method="POST">
                         {% csrf_token %}
+                        <input type="hidden" name="post_type" value="comment">
                         <div class="mb-3">
                             <label class="form-label">Título</label>
                             <input type="text" class="form-control" name="title" placeholder="Dale un título a tu publicación" required>

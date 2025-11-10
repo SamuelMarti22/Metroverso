@@ -25,4 +25,5 @@ urlpatterns = [
     # URLs del Blog
     path('blog/', metroversoViews.blog_view, name='blog'),
     path('blog/delete/<int:post_id>/', metroversoViews.delete_blog_post, name='delete_blog_post'),
+    path('blog/edit/<int:post_id>/', metroversoViews.edit_blog_post, name='edit_blog_post'),
 ]
