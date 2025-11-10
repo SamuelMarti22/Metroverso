@@ -24,9 +24,9 @@ async function loadDashboardData() {
       if (el) {
         el.innerHTML = '<div class="alert alert-danger py-2 small">Error al cargar los datos</div>';
       }
-    });
-  }
+    };
 }
+
 
 // Cargar datos cuando se abre el offcanvas
 document.addEventListener('DOMContentLoaded', function() {
