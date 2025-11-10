@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from django.http import JsonResponse
 from django.utils import translation
@@ -10,7 +10,7 @@ from django.contrib.auth.decorators import login_required
 
 from .assets import stationGraphs
 from .assets import functions
-from .models import Route, Station, User
+from .models import Route, Station, User, BlogPost
 
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
@@ -510,3 +510,54 @@ def stations_with_data(request):
         
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+@login_required
+def blog_view(request):
+    """Vista para el blog comunitario"""
+    if request.method == 'POST':
+        post_type = request.POST.get('post_type')
+        title = request.POST.get('title')
+        content = request.POST.get('content')
+        route_id = request.POST.get('route_id')
+
+        shared_route = None
+        if post_type == 'route' and route_id:
+            try:
+                shared_route = Route.objects.get(id_route=route_id)
+            except Route.DoesNotExist:
+                messages.error(request, 'La ruta seleccionada no existe')
+                return redirect('blog')
+
+        BlogPost.objects.create(
+            author=request.user,
+            post_type=post_type,
+            title=title,
+            content=content,
+            shared_route=shared_route
+        )
+        messages.success(request, '¡Publicación creada exitosamente!')
+        return redirect('blog')
+
+    posts = BlogPost.objects.all().order_by('-created_at')
+    user_routes = []
+    if request.user.is_authenticated:
+        try:
+            user_routes = Route.objects.filter(
+                id_user=request.user.metro_profile
+            ).order_by('-start_time')
+        except:
+            pass
+
+    return render(request, 'auth/blog.html', {
+        'posts': posts,
+        'user_routes': user_routes
+    })
+
+@login_required
+def delete_blog_post(request, post_id):
+    """Vista para eliminar una publicación del blog"""
+    post = get_object_or_404(BlogPost, id=post_id)
+    if request.user == post.author:
+        post.delete()
+        return JsonResponse({'success': True})
+    return JsonResponse({'error': 'No autorizado'}, status=403)

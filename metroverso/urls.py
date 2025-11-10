@@ -21,4 +21,8 @@ urlpatterns = [
     path('auth/profile-data/', metroversoViews.profile_data_view, name='profile_data'),
     path('station/<str:station_id>/', metroversoViews.station_info, name='station_info'),
     path('stations-with-data/', metroversoViews.stations_with_data, name='stations_with_data'),
+    
+    # URLs del Blog
+    path('blog/', metroversoViews.blog_view, name='blog'),
+    path('blog/delete/<int:post_id>/', metroversoViews.delete_blog_post, name='delete_blog_post'),
 ]
