@@ -155,6 +155,48 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // Paso 4.5: Blog y Comunidad
+  tour.addStep({
+    id: 'blog',
+    title: '📰 Blog y Comunidad',
+    text: `
+      <p>Visita el nuevo <strong>Blog</strong> para leer y publicar noticias y comentarios de la comunidad.</p>
+      <p style="margin-top: 8px; color: #6c757d; font-size: 0.9rem;">
+        ✓ Lee publicaciones de la comunidad<br>
+        ✓ Publica comentarios y noticias
+      </p>
+      <p style="margin-top: 12px; color: #e67e22; font-size: 0.85rem;">
+        💡 <em>Nota: debes iniciar sesión para poder publicar o comentar.</em>
+      </p>
+    `,
+    attachTo: {
+      element: '#btnBlog',
+      on: 'right'
+    },
+    when: {
+      show: () => {
+        // Cerrar cualquier offcanvas abierto para que el paso pueda posicionarse correctamente
+        const openOffcanvas = document.querySelectorAll('.offcanvas.show');
+        openOffcanvas.forEach(el => {
+          const inst = bootstrap.Offcanvas.getInstance(el);
+          if (inst) inst.hide();
+        });
+      }
+    },
+    buttons: [
+      { 
+        text: '← Anterior', 
+        action: tour.back,
+        classes: 'shepherd-button-secondary'
+      },
+      { 
+        text: 'Siguiente →', 
+        action: tour.next,
+        classes: 'shepherd-button'
+      }
+    ]
+  });
+
   // Paso 5: Cambiar idioma
   tour.addStep({
     id: 'language',
@@ -392,9 +434,11 @@ document.addEventListener('DOMContentLoaded', () => {
 function createHelpButton() {
   const helpButton = document.createElement('button');
   helpButton.className = 'tutorial-help-button';
-  helpButton.innerHTML = '❓';
+  helpButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-question-diamond-fill" viewBox="0 0 16 16"> <path d="M9.05.435c-.58-.58-1.52-.58-2.1 0L.436 6.95c-.58.58-.58 1.519 0 2.098l6.516 6.516c.58.58 1.519.58 2.098 0l6.516-6.516c.58-.58.58-1.519 0-2.098zM5.495 6.033a.237.237 0 0 1-.24-.247C5.35 4.091 6.737 3.5 8.005 3.5c1.396 0 2.672.73 2.672 2.24 0 1.08-.635 1.594-1.244 2.057-.737.559-1.01.768-1.01 1.486v.105a.25.25 0 0 1-.25.25h-.81a.25.25 0 0 1-.25-.246l-.004-.217c-.038-.927.495-1.498 1.168-1.987.59-.444.965-.736.965-1.371 0-.825-.628-1.168-1.314-1.168-.803 0-1.253.478-1.342 1.134-.018.137-.128.25-.266.25zm2.325 6.443c-.584 0-1.009-.394-1.009-.927 0-.552.425-.94 1.01-.94.609 0 1.028.388 1.028.94 0 .533-.42.927-1.029.927"/> </svg>';
   helpButton.title = 'Ver tutorial';
   helpButton.setAttribute('aria-label', 'Mostrar tutorial interactivo');
+  helpButton.setAttribute('data-bs-toggle', 'tooltip');
+  helpButton.setAttribute('data-bs-placement', 'right');
   
   helpButton.addEventListener('click', () => {
     if (typeof window.showTutorial === 'function') {
@@ -403,4 +447,11 @@ function createHelpButton() {
   });
   
   document.body.appendChild(helpButton);
+  
+  // Inicializar el tooltip de Bootstrap
+  new bootstrap.Tooltip(helpButton, {
+    placement: 'right',
+    trigger: 'hover',
+    customClass: 'help-button-tooltip'
+  });
 }

@@ -195,6 +195,15 @@ window.renderRouteChain = function(route, transferInfo){
       '1': '#005d9a', '2': '#e88530'
     };
 
+    // Mapping for transport type images
+    const lineTransportType = {
+      'A': 'metro', 'B': 'metro',           // Metro
+      'K': 'metrocable', 'L': 'metrocable', 'H': 'metrocable', 'J': 'metrocable', // Metrocable
+      'M': 'bus', 'X': 'bus', 'P': 'bus', 'O': 'bus', 'Z': 'bus',  // Metroplus (bus)
+      'T': 'tranvia',                       // Tranvía
+      '1': 'metro', '2': 'metro'            // Metro lines (alternative naming)
+    };
+
     // Generates the card HTML for each station
     var cards = [];
     for (var j = 0; j < route.length; j++) {
@@ -203,6 +212,7 @@ window.renderRouteChain = function(route, transferInfo){
       var isTransfer = !!transferSet[stationId];
       var line = stationId.charAt(0); // Extract line from station ID
       var lineColor = lineColors[line] || '#20c997';
+      var transportType = lineTransportType[line] || 'metro';
       
       // Determine if it's the first or last station
       var isFirst = j === 0;
@@ -213,18 +223,28 @@ window.renderRouteChain = function(route, transferInfo){
       if (isLast) cardClass += ' last-station';
       if (isTransfer) cardClass += ' transfer-station';
       
-      var icon = isFirst ? '🚶' : (isLast ? '🏁' : (isTransfer ? '🔄' : '🚇'));
+      // Icon for first/last/transfer stations, or transport type image
+      var iconHtml;
+      if (isFirst) {
+        iconHtml = '<span style="font-size: 32px;"><svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" fill="currentColor" class="bi bi-person-walking" viewBox="0 0 16 16"> <path d="M9.5 1.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0M6.44 3.752A.75.75 0 0 1 7 3.5h1.445c.742 0 1.32.643 1.243 1.38l-.43 4.083a1.8 1.8 0 0 1-.088.395l-.318.906.213.242a.8.8 0 0 1 .114.175l2 4.25a.75.75 0 1 1-1.357.638l-1.956-4.154-1.68-1.921A.75.75 0 0 1 6 8.96l.138-2.613-.435.489-.464 2.786a.75.75 0 1 1-1.48-.246l.5-3a.75.75 0 0 1 .18-.375l2-2.25Z"/> <path d="M6.25 11.745v-1.418l1.204 1.375.261.524a.8.8 0 0 1-.12.231l-2.5 3.25a.75.75 0 1 1-1.19-.914zm4.22-4.215-.494-.494.205-1.843.006-.067 1.124 1.124h1.44a.75.75 0 0 1 0 1.5H11a.75.75 0 0 1-.531-.22Z"/> </svg></span>';
+      } else if (isLast) {
+        iconHtml = '<span style="font-size: 32px;">🏁</span>';
+      } else if (isTransfer) {
+        iconHtml = '<span style="font-size: 32px;"><svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" fill="currentColor" class="bi bi-arrow-left-right" viewBox="0 0 16 16"> <path fill-rule="evenodd" d="M1 11.5a.5.5 0 0 0 .5.5h11.793l-3.147 3.146a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708.708L13.293 11H1.5a.5.5 0 0 0-.5.5m14-7a.5.5 0 0 1-.5.5H2.707l3.147 3.146a.5.5 0 1 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 4H14.5a.5.5 0 0 1 .5.5"/> </svg></span>';
+      } else {
+        iconHtml = `<img src="/static/images/${transportType}.png" alt="${transportType}" style="width: 35px; height: 35px; object-fit: contain;">`;
+      }
       
       cards.push(`
-        <div class="${cardClass}">
-          <div class="station-card-icon">${icon}</div>
+        <div class="${cardClass}" style="background-color: ${lineColor}; border-color: ${lineColor};">
+          <div class="station-card-icon">${iconHtml}</div>
           <div class="station-card-content">
-            <div class="station-card-name">${stationName}</div>
-            <div class="station-card-line" style="background-color: ${lineColor}">
+            <div class="station-card-name" style="color: white;">${stationName}</div>
+            <div class="station-card-line" style="background-color: ${lineColor}; color: white;">
               Línea ${line}
             </div>
           </div>
-          ${!isLast ? '<div class="station-card-connector"></div>' : ''}
+          ${!isLast ? '<div class="station-card-connector" style="background: linear-gradient(to bottom, ' + lineColor + ', rgba(0,0,0,0.1));"></div>' : ''}
         </div>
       `);
     }

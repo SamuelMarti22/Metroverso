@@ -344,43 +344,45 @@ body {
     align-items: center;
     gap: 12px;
     background: white;
-    border: 1px solid #e9ecef;
+    border: 2px solid;
     border-radius: 12px;
     padding: 12px 16px;
     margin-bottom: 8px;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .route-station-card:hover {
-    box-shadow: 0 4px 12px rgba(32, 201, 151, 0.15);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
     transform: translateX(4px);
-    border-color: #20c997;
 }
 
 .route-station-card.first-station {
-    background: linear-gradient(135deg, #e8f8f5 0%, #ffffff 100%);
-    border-color: #20c997;
-    border-width: 2px;
+    border-width: 3px;
 }
 
 .route-station-card.last-station {
-    background: linear-gradient(135deg, #fff5e6 0%, #ffffff 100%);
-    border-color: #ffa500;
-    border-width: 2px;
+    border-width: 3px;
 }
 
 .route-station-card.transfer-station {
-    background: linear-gradient(135deg, #fff0f0 0%, #ffffff 100%);
-    border-color: #ea0f0f;
-    border-left-width: 4px;
+    border-left-width: 5px !important;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
 }
 
 .station-card-icon {
     font-size: 28px;
     min-width: 40px;
     text-align: center;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.station-card-icon img {
+    filter: brightness(0) invert(1);
 }
 
 .station-card-content {
@@ -391,15 +393,16 @@ body {
 }
 
 .station-card-name {
-    font-size: 1rem;
+    font-size: 20px;
     font-weight: 600;
-    color: #2d3436;
+    color: white;
     line-height: 1.2;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .station-card-line {
     display: inline-block;
-    padding: 4px 10px;
+    padding: 4px 0px;
     border-radius: 6px;
     font-size: 0.75rem;
     font-weight: 600;
@@ -407,7 +410,6 @@ body {
     text-transform: uppercase;
     letter-spacing: 0.5px;
     width: fit-content;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 .station-card-connector {
@@ -416,7 +418,6 @@ body {
     bottom: -8px;
     width: 3px;
     height: 8px;
-    background: linear-gradient(to bottom, #20c997, #e9ecef);
     z-index: 1;
 }
 
@@ -915,31 +916,44 @@ body {
 /* Botón de ayuda flotante */
 .tutorial-help-button {
     position: fixed;
-    bottom: 15px;
-    left: 70px;
-    width: 56px;
-    height: 56px;
+    bottom: 70px;
+    left: 7px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #20c997 0%, #17a085 100%);
-    color: white;
+    background: rgba(0, 0, 0, 0);
+    color: #6c757d;
     border: none;
-    box-shadow: 0 4px 16px rgba(32, 201, 151, 0.4);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 40px;
     transition: all 0.3s ease;
     z-index: 999;
 }
 
 .tutorial-help-button:hover {
     transform: scale(1.1) translateY(-3px);
-    box-shadow: 0 6px 20px rgba(32, 201, 151, 0.5);
 }
 
 .tutorial-help-button:active {
     transform: scale(0.95);
+}
+
+/* Estilos personalizados para tooltips del botón de ayuda */
+.tooltip.help-button-tooltip .tooltip-inner {
+    background-color: #20c997;
+    color: white;
+    font-size: 0.95rem;
+    font-weight: 500;
+    padding: 8px 14px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(32, 201, 151, 0.3);
+}
+
+.tooltip.help-button-tooltip .tooltip-arrow::before {
+    border-right-color: #20c997;
 }
 
 @media (max-width: 768px) {

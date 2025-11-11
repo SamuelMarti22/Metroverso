@@ -243,6 +243,7 @@
 
       <!-- Blog icon -->
       <div 
+        id="btnBlog"
         class="subCategory d-flex justify-content-center align-items-center"
         type="button"
         onclick="window.location.href='{% url 'blog' %}'"
@@ -555,7 +556,7 @@
               <select class="form-select" aria-label="Default select example" id="inputCriteria">
                 <option selected value="time">{% trans "Time" %}</option>
                 <option value="distance_km">{% trans "Distance" %}</option>
-                <option value="price">{% trans "Price" %}</option>
+                <option value="transfer">{% trans "Price" %}</option>
               </select>
               <button
                 class="btn btn-primary w-100 fw-semibold"
