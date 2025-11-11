@@ -113,15 +113,16 @@
                         <div id="routeSelector" class="mb-3" style="display: none;">
                             <label class="form-label">Seleccionar Ruta</label>
                             <select class="form-select" name="route_id">
-                                {% if user_routes %}
-                                    {% for route in user_routes %}
-                                    <option value="{{ route.id_route }}">
-                                        {{ route.id_start.name }} → {{ route.id_end.name }}
-                                    </option>
-                                    {% endfor %}
-                                {% else %}
-                                    <option value="" disabled>No hay rutas recientes disponibles</option>
-                                {% endif %}
+                                    <option value="">Sin ruta</option>
+                                    {% if user_routes %}
+                                        {% for route in user_routes %}
+                                        <option value="{{ route.id_route }}">
+                                            {{ route.id_start.name }} → {{ route.id_end.name }}
+                                        </option>
+                                        {% endfor %}
+                                    {% else %}
+                                        <option value="" disabled>No hay rutas recientes disponibles</option>
+                                    {% endif %}
                             </select>
                             {% if not user_routes %}
                             <small class="text-muted">Para compartir una ruta, primero debes realizar un viaje en el mapa.</small>
@@ -365,6 +366,7 @@
                         <div id="editRouteSelector" class="mb-3" style="display: none;">
                             <label class="form-label">Seleccionar Ruta</label>
                             <select class="form-select" name="route_id">
+                                <option value="">Sin ruta</option>
                                 {% if user_routes %}
                                     {% for route in user_routes %}
                                     <option value="{{ route.id_route }}">

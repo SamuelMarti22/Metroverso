@@ -589,20 +589,36 @@ def edit_blog_post(request, post_id):
         title = request.POST.get('title')
         content = request.POST.get('content')
         route_id = request.POST.get('route_id')
+        post_type = request.POST.get('post_type')  # prefer explicit post_type from form
 
         if title and content:
             post.title = title
             post.content = content
-            post.post_type = 'route' if route_id else 'comment'
-            
-            # Actualizar ruta compartida si es necesario
-            if route_id:
-                try:
-                    route = Route.objects.get(id_route=route_id)
-                    post.shared_route = route
-                except Route.DoesNotExist:
-                    pass
-            
+
+            # Respect explicit post_type sent by the form. If absent, fallback to previous logic.
+            if post_type:
+                if post_type == 'route' and route_id:
+                    post.post_type = 'route'
+                    try:
+                        route = Route.objects.get(id_route=route_id)
+                        post.shared_route = route
+                    except Route.DoesNotExist:
+                        # If route not found, keep shared_route unchanged
+                        pass
+                else:
+                    # explicit 'comment' or other values -> remove shared_route
+                    post.post_type = 'comment'
+                    post.shared_route = None
+            else:
+                # Backwards-compatible behavior: infer from route_id
+                post.post_type = 'route' if route_id else 'comment'
+                if route_id:
+                    try:
+                        route = Route.objects.get(id_route=route_id)
+                        post.shared_route = route
+                    except Route.DoesNotExist:
+                        pass
+
             post.save()
             return JsonResponse({'success': True})
     
