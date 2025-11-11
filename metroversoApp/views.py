@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from django.http import JsonResponse
 from django.utils import translation
@@ -10,7 +10,7 @@ from django.contrib.auth.decorators import login_required
 
 from .assets import stationGraphs
 from .assets import functions
-from .models import Route, Station, User
+from .models import Route, Station, User, BlogPost
 
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
@@ -510,3 +510,116 @@ def stations_with_data(request):
         
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+@login_required
+def blog_view(request):
+    """Vista para el blog comunitario"""
+    if request.method == 'POST':
+        post_type = request.POST.get('post_type')
+        title = request.POST.get('title')
+        content = request.POST.get('content')
+        route_id = request.POST.get('route_id')
+
+        shared_route = None
+        if post_type == 'route' and route_id:
+            try:
+                shared_route = Route.objects.get(id_route=route_id)
+            except Route.DoesNotExist:
+                messages.error(request, 'La ruta seleccionada no existe')
+                return redirect('blog')
+
+        BlogPost.objects.create(
+            author=request.user,
+            post_type=post_type,
+            title=title,
+            content=content,
+            shared_route=shared_route
+        )
+        messages.success(request, '¡Publicación creada exitosamente!')
+        return redirect('blog')
+
+    posts = BlogPost.objects.all().order_by('-created_at')
+    user_routes = []
+    if request.user.is_authenticated:
+        try:
+            user_routes = Route.objects.filter(
+                id_user=request.user.metro_profile
+            ).order_by('-start_time')
+        except:
+            pass
+
+    return render(request, 'auth/blog.html', {
+        'posts': posts,
+        'user_routes': user_routes
+    })
+
+@login_required
+@require_http_methods(["POST"])
+def delete_blog_post(request, post_id):
+    """Vista para eliminar una publicación del blog"""
+    try:
+        post = get_object_or_404(BlogPost, id=post_id)
+        print(f"Intentando eliminar post {post_id} por usuario {request.user}")
+        
+        if request.user == post.author:
+            print(f"Usuario autorizado, eliminando post {post_id}")
+            post.delete()
+            return JsonResponse({'success': True, 'message': 'Post eliminado correctamente'})
+        else:
+            print(f"Usuario no autorizado: {request.user} != {post.author}")
+            return JsonResponse({
+                'error': 'No autorizado',
+                'message': 'No tienes permiso para eliminar esta publicación'
+            }, status=403)
+    except Exception as e:
+        print(f"Error al eliminar post: {str(e)}")
+        return JsonResponse({
+            'error': 'Error interno',
+            'message': str(e)
+        }, status=500)
+
+@login_required
+def edit_blog_post(request, post_id):
+    """Vista para editar una publicación del blog"""
+    post = get_object_or_404(BlogPost, id=post_id)
+    if request.user != post.author:
+        return JsonResponse({'error': 'No autorizado'}, status=403)
+    
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        content = request.POST.get('content')
+        route_id = request.POST.get('route_id')
+        post_type = request.POST.get('post_type')  # prefer explicit post_type from form
+
+        if title and content:
+            post.title = title
+            post.content = content
+
+            # Respect explicit post_type sent by the form. If absent, fallback to previous logic.
+            if post_type:
+                if post_type == 'route' and route_id:
+                    post.post_type = 'route'
+                    try:
+                        route = Route.objects.get(id_route=route_id)
+                        post.shared_route = route
+                    except Route.DoesNotExist:
+                        # If route not found, keep shared_route unchanged
+                        pass
+                else:
+                    # explicit 'comment' or other values -> remove shared_route
+                    post.post_type = 'comment'
+                    post.shared_route = None
+            else:
+                # Backwards-compatible behavior: infer from route_id
+                post.post_type = 'route' if route_id else 'comment'
+                if route_id:
+                    try:
+                        route = Route.objects.get(id_route=route_id)
+                        post.shared_route = route
+                    except Route.DoesNotExist:
+                        pass
+
+            post.save()
+            return JsonResponse({'success': True})
+    
+    return JsonResponse({'error': 'Datos inválidos'}, status=400)

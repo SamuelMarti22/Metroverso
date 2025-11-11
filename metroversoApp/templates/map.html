@@ -240,21 +240,23 @@
         </svg>
       </div>
 
+
+      <!-- Blog icon -->
       <div 
         class="subCategory d-flex justify-content-center align-items-center"
-        title="{% trans 'Explore' %}"
+        type="button"
+        onclick="window.location.href='{% url 'blog' %}'"
+        title="{% trans 'Community Blog' %}"
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="18"
-          height="18"
-          fill="currentColor"
-          class="bi bi-radar"
+        <svg 
+          xmlns="http://www.w3.org/2000/svg" 
+          width="18" 
+          height="18" 
+          fill="currentColor" 
+          class="bi bi-chat-square-text-fill" 
           viewBox="0 0 16 16"
         >
-          <path
-            d="M6.634 1.135A7 7 0 0 1 15 8a.5.5 0 0 1-1 0 6 6 0 1 0-6.5 5.98v-1.005A5 5 0 1 1 13 8a.5.5 0 0 1-1 0 4 4 0 1 0-4.5 3.969v-1.011A2.999 2.999 0 1 1 11 8a.5.5 0 0 1-1 0 2 2 0 1 0-2.5 1.936v-1.07a1 1 0 1 1 1 0V15.5a.5.5 0 0 1-1 0v-.518a7 7 0 0 1-.866-13.847"
-          />
+          <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.5a1 1 0 0 0-.8.4l-1.9 2.533a1 1 0 0 1-1.6 0L5.3 12.4a1 1 0 0 0-.8-.4H2a2 2 0 0 1-2-2zm3.5 1a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1zm0 2.5a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1zm0 2.5a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1z"/>
         </svg>
       </div>
 
@@ -331,6 +333,46 @@
       </div>
     </div>
 
+    <style>
+      .dashboard-item {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 10px;
+        margin-bottom: 10px;
+        transition: all 0.3s ease;
+      }
+      .dashboard-item:hover {
+        background-color: #e9ecef;
+      }
+      .dashboard-item .station-name,
+      .dashboard-item .route-name {
+        font-weight: 500;
+        color: #20c997;
+      }
+      .dashboard-item .badge {
+        background-color: #20c997 !important;
+      }
+      .dashboard-item .text-muted {
+        font-size: 0.875rem;
+      }
+      .dashboard-item .route-path {
+        font-size: 0.8125rem;
+        color: #6c757d;
+        margin-top: 4px;
+      }
+      .dashboard-section {
+        margin-bottom: 1.5rem;
+      }
+      .dashboard-section-title {
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+        font-size: 1rem;
+      }
+      .dashboard-section-title.text-success {
+        color: #198754 !important;
+      }
+    </style>
+
     <!-- Dashboard Offcanvas -->
     <div class="offcanvasContainer">
       <div
@@ -357,11 +399,92 @@
         </div>
         <div class="offcanvas-body">
           <div id="dashboard-content">
-            <div class="fw-bold mb-2 text-success">
-              {% trans "Most Used Stations" %}
+            <!-- Estaciones más usadas -->
+            <div class="dashboard-section">
+              <div class="dashboard-section-title text-success">
+                <i class="bi bi-pin-map-fill me-2"></i>
+                {% trans "Most Used Stations" %}
+              </div>
+              <div id="dashboard-stations">
+                <div class="loading text-center">
+                  <div class="spinner-border spinner-border-sm text-success" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div id="dashboard-stations"></div>
           </div>
+
+          <script>
+            // Función para cargar los datos del dashboard
+            async function loadDashboardData() {
+              try {
+                const response = await fetch('/dashboard/');
+                const data = await response.json();
+
+                // Actualizar estaciones más usadas
+                const stationsHtml = data.top_stations.map(station => `
+                  <div class="dashboard-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <div>
+                        <div class="station-name">${station.name}</div>
+                        <small class="text-muted">Línea ${station.line} - ${station.type}</small>
+                      </div>
+                      <span class="badge">${station.usage} usos</span>
+                    </div>
+                  </div>
+                `).join('');
+                document.getElementById('dashboard-stations').innerHTML = stationsHtml || 
+                  '<p class="text-muted small">No hay datos disponibles</p>';
+
+                // Actualizar rutas más frecuentes
+                const routesHtml = data.top_routes.map(route => `
+                  <div class="dashboard-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <div class="route-name">${route.start} → ${route.end}</div>
+                      <span class="badge">${route.count} viajes</span>
+                    </div>
+                    <div class="route-path">
+                      <i class="bi bi-arrow-right me-1"></i>
+                      ${route.rute.join(' → ')}
+                    </div>
+                  </div>
+                `).join('');
+                document.getElementById('dashboard-routes').innerHTML = routesHtml || 
+                  '<p class="text-muted small">No hay datos disponibles</p>';
+
+                // Actualizar rutas recientes si el usuario está autenticado
+                const recentEl = document.getElementById('dashboard-recent');
+                if (recentEl && data.recent_routes) {
+                  const recentHtml = data.recent_routes.map(route => `
+                    <div class="dashboard-item">
+                      <div class="d-flex justify-content-between align-items-center">
+                        <div class="route-name">${route.start} → ${route.end}</div>
+                        <small class="text-muted">${route.date}</small>
+                      </div>
+                      <div class="route-path">
+                        <i class="bi bi-arrow-right me-1"></i>
+                        ${route.rute.join(' → ')}
+                      </div>
+                    </div>
+                  `).join('');
+                  recentEl.innerHTML = recentHtml || 
+                    '<p class="text-muted small">No hay rutas recientes</p>';
+                }
+
+              } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                document.querySelectorAll('#dashboard-stations, #dashboard-routes, #dashboard-recent').forEach(el => {
+                  if (el) {
+                    el.innerHTML = '<div class="alert alert-danger py-2 small">Error al cargar los datos</div>';
+                  }
+                });
+              }
+            }
+
+            // Cargar datos cuando se abre el offcanvas
+            document.getElementById('offcanvasDashboard').addEventListener('show.bs.offcanvas', loadDashboardData);
+          </script>
         </div>
       </div>
     </div>

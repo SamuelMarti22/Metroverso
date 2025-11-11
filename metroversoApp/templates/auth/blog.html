@@ -1,0 +1,389 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog Comunitario - Metroverso</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="{% static 'css/blog.css' %}" rel="stylesheet">
+</head>
+<body>
+    {% csrf_token %}
+    <div class="blog-container">
+        <div class="header-section">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="m-0 d-flex align-items-center">
+                    <img src="{% static 'images/LogoB.png' %}" alt="Metroverso Logo" width="55" height="55" style="border-radius: 8px" class="me-3">
+                    <span class="text-white">Metroverso</span>
+                </h1>
+                <a href="{% url 'map' %}" class="btn btn-light">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left me-2" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+                    </svg>
+                    Volver al Mapa
+                </a>
+            </div>
+            <p class="text-white">Comparte tus experiencias y rutas favoritas</p>
+        </div>
+        
+        {% if user.is_authenticated %}
+        <div class="text-center">
+            <button class="btn-create-post" data-bs-toggle="modal" data-bs-target="#createPostModal">
+                Crear Publicación
+            </button>
+        </div>
+        {% endif %}
+
+        <div id="blog-posts">
+            {% for post in posts %}
+            <div class="blog-post">
+                <div class="post-accent"></div>
+                <div class="post-body">
+                    <div class="post-header">
+                        <h2 class="post-title">{{ post.title }}</h2>
+                        <div class="post-meta">
+                            <span class="author-badge">👤 {{ post.author.username }}</span>
+                            <span class="meta-item">📅 {{ post.created_at|date:"d/m/Y" }}</span>
+                            <span class="meta-item">🕐 {{ post.created_at|date:"H:i" }}</span>
+                        </div>
+                        {% if user == post.author %}
+                        <div class="post-actions">
+                            <button class="action-btn edit-post" data-post-id="{{ post.id }}" data-post-title="{{ post.title }}" 
+                                    data-post-content="{{ post.content }}" data-post-type="{% if post.shared_route %}route{% else %}comment{% endif %}"
+                                    {% if post.shared_route %}data-route-id="{{ post.shared_route.id_route }}"{% endif %}
+                                    data-bs-toggle="modal" data-bs-target="#editPostModal" title="Editar publicación">
+                                <i class="bi bi-pencil-square"></i>
+                            </button>
+                            <button class="action-btn delete-post" data-post-id="{{ post.id }}" title="Eliminar publicación">
+                                <i class="bi bi-trash3-fill"></i>
+                            </button>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="post-content">
+                        {{ post.content }}
+                    </div>
+                    {% if post.shared_route %}
+                    <div class="route-preview">
+                        <strong>🗺️ Ruta Compartida</strong>
+                        <p>📍 {{ post.shared_route.id_start.name }} → {{ post.shared_route.id_end.name }}</p>
+                        <!-- 'Ver en el Mapa' button removed intentionally -->
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state">
+                <div class="empty-state-icon">📝</div>
+                <h3>Aún no hay publicaciones</h3>
+                <p>¡Sé el primero en compartir una experiencia!</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Modal para crear publicación -->
+    <div class="modal fade" id="createPostModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">✨ Nueva Publicación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="postForm" method="POST">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">Tipo de Publicación</label>
+                            <select class="form-select" name="post_type" required>
+                                <option value="comment">💬 Comentario General</option>
+                                <option value="route">🗺️ Compartir Ruta</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Título</label>
+                            <input type="text" class="form-control" name="title" placeholder="Dale un título a tu publicación" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Contenido</label>
+                            <textarea class="form-control" name="content" rows="4" placeholder="Comparte tu experiencia..." required></textarea>
+                        </div>
+                        <div id="routeSelector" class="mb-3" style="display: none;">
+                            <label class="form-label">Seleccionar Ruta</label>
+                            <select class="form-select" name="route_id">
+                                    <option value="">Sin ruta</option>
+                                    {% if user_routes %}
+                                        {% for route in user_routes %}
+                                        <option value="{{ route.id_route }}">
+                                            {{ route.id_start.name }} → {{ route.id_end.name }}
+                                        </option>
+                                        {% endfor %}
+                                    {% else %}
+                                        <option value="" disabled>No hay rutas recientes disponibles</option>
+                                    {% endif %}
+                            </select>
+                            {% if not user_routes %}
+                            <small class="text-muted">Para compartir una ruta, primero debes realizar un viaje en el mapa.</small>
+                            {% endif %}
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Publicar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Configurar el selector de tipo de post
+            const postTypeSelect = document.querySelector('select[name="post_type"]');
+            if (postTypeSelect) {
+                postTypeSelect.addEventListener('change', function() {
+                    const routeSelector = document.getElementById('routeSelector');
+                    if (routeSelector) {
+                        routeSelector.style.display = this.value === 'route' ? 'block' : 'none';
+                    }
+                });
+            }
+
+            // Configurar botones de eliminación
+            const deleteButtons = document.querySelectorAll('.delete-post');
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const postId = this.getAttribute('data-post-id');
+                    if (!postId) return;
+
+                    // Crear modal de confirmación personalizado
+                    const modalHtml = `
+                        <div class="modal fade" id="confirmDeleteModal" tabindex="-1">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Confirmar eliminación</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p>¿Estás seguro de que quieres eliminar esta publicación?</p>
+                                        <p class="text-muted">Esta acción no se puede deshacer.</p>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                        <button type="button" class="btn btn-danger" id="confirmDelete">Eliminar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    // Añadir modal al DOM
+                    document.body.insertAdjacentHTML('beforeend', modalHtml);
+                    const modal = new bootstrap.Modal(document.getElementById('confirmDeleteModal'));
+                    
+                    // Mostrar modal
+                    modal.show();
+
+                    // Manejar confirmación
+                    document.getElementById('confirmDelete').addEventListener('click', function() {
+                        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                        
+                        fetch(`/blog/delete/${postId}/`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': csrftoken,
+                                'Content-Type': 'application/x-www-form-urlencoded'
+                            },
+                            credentials: 'same-origin'
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            modal.hide();
+                            if (data.success) {
+                                // Mostrar mensaje de éxito
+                                const toastHtml = `
+                                    <div class="position-fixed top-0 end-0 p-3" style="z-index: 1070">
+                                        <div class="toast align-items-center text-white bg-success border-0" role="alert">
+                                            <div class="d-flex">
+                                                <div class="toast-body">
+                                                    Publicación eliminada correctamente
+                                                </div>
+                                                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                                document.body.insertAdjacentHTML('beforeend', toastHtml);
+                                const toastElement = document.querySelector('.toast');
+                                const toast = new bootstrap.Toast(toastElement);
+                                toast.show();
+
+                                // Recargar después de un breve delay
+                                setTimeout(() => window.location.reload(), 1000);
+                            }
+                        })
+                        .catch(() => {
+                            modal.hide();
+                            // Mostrar mensaje de error
+                            const toastHtml = `
+                                <div class="position-fixed top-0 end-0 p-3" style="z-index: 1070">
+                                    <div class="toast align-items-center text-white bg-danger border-0" role="alert">
+                                        <div class="d-flex">
+                                            <div class="toast-body">
+                                                Error al eliminar la publicación
+                                            </div>
+                                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                            document.body.insertAdjacentHTML('beforeend', toastHtml);
+                            const toastElement = document.querySelector('.toast');
+                            const toast = new bootstrap.Toast(toastElement);
+                            toast.show();
+                        });
+                    });
+
+                    // Limpiar el modal cuando se cierre
+                    document.getElementById('confirmDeleteModal').addEventListener('hidden.bs.modal', function() {
+                        this.remove();
+                    });
+                });
+            });
+
+            // Configurar botones de edición
+            const editButtons = document.querySelectorAll('.edit-post');
+            editButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const postId = this.dataset.postId;
+                    const title = this.dataset.postTitle;
+                    const content = this.dataset.postContent;
+                    const postType = this.dataset.postType;
+                    const routeId = this.dataset.routeId;
+                    
+                    const form = document.getElementById('editPostForm');
+                    if (form) {
+                        form.querySelector('[name="post_id"]').value = postId;
+                        form.querySelector('[name="title"]').value = title;
+                        form.querySelector('[name="content"]').value = content;
+                        form.querySelector('[name="post_type"]').value = postType;
+                        
+                        const routeSelector = document.getElementById('editRouteSelector');
+                        if (routeSelector) {
+                            routeSelector.style.display = postType === 'route' ? 'block' : 'none';
+                            if (routeId && postType === 'route') {
+                                const routeSelect = routeSelector.querySelector('select');
+                                if (routeSelect) routeSelect.value = routeId;
+                            }
+                        }
+                    }
+                });
+            });
+
+            // Configurar formulario de edición
+            const editForm = document.getElementById('editPostForm');
+            if (editForm) {
+                editForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const postId = this.querySelector('[name="post_id"]').value;
+                    const formData = new FormData(this);
+
+                    fetch(`/blog/edit/${postId}/`, {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const toastHtml = `
+                                <div class="position-fixed top-0 end-0 p-3" style="z-index: 1070">
+                                    <div class="toast align-items-center text-white bg-success border-0" role="alert">
+                                        <div class="d-flex">
+                                            <div class="toast-body">
+                                                Publicación actualizada correctamente
+                                            </div>
+                                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                            document.body.insertAdjacentHTML('beforeend', toastHtml);
+                            const toastElement = document.querySelector('.toast');
+                            const toast = new bootstrap.Toast(toastElement);
+                            toast.show();
+                            setTimeout(() => window.location.reload(), 1000);
+                        }
+                    })
+                    .catch(() => {
+                        const toastHtml = `
+                            <div class="position-fixed top-0 end-0 p-3" style="z-index: 1070">
+                                <div class="toast align-items-center text-white bg-danger border-0" role="alert">
+                                    <div class="d-flex">
+                                        <div class="toast-body">
+                                            Error al actualizar la publicación
+                                        </div>
+                                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        document.body.insertAdjacentHTML('beforeend', toastHtml);
+                        const toastElement = document.querySelector('.toast');
+                        const toast = new bootstrap.Toast(toastElement);
+                        toast.show();
+                    });
+                });
+            }
+
+            // 'Ver en el Mapa' functionality removed (button and listeners deleted)
+        });
+    </script>
+
+    <!-- Modal para editar publicación -->
+    <div class="modal fade" id="editPostModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">✏️ Editar Publicación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editPostForm" method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="post_type" value="comment">
+                        <div class="mb-3">
+                            <label class="form-label">Título</label>
+                            <input type="text" class="form-control" name="title" placeholder="Dale un título a tu publicación" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Contenido</label>
+                            <textarea class="form-control" name="content" rows="4" placeholder="Comparte tu experiencia..." required></textarea>
+                        </div>
+                        <div id="editRouteSelector" class="mb-3" style="display: none;">
+                            <label class="form-label">Seleccionar Ruta</label>
+                            <select class="form-select" name="route_id">
+                                <option value="">Sin ruta</option>
+                                {% if user_routes %}
+                                    {% for route in user_routes %}
+                                    <option value="{{ route.id_route }}">
+                                        {{ route.id_start.name }} → {{ route.id_end.name }}
+                                    </option>
+                                    {% endfor %}
+                                {% else %}
+                                    <option value="" disabled>No hay rutas recientes disponibles</option>
+                                {% endif %}
+                            </select>
+                        </div>
+                        <input type="hidden" name="post_id">
+                        <button type="submit" class="btn btn-primary w-100">Guardar Cambios</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

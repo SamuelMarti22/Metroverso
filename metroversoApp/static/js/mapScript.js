@@ -32,6 +32,24 @@ const UPDATE_INTERVAL = 1000; // Update interval in milliseconds
 const STATION_UPDATE_THRESHOLD = 10; // Update stations when user moves more than 10 meters
 let linesStations = null;
 
+// Function to load initial route if provided
+async function loadInitialRoute() {
+    const cfg = window.APP_CONFIG || {};
+    if (cfg.initialRoute) {
+        const { inputStart, inputDestination, inputCriteria, nameStart, nameDestination } = cfg.initialRoute;
+        
+        // Set the form values
+        document.getElementById('inputStart').value = inputStart;
+        document.getElementById('nameStart').value = nameStart;
+        document.getElementById('inputDestination').value = inputDestination;
+        document.getElementById('nameDestination').value = nameDestination;
+        document.getElementById('inputCriteria').value = inputCriteria;
+        
+        // Call the route function
+        await callRoute(inputStart, inputDestination, inputCriteria, nameStart, nameDestination);
+    }
+}
+
 // ==================== TRAVEL STORAGE SYSTEM ====================
 
 // Variables to track journey state
@@ -533,13 +551,15 @@ function closestStations(userPoint, maxDistance) {
 }
 
 console.log("Map initialized");
-map.on("load", () => {
+map.on("load", async () => {
   startLocationTracking();
   loadServiceHours(); // Load service hours when page loads
 
   // Cargar el GeoJSON de las líneas del metro
-  loadLinesStations();
-  loadLinesComplete();
+  await Promise.all([loadLinesStations(), loadLinesComplete()]);
+  
+  // Cargar la ruta inicial si existe
+  await loadInitialRoute();
 
   // Inicializar funcionalidades de autocompletado
   //setupInputSuggestions();
