@@ -69,9 +69,7 @@
                     <div class="route-preview">
                         <strong>🗺️ Ruta Compartida</strong>
                         <p>📍 {{ post.shared_route.id_start.name }} → {{ post.shared_route.id_end.name }}</p>
-                        <button class="btn btn-view-route view-route" data-route-id="{{ post.shared_route.id_route }}">
-                            Ver en el Mapa
-                        </button>
+                        <!-- 'Ver en el Mapa' button removed intentionally -->
                     </div>
                     {% endif %}
                 </div>
@@ -340,16 +338,7 @@
                 });
             }
 
-            // Configurar botones de vista de ruta
-            const viewRouteButtons = document.querySelectorAll('.view-route');
-            viewRouteButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    const routeId = this.dataset.routeId;
-                    if (routeId) {
-                        window.location.href = `/?route=${routeId}`;
-                    }
-                });
-            });
+            // 'Ver en el Mapa' functionality removed (button and listeners deleted)
         });
     </script>
 

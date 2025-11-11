@@ -200,7 +200,7 @@ body {
 }
 
 .author-badge {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #20c997 0%, #198754 100%);
     color: white;
     padding: 5px 12px;
     border-radius: 15px;
@@ -286,7 +286,7 @@ body {
 }
 
 .route-preview strong {
-    color: #764ba2;
+    color: #198754;
     font-size: 1.1rem;
     display: block;
     margin-bottom: 10px;
@@ -298,21 +298,7 @@ body {
     font-weight: 500;
 }
 
-.btn-view-route {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    padding: 10px 25px;
-    border-radius: 25px;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-}
-
-.btn-view-route:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-}
+/* .btn-view-route removed: button and functionality deleted from templates */
 
 /* Modal moderno */
 .modal-content {
@@ -355,8 +341,8 @@ body {
 }
 
 .form-control:focus, .form-select:focus {
-    border-color: #764ba2;
-    box-shadow: 0 0 0 0.2rem rgba(118, 75, 162, 0.15);
+    border-color: #20c997;
+    box-shadow: 0 0 0 0.2rem rgba(32, 201, 151, 0.15);
 }
 
 .btn-primary {
