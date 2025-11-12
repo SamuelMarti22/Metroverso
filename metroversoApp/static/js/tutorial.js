@@ -3,6 +3,9 @@
 // Esperar a que el DOM esté listo
 document.addEventListener('DOMContentLoaded', () => {
   
+  // Obtener traducciones del objeto global texts (definido en map.html)
+  const t = texts.tutorial;
+  
   // Crear el tour
   const tour = new Shepherd.Tour({
     useModalOverlay: true,
@@ -19,18 +22,18 @@ document.addEventListener('DOMContentLoaded', () => {
   tour.addStep({
     id: 'welcome',
     text: `
-      <h4 style="color: #20c997; margin-bottom: 16px;">👋 ¡Bienvenido a Metroverso!</h4>
-      <p style="margin-bottom: 12px;">Tu guía inteligente para navegar por el Metro de Medellín.</p>
-      <p style="color: #6c757d; font-size: 0.9rem;">Te mostraremos cómo usar todas las funciones en unos simples pasos.</p>
+      <h4 style="color: #20c997; margin-bottom: 16px;">👋 ${t.welcomeTitle}</h4>
+      <p style="margin-bottom: 12px;">${t.welcomeText}</p>
+      <p style="color: #6c757d; font-size: 0.9rem;">${t.welcomeSubtitle}</p>
     `,
     buttons: [
       {
-        text: '🚀 Comenzar',
+        text: `🚀 ${t.startButton}`,
         action: tour.next,
         classes: 'shepherd-button'
       },
       {
-        text: 'Saltar tutorial',
+        text: t.skipButton,
         action: tour.cancel,
         classes: 'shepherd-button-secondary'
       }
@@ -40,13 +43,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Paso 2: Planificador de rutas
   tour.addStep({
     id: 'route-planner',
-    title: '🗺️ Planificador de Rutas',
+    title: `🗺️ ${t.routePlannerTitle}`,
     text: `
-      <p>Aquí puedes <strong>planificar tu viaje</strong> entre dos estaciones.</p>
+      <p>${t.routePlannerText}</p>
       <p style="margin-top: 8px; color: #6c757d; font-size: 0.9rem;">
-        ✓ Busca rutas optimizadas<br>
-        ✓ Consulta tiempo estimado<br>
-        ✓ Visualiza transferencias
+        ✓ ${t.routePlannerFeatures}
       </p>
     `,
     attachTo: {
@@ -55,12 +56,12 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     buttons: [
       { 
-        text: '← Anterior', 
+        text: `← ${t.previousButton}`, 
         action: tour.back,
         classes: 'shepherd-button-secondary'
       },
       { 
-        text: 'Siguiente →', 
+        text: `${t.nextButton} →`, 
         action: tour.next,
         classes: 'shepherd-button'
       }
@@ -80,13 +81,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Paso 3: Líneas del metro
   tour.addStep({
     id: 'metro-lines',
-    title: '🚇 Líneas del Metro',
+    title: `🚇 ${t.metroLinesTitle}`,
     text: `
-      <p>Explora todas las <strong>líneas del sistema</strong> y sus estaciones.</p>
+      <p>${t.metroLinesText}</p>
       <p style="margin-top: 8px; color: #6c757d; font-size: 0.9rem;">
-        ✓ Visualiza cada línea en el mapa<br>
-        ✓ Consulta información de estaciones<br>
-        ✓ Encuentra servicios disponibles
+        ✓ ${t.metroLinesFeatures}
       </p>
     `,
     attachTo: {
@@ -95,12 +94,12 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     buttons: [
       { 
-        text: '← Anterior', 
+        text: `← ${t.previousButton}`, 
         action: tour.back,
         classes: 'shepherd-button-secondary'
       },
       { 
-        text: 'Siguiente →', 
+        text: `${t.nextButton} →`, 
         action: tour.next,
         classes: 'shepherd-button'
       }
@@ -119,13 +118,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Paso 4: Dashboard
   tour.addStep({
     id: 'dashboard',
-    title: '📊 Dashboard Personal',
+    title: `📊 ${t.dashboardTitle}`,
     text: `
-      <p>Accede a tu <strong>panel de estadísticas</strong> y viajes.</p>
+      <p>${t.dashboardText}</p>
       <p style="margin-top: 8px; color: #6c757d; font-size: 0.9rem;">
-        ✓ Ve tu historial de viajes<br>
-        ✓ Consulta estadísticas<br>
-        ✓ Revisa tus rutas favoritas
+        ✓ ${t.dashboardFeatures}
       </p>
     `,
     attachTo: {
@@ -134,12 +131,12 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     buttons: [
       { 
-        text: '← Anterior', 
+        text: `← ${t.previousButton}`, 
         action: tour.back,
         classes: 'shepherd-button-secondary'
       },
       { 
-        text: 'Siguiente →', 
+        text: `${t.nextButton} →`, 
         action: tour.next,
         classes: 'shepherd-button'
       }
@@ -158,15 +155,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // Paso 4.5: Blog y Comunidad
   tour.addStep({
     id: 'blog',
-    title: '📰 Blog y Comunidad',
+    title: `📰 ${t.blogTitle}`,
     text: `
-      <p>Visita el nuevo <strong>Blog</strong> para leer y publicar noticias y comentarios de la comunidad.</p>
+      <p>${t.blogText}</p>
       <p style="margin-top: 8px; color: #6c757d; font-size: 0.9rem;">
-        ✓ Lee publicaciones de la comunidad<br>
-        ✓ Publica comentarios y noticias
+        ✓ ${t.blogFeatures}
       </p>
       <p style="margin-top: 12px; color: #e67e22; font-size: 0.85rem;">
-        💡 <em>Nota: debes iniciar sesión para poder publicar o comentar.</em>
+        💡 <em>${t.blogNote}</em>
       </p>
     `,
     attachTo: {
@@ -185,12 +181,12 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     buttons: [
       { 
-        text: '← Anterior', 
+        text: `← ${t.previousButton}`, 
         action: tour.back,
         classes: 'shepherd-button-secondary'
       },
       { 
-        text: 'Siguiente →', 
+        text: `${t.nextButton} →`, 
         action: tour.next,
         classes: 'shepherd-button'
       }
@@ -200,11 +196,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Paso 5: Cambiar idioma
   tour.addStep({
     id: 'language',
-    title: '🌍 Cambiar Idioma',
+    title: `🌍 ${t.languageTitle}`,
     text: `
-      <p>Cambia el <strong>idioma de la aplicación</strong> entre español e inglés.</p>
+      <p>${t.languageText}</p>
       <p style="margin-top: 8px; color: #6c757d; font-size: 0.9rem;">
-        La interfaz se adaptará automáticamente al idioma seleccionado.
+        ${t.languageNote}
       </p>
     `,
     attachTo: {
@@ -213,12 +209,12 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     buttons: [
       { 
-        text: '← Anterior', 
+        text: `← ${t.previousButton}`, 
         action: tour.back,
         classes: 'shepherd-button-secondary'
       },
       { 
-        text: 'Siguiente →', 
+        text: `${t.nextButton} →`, 
         action: tour.next,
         classes: 'shepherd-button'
       }
@@ -237,13 +233,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Paso 6: Tu ubicación
   tour.addStep({
     id: 'user-location',
-    title: '📍 Tu Ubicación',
+    title: `📍 ${t.locationTitle}`,
     text: `
-      <p>Haz clic aquí para <strong>centrar el mapa en tu ubicación actual</strong>.</p>
+      <p>${t.locationText}</p>
       <p style="margin-top: 8px; color: #6c757d; font-size: 0.9rem;">
-        ✓ Encuentra estaciones cercanas<br>
-        ✓ Planifica desde donde estás<br>
-        ✓ Navega en tiempo real
+        ✓ ${t.locationFeatures}
       </p>
     `,
     attachTo: {
@@ -252,12 +246,12 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     buttons: [
       { 
-        text: '← Anterior', 
+        text: `← ${t.previousButton}`, 
         action: tour.back,
         classes: 'shepherd-button-secondary'
       },
       { 
-        text: 'Siguiente →', 
+        text: `${t.nextButton} →`, 
         action: tour.next,
         classes: 'shepherd-button'
       }
@@ -267,16 +261,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // Paso 7: Estaciones más cercanas
   tour.addStep({
     id: 'closest-stations',
-    title: '🎯 Estaciones Cercanas',
+    title: `🎯 ${t.closestStationsTitle}`,
     text: `
-      <p>Cuando uses tu ubicación, aparecerá aquí un <strong>panel con las 3 estaciones más cercanas</strong> a ti.</p>
+      <p>${t.closestStationsText}</p>
       <p style="margin-top: 8px; color: #6c757d; font-size: 0.9rem;">
-        ✓ Selecciona una de las 3 estaciones<br>
-        ✓ Se establecerá automáticamente como punto de partida<br>
-        ✓ Ahorra tiempo en la planificación de rutas
+        ✓ ${t.closestStationsFeatures}
       </p>
       <p style="margin-top: 12px; color: #e67e22; font-size: 0.85rem;">
-        💡 <em>Nota: Este panel solo aparece después de activar tu ubicación.</em>
+        💡 <em>${t.closestStationsNote}</em>
       </p>
     `,
     attachTo: {
@@ -285,12 +277,12 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     buttons: [
       { 
-        text: '← Anterior', 
+        text: `← ${t.previousButton}`, 
         action: tour.back,
         classes: 'shepherd-button-secondary'
       },
       { 
-        text: 'Siguiente →', 
+        text: `${t.nextButton} →`, 
         action: tour.next,
         classes: 'shepherd-button'
       }
@@ -300,13 +292,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Paso 8: Seleccionar destino en el mapa
   tour.addStep({
     id: 'select-destination',
-    title: '🎯 Seleccionar Destino',
+    title: `🎯 ${t.selectDestinationTitle}`,
     text: `
-      <p>Usa este botón para <strong>seleccionar tu destino haciendo clic en el mapa</strong>.</p>
+      <p>${t.selectDestinationText}</p>
       <p style="margin-top: 8px; color: #6c757d; font-size: 0.9rem;">
-        ✓ Activa el modo de selección<br>
-        ✓ Haz clic en cualquier punto del mapa<br>
-        ✓ Se seleccionará la estación más cercana
+        ✓ ${t.selectDestinationFeatures}
       </p>
     `,
     attachTo: {
@@ -315,12 +305,12 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     buttons: [
       { 
-        text: '← Anterior', 
+        text: `← ${t.previousButton}`, 
         action: tour.back,
         classes: 'shepherd-button-secondary'
       },
       { 
-        text: 'Siguiente →', 
+        text: `${t.nextButton} →`, 
         action: tour.next,
         classes: 'shepherd-button'
       }
@@ -330,14 +320,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Paso 9: Interacción con el mapa
   tour.addStep({
     id: 'map-interaction',
-    title: '🗺️ Interacción con el Mapa',
+    title: `🗺️ ${t.mapInteractionTitle}`,
     text: `
-      <p><strong>Explora el mapa libremente:</strong></p>
+      <p><strong>${t.mapInteractionText}</strong></p>
       <p style="margin-top: 12px; color: #2d3436; font-size: 0.95rem;">
-        🖱️ <strong>Click</strong> en una estación para ver su información<br>
-        📌 <strong>Arrastra</strong> para mover el mapa<br>
-        🔍 <strong>Scroll</strong> para hacer zoom<br>
-        🎯 <strong>Doble click</strong> para acercar rápidamente
+        🖱️ ${t.mapInteractionFeatures}
       </p>
     `,
     attachTo: {
@@ -346,12 +333,12 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     buttons: [
       { 
-        text: '← Anterior', 
+        text: `← ${t.previousButton}`, 
         action: tour.back,
         classes: 'shepherd-button-secondary'
       },
       { 
-        text: '✓ Finalizar', 
+        text: `✓ ${t.finishButton}`, 
         action: tour.complete,
         classes: 'shepherd-button'
       }
@@ -377,7 +364,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const progress = document.createElement('div');
       progress.className = 'shepherd-progress';
       const stepIndex = tour.steps.indexOf(currentStep);
-      progress.textContent = `Paso ${stepIndex + 1} de ${tour.steps.length}`;
+      progress.textContent = `${t.stepCounter} ${stepIndex + 1} ${t.stepOf} ${tour.steps.length}`;
       footer.insertBefore(progress, footer.firstChild);
     }
   });
@@ -391,7 +378,7 @@ document.addEventListener('DOMContentLoaded', () => {
     tutorialAlert.className = 'alert alert-success alert-dismissible fade show position-absolute top-0 start-50 translate-middle-x mt-3';
     tutorialAlert.style.cssText = 'z-index: 10000; max-width: 600px; box-shadow: 0 4px 12px rgba(32, 201, 151, 0.3);';
     tutorialAlert.innerHTML = `
-      <strong>✅ ¡Tutorial completado!</strong> Ya conoces todas las funciones de Metroverso.
+      <strong>✅ ${t.tutorialComplete}</strong> ${t.tutorialCompleteMessage}
       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     `;
     
@@ -432,11 +419,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Función para crear el botón de ayuda flotante
 function createHelpButton() {
+  const t = texts.tutorial;
   const helpButton = document.createElement('button');
   helpButton.className = 'tutorial-help-button';
   helpButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-question-diamond-fill" viewBox="0 0 16 16"> <path d="M9.05.435c-.58-.58-1.52-.58-2.1 0L.436 6.95c-.58.58-.58 1.519 0 2.098l6.516 6.516c.58.58 1.519.58 2.098 0l6.516-6.516c.58-.58.58-1.519 0-2.098zM5.495 6.033a.237.237 0 0 1-.24-.247C5.35 4.091 6.737 3.5 8.005 3.5c1.396 0 2.672.73 2.672 2.24 0 1.08-.635 1.594-1.244 2.057-.737.559-1.01.768-1.01 1.486v.105a.25.25 0 0 1-.25.25h-.81a.25.25 0 0 1-.25-.246l-.004-.217c-.038-.927.495-1.498 1.168-1.987.59-.444.965-.736.965-1.371 0-.825-.628-1.168-1.314-1.168-.803 0-1.253.478-1.342 1.134-.018.137-.128.25-.266.25zm2.325 6.443c-.584 0-1.009-.394-1.009-.927 0-.552.425-.94 1.01-.94.609 0 1.028.388 1.028.94 0 .533-.42.927-1.029.927"/> </svg>';
-  helpButton.title = 'Ver tutorial';
-  helpButton.setAttribute('aria-label', 'Mostrar tutorial interactivo');
+  helpButton.title = t.helpButtonTooltip;
+  helpButton.setAttribute('aria-label', t.helpButtonTooltip);
   helpButton.setAttribute('data-bs-toggle', 'tooltip');
   helpButton.setAttribute('data-bs-placement', 'right');
   

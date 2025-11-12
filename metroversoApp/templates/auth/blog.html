@@ -1,10 +1,11 @@
 {% load static %}
+{% load i18n %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blog Comunitario - Metroverso</title>
+    <title>{% trans "Community Blog - Metroverso" %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="{% static 'css/blog.css' %}" rel="stylesheet">
@@ -22,16 +23,16 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left me-2" viewBox="0 0 16 16">
                         <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
                     </svg>
-                    Volver al Mapa
+                    {% trans "Back to Map" %}
                 </a>
             </div>
-            <p class="text-white">Comparte tus experiencias y rutas favoritas</p>
+            <p class="text-white">{% trans "Share your experiences and favorite routes" %}</p>
         </div>
         
         {% if user.is_authenticated %}
         <div class="text-center">
             <button class="btn-create-post" data-bs-toggle="modal" data-bs-target="#createPostModal">
-                Crear Publicación
+                {% trans "Create Post" %}
             </button>
         </div>
         {% endif %}
@@ -67,7 +68,7 @@
                     </div>
                     {% if post.shared_route %}
                     <div class="route-preview">
-                        <strong>🗺️ Ruta Compartida</strong>
+                        <strong>🗺️ {% trans "Shared Route" %}</strong>
                         <p>📍 {{ post.shared_route.id_start.name }} → {{ post.shared_route.id_end.name }}</p>
                         <!-- 'Ver en el Mapa' button removed intentionally -->
                     </div>
@@ -77,8 +78,8 @@
             {% empty %}
             <div class="empty-state">
                 <div class="empty-state-icon">📝</div>
-                <h3>Aún no hay publicaciones</h3>
-                <p>¡Sé el primero en compartir una experiencia!</p>
+                <h3>{% trans "No posts yet" %}</h3>
+                <p>{% trans "Be the first to share an experience!" %}</p>
             </div>
             {% endfor %}
         </div>
@@ -89,31 +90,31 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">✨ Nueva Publicación</h5>
+                    <h5 class="modal-title">✨ {% trans "New Post" %}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <form id="postForm" method="POST">
                         {% csrf_token %}
                         <div class="mb-3">
-                            <label class="form-label">Tipo de Publicación</label>
+                            <label class="form-label">{% trans "Post Type" %}</label>
                             <select class="form-select" name="post_type" required>
-                                <option value="comment">💬 Comentario General</option>
-                                <option value="route">🗺️ Compartir Ruta</option>
+                                <option value="comment">💬 {% trans "General Comment" %}</option>
+                                <option value="route">🗺️ {% trans "Share Route" %}</option>
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Título</label>
-                            <input type="text" class="form-control" name="title" placeholder="Dale un título a tu publicación" required>
+                            <label class="form-label">{% trans "Title" %}</label>
+                            <input type="text" class="form-control" name="title" placeholder="{% trans 'Give your post a title' %}" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Contenido</label>
-                            <textarea class="form-control" name="content" rows="4" placeholder="Comparte tu experiencia..." required></textarea>
+                            <label class="form-label">{% trans "Content" %}</label>
+                            <textarea class="form-control" name="content" rows="4" placeholder="{% trans 'Share your experience...' %}" required></textarea>
                         </div>
                         <div id="routeSelector" class="mb-3" style="display: none;">
-                            <label class="form-label">Seleccionar Ruta</label>
+                            <label class="form-label">{% trans "Select Route" %}</label>
                             <select class="form-select" name="route_id">
-                                    <option value="">Sin ruta</option>
+                                    <option value="">{% trans "No route" %}</option>
                                     {% if user_routes %}
                                         {% for route in user_routes %}
                                         <option value="{{ route.id_route }}">
@@ -121,14 +122,14 @@
                                         </option>
                                         {% endfor %}
                                     {% else %}
-                                        <option value="" disabled>No hay rutas recientes disponibles</option>
+                                        <option value="" disabled>{% trans "No recent routes available" %}</option>
                                     {% endif %}
                             </select>
                             {% if not user_routes %}
-                            <small class="text-muted">Para compartir una ruta, primero debes realizar un viaje en el mapa.</small>
+                            <small class="text-muted">{% trans "To share a route, you must first take a trip on the map." %}</small>
                             {% endif %}
                         </div>
-                        <button type="submit" class="btn btn-primary w-100">Publicar</button>
+                        <button type="submit" class="btn btn-primary w-100">{% trans "Publish" %}</button>
                     </form>
                 </div>
             </div>
@@ -210,7 +211,7 @@
                                         <div class="toast align-items-center text-white bg-success border-0" role="alert">
                                             <div class="d-flex">
                                                 <div class="toast-body">
-                                                    Publicación eliminada correctamente
+                                                    {% trans "Post deleted successfully" %}
                                                 </div>
                                                 <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
                                             </div>
@@ -234,7 +235,7 @@
                                     <div class="toast align-items-center text-white bg-danger border-0" role="alert">
                                         <div class="d-flex">
                                             <div class="toast-body">
-                                                Error al eliminar la publicación
+                                                {% trans "Error updating post" %}
                                             </div>
                                             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
                                         </div>
@@ -304,7 +305,7 @@
                                     <div class="toast align-items-center text-white bg-success border-0" role="alert">
                                         <div class="d-flex">
                                             <div class="toast-body">
-                                                Publicación actualizada correctamente
+                                                {% trans "Post updated successfully" %}
                                             </div>
                                             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
                                         </div>
@@ -348,7 +349,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">✏️ Editar Publicación</h5>
+                    <h5 class="modal-title">✏️ {% trans "Edit Post" %}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
@@ -356,17 +357,17 @@
                         {% csrf_token %}
                         <input type="hidden" name="post_type" value="comment">
                         <div class="mb-3">
-                            <label class="form-label">Título</label>
-                            <input type="text" class="form-control" name="title" placeholder="Dale un título a tu publicación" required>
+                            <label class="form-label">{% trans "Title" %}</label>
+                            <input type="text" class="form-control" name="title" placeholder="{% trans 'Give your post a title' %}" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Contenido</label>
-                            <textarea class="form-control" name="content" rows="4" placeholder="Comparte tu experiencia..." required></textarea>
+                            <label class="form-label">{% trans "Content" %}</label>
+                            <textarea class="form-control" name="content" rows="4" placeholder="{% trans 'Share your experience...' %}" required></textarea>
                         </div>
                         <div id="editRouteSelector" class="mb-3" style="display: none;">
-                            <label class="form-label">Seleccionar Ruta</label>
+                            <label class="form-label">{% trans "Select Route" %}</label>
                             <select class="form-select" name="route_id">
-                                <option value="">Sin ruta</option>
+                                <option value="">{% trans "No route" %}</option>
                                 {% if user_routes %}
                                     {% for route in user_routes %}
                                     <option value="{{ route.id_route }}">
@@ -374,12 +375,12 @@
                                     </option>
                                     {% endfor %}
                                 {% else %}
-                                    <option value="" disabled>No hay rutas recientes disponibles</option>
+                                    <option value="" disabled>{% trans "No recent routes available" %}</option>
                                 {% endif %}
                             </select>
                         </div>
                         <input type="hidden" name="post_id">
-                        <button type="submit" class="btn btn-primary w-100">Guardar Cambios</button>
+                        <button type="submit" class="btn btn-primary w-100">{% trans "Save Changes" %}</button>
                     </form>
                 </div>
             </div>

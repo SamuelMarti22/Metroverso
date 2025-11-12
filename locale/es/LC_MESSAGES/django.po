@@ -318,3 +318,342 @@ msgstr "Error al actualizar el perfil"
 msgid "(no name)"
 msgstr "(sin nombre)"
 
+# Blog translations
+msgid "Community Blog - Metroverso"
+msgstr "Blog Comunitario - Metroverso"
+
+msgid "Share your experiences and favorite routes"
+msgstr "Comparte tus experiencias y rutas favoritas"
+
+msgid "Back to Map"
+msgstr "Volver al Mapa"
+
+msgid "Create Post"
+msgstr "Crear Publicación"
+
+msgid "New Post"
+msgstr "Nueva Publicación"
+
+msgid "Post Type"
+msgstr "Tipo de Publicación"
+
+msgid "General Comment"
+msgstr "Comentario General"
+
+msgid "Share Route"
+msgstr "Compartir Ruta"
+
+msgid "Title"
+msgstr "Título"
+
+msgid "Give your post a title"
+msgstr "Dale un título a tu publicación"
+
+msgid "Content"
+msgstr "Contenido"
+
+msgid "Share your experience..."
+msgstr "Comparte tu experiencia..."
+
+msgid "Select Route"
+msgstr "Seleccionar Ruta"
+
+msgid "No route"
+msgstr "Sin ruta"
+
+msgid "No recent routes available"
+msgstr "No hay rutas recientes disponibles"
+
+msgid "To share a route, you must first take a trip on the map."
+msgstr "Para compartir una ruta, primero debes realizar un viaje en el mapa."
+
+msgid "Publish"
+msgstr "Publicar"
+
+msgid "Shared Route"
+msgstr "Ruta Compartida"
+
+msgid "No posts yet"
+msgstr "Aún no hay publicaciones"
+
+msgid "Be the first to share an experience!"
+msgstr "¡Sé el primero en compartir una experiencia!"
+
+msgid "Edit Post"
+msgstr "Editar Publicación"
+
+msgid "Edit publication"
+msgstr "Editar publicación"
+
+msgid "Delete publication"
+msgstr "Eliminar publicación"
+
+msgid "Confirm deletion"
+msgstr "Confirmar eliminación"
+
+msgid "Are you sure you want to delete this post?"
+msgstr "¿Estás seguro de que quieres eliminar esta publicación?"
+
+msgid "This action cannot be undone."
+msgstr "Esta acción no se puede deshacer."
+
+msgid "Delete"
+msgstr "Eliminar"
+
+msgid "Post deleted successfully"
+msgstr "Publicación eliminada correctamente"
+
+msgid "Error deleting post"
+msgstr "Error al eliminar la publicación"
+
+msgid "Post updated successfully"
+msgstr "Publicación actualizada correctamente"
+
+msgid "Error updating post"
+msgstr "Error al actualizar la publicación"
+
+# Auth translations
+msgid "Log In - Metroverso"
+msgstr "Iniciar Sesión - Metroverso"
+
+msgid "Log In"
+msgstr "Iniciar Sesión"
+
+msgid "Username"
+msgstr "Nombre de Usuario"
+
+msgid "Password"
+msgstr "Contraseña"
+
+msgid "Don't have an account?"
+msgstr "¿No tienes cuenta?"
+
+msgid "Register here"
+msgstr "Regístrate aquí"
+
+msgid "Register - Metroverso"
+msgstr "Registro - Metroverso"
+
+msgid "Register"
+msgstr "Registro"
+
+msgid "Email"
+msgstr "Correo Electrónico"
+
+msgid "Confirm Password"
+msgstr "Confirmar Contraseña"
+
+msgid "Already have an account?"
+msgstr "¿Ya tienes cuenta?"
+
+msgid "Log in"
+msgstr "Inicia Sesión"
+
+msgid "My Profile - Metroverso"
+msgstr "Mi Perfil - Metroverso"
+
+msgid "Hello"
+msgstr "¡Hola"
+
+msgid "User"
+msgstr "Usuario"
+
+msgid "Profile Settings"
+msgstr "Configuración del Perfil"
+
+msgid "Profile Type"
+msgstr "Tipo de Perfil"
+
+msgid "Update Profile"
+msgstr "Actualizar Perfil"
+
+msgid "Go to Map"
+msgstr "Ir al Mapa"
+
+msgid "Close Session"
+msgstr "Cerrar Sesión"
+
+msgid "Blog"
+msgstr "Blog"
+
+# Backend messages (views.py)
+msgid "All fields are required"
+msgstr "Todos los campos son obligatorios"
+
+msgid "Passwords do not match"
+msgstr "Las contraseñas no coinciden"
+
+msgid "Username already exists"
+msgstr "El nombre de usuario ya existe"
+
+msgid "Email is already registered"
+msgstr "El email ya está registrado"
+
+msgid "Registration successful! You can now log in"
+msgstr "¡Registro exitoso! Ya puedes iniciar sesión"
+
+msgid "Error creating account: %(error)s"
+msgstr "Error al crear la cuenta: %(error)s"
+
+msgid "Username and password are required"
+msgstr "Usuario y contraseña son obligatorios"
+
+msgid "Welcome, %(username)s!"
+msgstr "¡Bienvenido, %(username)s!"
+
+msgid "Incorrect username or password"
+msgstr "Usuario o contraseña incorrectos"
+
+msgid "You have successfully logged out"
+msgstr "Has cerrado sesión exitosamente"
+
+msgid "Station not found: %(start)s or %(end)s"
+msgstr "Estación no encontrada: %(start)s o %(end)s"
+
+msgid "Journey saved successfully"
+msgstr "Viaje guardado exitosamente"
+
+msgid "User not found. Make sure a user with pk=1 exists"
+msgstr "Usuario no encontrado. Asegúrate de que existe un usuario con pk=1"
+
+msgid "Error saving journey: %(error)s"
+msgstr "Error al guardar el viaje: %(error)s"
+
+msgid "Station not found"
+msgstr "Estación no encontrada"
+
+msgid "The selected route does not exist"
+msgstr "La ruta seleccionada no existe"
+
+msgid "Post created successfully!"
+msgstr "¡Publicación creada exitosamente!"
+
+msgid "Not authorized"
+msgstr "No autorizado"
+
+msgid "You do not have permission to delete this post"
+msgstr "No tienes permiso para eliminar esta publicación"
+
+msgid "Internal error"
+msgstr "Error interno"
+
+msgid "Invalid data"
+msgstr "Datos inválidos"
+
+# Tutorial translations (additional)
+msgid "Your smart guide to navigate the Medellín Metro."
+msgstr "Tu guía inteligente para navegar por el Metro de Medellín."
+
+msgid "We will show you how to use all features in a few simple steps."
+msgstr "Te mostraremos cómo usar todas las funciones en unos simples pasos."
+
+msgid "Skip tutorial"
+msgstr "Saltar tutorial"
+
+msgid "Previous"
+msgstr "Anterior"
+
+msgid "Next"
+msgstr "Siguiente"
+
+msgid "Finish"
+msgstr "Finalizar"
+
+msgid "Here you can plan your trip between two stations."
+msgstr "Aquí puedes planificar tu viaje entre dos estaciones."
+
+msgid "Search for optimized routes, check estimated time, and view transfers"
+msgstr "Busca rutas optimizadas, consulta tiempo estimado y visualiza transferencias"
+
+msgid "Explore all system lines and their stations."
+msgstr "Explora todas las líneas del sistema y sus estaciones."
+
+msgid "View each line on the map, check station information, and find available services"
+msgstr "Visualiza cada línea en el mapa, consulta información de estaciones y encuentra servicios disponibles"
+
+msgid "Access your statistics panel and trips."
+msgstr "Accede a tu panel de estadísticas y viajes."
+
+msgid "View your trip history, check statistics, and review your favorite routes"
+msgstr "Ve tu historial de viajes, consulta estadísticas y revisa tus rutas favoritas"
+
+msgid "Blog and Community"
+msgstr "Blog y Comunidad"
+
+msgid "Visit the new Blog to read and post news and community comments."
+msgstr "Visita el nuevo Blog para leer y publicar noticias y comentarios de la comunidad."
+
+msgid "Read community posts and share your experiences"
+msgstr "Lee publicaciones de la comunidad y comparte tus experiencias"
+
+msgid "Note: you must log in to post or comment."
+msgstr "Nota: debes iniciar sesión para poder publicar o comentar."
+
+msgid "Change Language"
+msgstr "Cambiar Idioma"
+
+msgid "Switch the application language between Spanish and English."
+msgstr "Cambia el idioma de la aplicación entre español e inglés."
+
+msgid "The interface will automatically adapt to the selected language."
+msgstr "La interfaz se adaptará automáticamente al idioma seleccionado."
+
+msgid "Your Location"
+msgstr "Tu Ubicación"
+
+msgid "Click here to center the map on your current location."
+msgstr "Haz clic aquí para centrar el mapa en tu ubicación actual."
+
+msgid "Find nearby stations, plan from where you are, and navigate in real time"
+msgstr "Encuentra estaciones cercanas, planifica desde donde estás y navega en tiempo real"
+
+msgid "Nearby Stations"
+msgstr "Estaciones Cercanas"
+
+msgid "When you use your location, a panel with the 3 closest stations will appear here."
+msgstr "Cuando uses tu ubicación, aparecerá aquí un panel con las 3 estaciones más cercanas."
+
+msgid "Select one of the 3 stations, it will be automatically set as starting point, and save time planning routes"
+msgstr "Selecciona una de las 3 estaciones, se establecerá automáticamente como punto de partida y ahorra tiempo en la planificación de rutas"
+
+msgid "This panel only appears after activating your location."
+msgstr "Este panel solo aparece después de activar tu ubicación."
+
+msgid "Select Destination"
+msgstr "Seleccionar Destino"
+
+msgid "Use this button to select your destination by clicking on the map."
+msgstr "Usa este botón para seleccionar tu destino haciendo clic en el mapa."
+
+msgid "Activate selection mode, click anywhere on the map, and the nearest station will be selected"
+msgstr "Activa el modo de selección, haz clic en cualquier punto del mapa y se seleccionará la estación más cercana"
+
+msgid "Map Interaction"
+msgstr "Interacción con el Mapa"
+
+msgid "Explore the map freely:"
+msgstr "Explora el mapa libremente:"
+
+msgid "Click on a station to see its information, drag to move the map, scroll to zoom, and double click to zoom in quickly"
+msgstr "Haz clic en una estación para ver su información, arrastra para mover el mapa, desplázate para hacer zoom y haz doble clic para acercar rápidamente"
+
+msgid "of"
+msgstr "de"
+
+msgid "Tutorial completed!"
+msgstr "¡Tutorial completado!"
+
+msgid "You now know all Metroverso features."
+msgstr "Ya conoces todas las funciones de Metroverso."
+
+msgid "Show tutorial"
+msgstr "Ver tutorial"
+
+msgid "Community Blog"
+msgstr "Blog de la Comunidad"
+
+
+
+
+
+

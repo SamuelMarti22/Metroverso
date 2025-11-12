@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from django.http import JsonResponse
 from django.utils import translation
+from django.utils.translation import gettext as _
 from django.db.models import Count
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User as DjangoUser
@@ -195,19 +196,19 @@ def register_view(request):
         
         # Validaciones
         if not all([username, email, password, confirm_password]):
-            messages.error(request, 'Todos los campos son obligatorios')
+            messages.error(request, _('All fields are required'))
             return render(request, 'auth/register.html')
         
         if password != confirm_password:
-            messages.error(request, 'Las contraseñas no coinciden')
+            messages.error(request, _('Passwords do not match'))
             return render(request, 'auth/register.html')
         
         if DjangoUser.objects.filter(username=username).exists():
-            messages.error(request, 'El nombre de usuario ya existe')
+            messages.error(request, _('Username already exists'))
             return render(request, 'auth/register.html')
         
         if DjangoUser.objects.filter(email=email).exists():
-            messages.error(request, 'El email ya está registrado')
+            messages.error(request, _('Email is already registered'))
             return render(request, 'auth/register.html')
         
         try:
@@ -228,11 +229,11 @@ def register_view(request):
                 lenguaje='Español'        # Idioma por defecto
             )
             
-            messages.success(request, '¡Registro exitoso! Ya puedes iniciar sesión')
+            messages.success(request, _('Registration successful! You can now log in'))
             return redirect('login')
             
         except Exception as e:
-            messages.error(request, f'Error al crear la cuenta: {str(e)}')
+            messages.error(request, _('Error creating account: %(error)s') % {'error': str(e)})
             return render(request, 'auth/register.html')
     
     return render(request, 'auth/register.html')
@@ -245,20 +246,20 @@ def login_view(request):
         password = request.POST.get('password')
         
         if not username or not password:
-            messages.error(request, 'Usuario y contraseña son obligatorios')
+            messages.error(request, _('Username and password are required'))
             return render(request, 'auth/login.html')
         
         user = authenticate(request, username=username, password=password)
         
         if user is not None:
             login(request, user)
-            messages.success(request, f'¡Bienvenido, {user.username}!')
+            messages.success(request, _('Welcome, %(username)s!') % {'username': user.username})
             
             # Redirigir a la página que quería visitar o al mapa
             next_url = request.GET.get('next', 'map')
             return redirect(next_url)
         else:
-            messages.error(request, 'Usuario o contraseña incorrectos')
+            messages.error(request, _('Incorrect username or password'))
     
     return render(request, 'auth/login.html')
 
@@ -266,7 +267,7 @@ def login_view(request):
 def logout_view(request):
     """Vista para cerrar sesión"""
     logout(request)
-    messages.success(request, 'Has cerrado sesión exitosamente')
+    messages.success(request, _('You have successfully logged out'))
     return redirect('login')
 
 
@@ -291,7 +292,7 @@ def profile_view(request):
         metro_profile.lenguaje = request.POST.get('lenguaje', metro_profile.lenguaje)
         metro_profile.save()
         
-        messages.success(request, 'Perfil actualizado exitosamente')
+        messages.success(request, _('Profile updated successfully'))
         return redirect('profile')
     
     context = {
@@ -327,7 +328,7 @@ def profile_data_view(request):
         
         return JsonResponse({
             'success': True,
-            'message': 'Perfil actualizado exitosamente'
+            'message': _('Profile updated successfully')
         })
     
     # GET - Devolver datos del perfil
@@ -370,7 +371,7 @@ def save_journey(request):
         except Station.DoesNotExist:
             return JsonResponse({
                 'success': False,
-                'message': f'Estación no encontrada: {start_station_id} o {end_station_id}'
+                'message': _('Station not found: %(start)s or %(end)s') % {'start': start_station_id, 'end': end_station_id}
             }, status=404)
         
         # Obtener usuario (usar el autenticado o el usuario por defecto pk=1)
@@ -438,7 +439,7 @@ def save_journey(request):
         
         return JsonResponse({
             'success': True,
-            'message': 'Viaje guardado exitosamente',
+            'message': _('Journey saved successfully'),
             'route_id': route.id_route,
             'duration_minutes': round(duration_minutes, 2),
             'start_time': route.start_time.strftime('%H:%M:%S'),
@@ -448,12 +449,12 @@ def save_journey(request):
     except User.DoesNotExist:
         return JsonResponse({
             'success': False,
-            'message': 'Usuario no encontrado. Asegúrate de que existe un usuario con pk=1'
+            'message': _('User not found. Make sure a user with pk=1 exists')
         }, status=404)
     except Exception as e:
         return JsonResponse({
             'success': False,
-            'message': f'Error al guardar el viaje: {str(e)}'
+            'message': _('Error saving journey: %(error)s') % {'error': str(e)}
         }, status=500)
 
 def station_info(request, station_id):
@@ -481,7 +482,7 @@ def station_info(request, station_id):
         })
         
     except Station.DoesNotExist:
-        return JsonResponse({'error': 'Estación no encontrada'}, status=404)
+        return JsonResponse({'error': _('Station not found')}, status=404)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
@@ -525,7 +526,7 @@ def blog_view(request):
             try:
                 shared_route = Route.objects.get(id_route=route_id)
             except Route.DoesNotExist:
-                messages.error(request, 'La ruta seleccionada no existe')
+                messages.error(request, _('The selected route does not exist'))
                 return redirect('blog')
 
         BlogPost.objects.create(
@@ -535,7 +536,7 @@ def blog_view(request):
             content=content,
             shared_route=shared_route
         )
-        messages.success(request, '¡Publicación creada exitosamente!')
+        messages.success(request, _('Post created successfully!'))
         return redirect('blog')
 
     posts = BlogPost.objects.all().order_by('-created_at')
@@ -564,17 +565,17 @@ def delete_blog_post(request, post_id):
         if request.user == post.author:
             print(f"Usuario autorizado, eliminando post {post_id}")
             post.delete()
-            return JsonResponse({'success': True, 'message': 'Post eliminado correctamente'})
+            return JsonResponse({'success': True, 'message': _('Post deleted successfully')})
         else:
             print(f"Usuario no autorizado: {request.user} != {post.author}")
             return JsonResponse({
-                'error': 'No autorizado',
-                'message': 'No tienes permiso para eliminar esta publicación'
+                'error': _('Not authorized'),
+                'message': _('You do not have permission to delete this post')
             }, status=403)
     except Exception as e:
         print(f"Error al eliminar post: {str(e)}")
         return JsonResponse({
-            'error': 'Error interno',
+            'error': _('Internal error'),
             'message': str(e)
         }, status=500)
 
@@ -583,7 +584,7 @@ def edit_blog_post(request, post_id):
     """Vista para editar una publicación del blog"""
     post = get_object_or_404(BlogPost, id=post_id)
     if request.user != post.author:
-        return JsonResponse({'error': 'No autorizado'}, status=403)
+        return JsonResponse({'error': _('Not authorized')}, status=403)
     
     if request.method == 'POST':
         title = request.POST.get('title')
@@ -622,4 +623,4 @@ def edit_blog_post(request, post_id):
             post.save()
             return JsonResponse({'success': True})
     
-    return JsonResponse({'error': 'Datos inválidos'}, status=400)
+    return JsonResponse({'error': _('Invalid data')}, status=400)
