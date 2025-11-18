@@ -113,7 +113,16 @@ async function loadLinesComplete() {
 // Function to show/hide the closest stations box
 function setClosestStationsBoxVisible(visible) {
   const box = document.getElementById("closestStationsBox");
-  box.style.display = visible ? "" : "none";
+  if (!box) return;
+  // If the box is currently suppressed (hidden due to estimated info on mobile),
+  // don't allow other code to show it until suppression is lifted.
+  const suppressed = box.dataset && box.dataset.suppressed === 'true';
+  if (visible) {
+    if (suppressed) return;
+    box.style.display = "";
+  } else {
+    box.style.display = "none";
+  }
 }
 
 // Function to update user location
@@ -249,7 +258,53 @@ const setInRoute = (value) => {
   } catch (e) {
     console.warn('[setInRoute] could not toggle closestStationsBox:', e.message);
   }
+  try {
+    // adjust stacking order when estimated box is shown
+    syncEstimatedClosestZIndex();
+  } catch (e) {}
 };
+
+// Keep estimated info box on top of the closestStationsBox when visible
+function syncEstimatedClosestZIndex() {
+  const est = document.getElementById('estimatedTimeBox');
+  const closest = document.getElementById('closestStationsBox');
+  if (!est || !closest) return;
+  // determine visibility: check computed style and presence in layout
+  const estVisible = est && window.getComputedStyle(est).display !== 'none' && est.offsetParent !== null;
+  const priceBox = document.getElementById('estimatedPriceBox');
+  const priceVisible = priceBox && window.getComputedStyle(priceBox).display !== 'none' && priceBox.offsetParent !== null;
+  const anyVisible = estVisible || priceVisible;
+
+  // If on mobile, hide the closestStationsBox completely when estimated info is visible
+  const mobile = (window.matchMedia && window.matchMedia('(max-width: 768px)').matches);
+  if (mobile) {
+    if (anyVisible) {
+      // store previous display to restore later
+      if (!closest.dataset.prevDisplay) closest.dataset.prevDisplay = window.getComputedStyle(closest).display || '';
+      closest.style.display = 'none';
+      // mark as suppressed so other code won't show it
+      try { closest.dataset.suppressed = 'true'; } catch (e) {}
+      try { closest.setAttribute('aria-hidden', 'true'); } catch (e) {}
+      try { closest.style.pointerEvents = 'none'; } catch (e) {}
+    } else {
+      // restore previous display
+      try { closest.style.display = closest.dataset.prevDisplay || ''; } catch (e) {}
+      try { delete closest.dataset.suppressed; } catch (e) {}
+      try { closest.removeAttribute('aria-hidden'); } catch (e) {}
+      try { closest.style.pointerEvents = ''; } catch (e) {}
+      delete closest.dataset.prevDisplay;
+    }
+    return;
+  }
+
+  // Desktop: keep previous z-index behavior (ensure estimated box is above)
+  if (anyVisible) {
+    try { est.style.zIndex = est.style.zIndex || '1060'; } catch (e) {}
+    try { closest.style.zIndex = '1040'; } catch (e) {}
+  } else {
+    try { closest.style.zIndex = closest.style.zIndex || '1050'; } catch (e) {}
+  }
+}
 
 // Function to get walking route
 async function walkingRoute(start, end) {
@@ -331,6 +386,7 @@ function walkingRouteToOrigin() {
           // maneja el anclaje en la esquina superior derecha. Si el estilo computado
           // es 'static' el CSS debería actualizarse en lugar de forzar inline styles.
           estimatedTimeBox.style.zIndex = estimatedTimeBox.style.zIndex || "1060";
+          try { syncEstimatedClosestZIndex(); } catch (e) {}
 
           // función para actualizar el valor mostrado (acepta segundos)
           function setEstimatedFromSeconds(sec) {
@@ -3246,3 +3302,90 @@ function getCategoryIcon(category) {
   };
   return icons[category] || 'bi bi-geo-alt';
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  const offcanvasElements = document.querySelectorAll('.offcanvas');
+  // function to toggle accessibility/visibility of map UI when offcanvas is open
+  function setMapControlsInaccessible(inaccessible) {
+    const selectors = [
+      '.location-controls',
+      '.estimated-info-container',
+      '#closestStationsBox',
+      '.mapboxgl-ctrl'
+    ];
+    selectors.forEach(sel => {
+      document.querySelectorAll(sel).forEach(el => {
+        if (inaccessible) {
+          el.setAttribute('aria-hidden', 'true');
+          el.classList.add('offcanvas-hidden');
+          el.style.pointerEvents = 'none';
+          el.querySelectorAll('button, a, [tabindex]').forEach(b => {
+            try { b.setAttribute('tabindex', '-1'); } catch (e) {}
+            try { b.disabled = true; } catch (e) {}
+          });
+        } else {
+          el.removeAttribute('aria-hidden');
+          el.classList.remove('offcanvas-hidden');
+          el.style.pointerEvents = '';
+          el.querySelectorAll('button, a, [tabindex]').forEach(b => {
+            try { b.removeAttribute('tabindex'); } catch (e) {}
+            try { b.disabled = false; } catch (e) {}
+          });
+        }
+      });
+    });
+  }
+
+  // helper to detect mobile viewport
+  function isMobileViewport() {
+    return window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+  }
+
+  offcanvasElements.forEach(el => {
+    el.addEventListener('show.bs.offcanvas', () => {
+      document.body.classList.add('offcanvas-open');
+      // Only hide/disable map controls on mobile devices
+      if (isMobileViewport()) setMapControlsInaccessible(true);
+    });
+    el.addEventListener('hide.bs.offcanvas', () => {
+      document.body.classList.remove('offcanvas-open');
+      if (isMobileViewport()) setMapControlsInaccessible(false);
+    });
+  });
+
+  // Keep controls state in sync when viewport size changes
+  try {
+    const mq = window.matchMedia('(max-width: 768px)');
+    // listener for browsers supporting addEventListener on MediaQueryList
+    const mqHandler = (e) => {
+      if (!e.matches) {
+        // switched to desktop: ensure controls are accessible
+        setMapControlsInaccessible(false);
+      } else {
+        // switched to mobile: if offcanvas is open, hide controls
+        if (document.body.classList.contains('offcanvas-open')) {
+          setMapControlsInaccessible(true);
+        }
+      }
+    };
+    if (mq.addEventListener) mq.addEventListener('change', mqHandler);
+    else if (mq.addListener) mq.addListener(mqHandler);
+  } catch (err) {
+    // non-critical: ignore if matchMedia isn't available
+  }
+
+  // Observe estimatedTimeBox for visibility changes and keep z-index sync
+  try {
+    const estBox = document.getElementById('estimatedTimeBox');
+    const priceBox = document.getElementById('estimatedPriceBox');
+    // initial sync
+    try { syncEstimatedClosestZIndex(); } catch (e) {}
+    const obs = new MutationObserver(() => {
+      try { syncEstimatedClosestZIndex(); } catch (e) {}
+    });
+    if (estBox) obs.observe(estBox, { attributes: true, attributeFilter: ['style', 'class'] });
+    if (priceBox) obs.observe(priceBox, { attributes: true, attributeFilter: ['style', 'class'] });
+  } catch (e) {
+    // ignore
+  }
+});

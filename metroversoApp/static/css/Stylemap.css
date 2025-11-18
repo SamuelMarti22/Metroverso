@@ -47,6 +47,28 @@ body {
     z-index: 2;
 }
 
+/* Mobile: avoid the sidebar being cut off at the bottom on some devices
+   Make it scrollable, respect safe-area insets and allow touch scrolling */
+@media (max-width: 768px) {
+    .sidebar {
+        height: auto;
+        top: 0;
+        bottom: 0;
+        max-height: 100vh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        /* Add some bottom padding to account for device UI / safe area */
+        padding-bottom: calc(12px + env(safe-area-inset-bottom, 12px));
+    }
+
+    /* Slightly reduce spacing so items don't overflow as easily */
+    .sidebar .icon,
+    .sidebar .subCategory,
+    .sidebar .profileIcon {
+        margin-bottom: 10px;
+    }
+}
+
 .subCategory {
     width: 50px;
     height: 50px;
@@ -971,3 +993,19 @@ body {
     }
 }
 
+@media (max-width: 768px) {
+    body.offcanvas-open .location-controls,
+    body.offcanvas-open .estimated-info-container,
+    body.offcanvas-open #closestStationsBox {
+        visibility: hidden;
+        opacity: 0;
+        pointer-events: none;
+        transition: visibility 0.3s, opacity 0.3s ease;
+    }
+}
+
+.offcanvas-hidden {
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
